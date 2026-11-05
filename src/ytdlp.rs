@@ -1,0 +1,316 @@
+// Pure helpers for driving yt-dlp: argument building and output parsing.
+// No Tauri here, so `cargo test` covers it. A port of the Electron app's src/ytdlp.js.
+
+use serde_json::{Value, json};
+
+pub const HEIGHTS: [u32; 9] = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144];
+pub const OUTPUT_TEMPLATE: &str = "%(title)s [%(id)s]%(height& {}p|)s.%(ext)s"; // "Title [id] 1080p.mp4"
+#[cfg(test)]
+const QUALITIES: [&str; 5] = ["best4k", "mp4_4k", "mp4_1080", "mp4_720", "mp4_default"];
+
+pub const BINARY_NAME: &str = if cfg!(windows) { "yt-dlp.exe" } else { "yt-dlp" };
+pub const BINARY_URL: &str = if cfg!(windows) {
+    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+} else if cfg!(target_os = "macos") {
+    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+} else {
+    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
+};
+
+fn strings(args: &[&str]) -> Vec<String> {
+    args.iter().map(|s| s.to_string()).collect()
+}
+
+// `res:N` = best resolution up to N; `vcodec:h264` breaks ties toward H.264 so MP4s play everywhere.
+// WebM can't hold H.264/AAC, so if a video has no WebM streams the merge falls back to MKV.
+fn container(ext: &str, h: u32) -> Option<Vec<String>> {
+    let res = format!("res:{h}");
+    Some(match ext {
+        "mp4" => strings(&[
+            "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4", "--remux-video", "mp4",
+            "-S", &format!("{res},vcodec:h264"),
+        ]),
+        "mkv" => strings(&["-f", "bv*+ba/b", "-S", &res, "--merge-output-format", "mkv"]),
+        "webm" => strings(&[
+            "-f", "bv*[ext=webm]+ba[ext=webm]/b[ext=webm]/bv*+ba/b", "-S", &res, "--merge-output-format", "webm/mkv",
+        ]),
+        _ => return None,
+    })
+}
+
+/// A preset key, or "custom-<container>-<height>" from the Custom row (validated: it comes from the page).
+pub fn quality_args(quality: &str) -> Result<Vec<String>, String> {
+    let args = match quality {
+        "best4k" => container("mkv", 2160),
+        "mp4_4k" => container("mp4", 2160),
+        "mp4_1080" => container("mp4", 1080),
+        "mp4_720" => container("mp4", 720),
+        "mp4_default" => Some(strings(&["-t", "mp4"])), // yt-dlp's own MP4 preset (H.264 + AAC preferred)
+        _ => quality.strip_prefix("custom-").and_then(|rest| rest.split_once('-')).and_then(|(ext, h)| {
+            let h: u32 = h.bytes().all(|b| b.is_ascii_digit()).then(|| h.parse().ok())??;
+            if HEIGHTS.contains(&h) { container(ext, h) } else { None }
+        }),
+    };
+    args.ok_or_else(|| format!("Unknown quality: {quality}"))
+}
+
+/// Links come from the clipboard/user; only web URLs may reach yt-dlp.
+pub fn assert_url(url: &str) -> Result<String, String> {
+    let u = url::Url::parse(url.trim()).map_err(|e| format!("Invalid link: {e}"))?;
+    if !matches!(u.scheme(), "http" | "https") {
+        return Err("Only http(s) links are supported".into());
+    }
+    Ok(u.into())
+}
+
+pub fn info_args(url: &str) -> Vec<String> {
+    strings(&[
+        "--no-playlist", "--no-warnings", "--encoding", "utf-8",
+        "-O", "%(.{id,title,channel,uploader,duration_string,thumbnail,height,fps})j",
+        "--", url, // `--` so a link can never be read as an option
+    ])
+}
+
+pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str>) -> Result<Vec<String>, String> {
+    let mut args = quality_args(quality)?;
+    args.extend(strings(&[
+        "--no-playlist", "--encoding", "utf-8", "--newline", "--progress",
+        "--progress-template", "download:DL|%(info.vcodec)s|%(progress)j",
+        "--print", "video:META|%(.{title,thumbnail})j",
+        "--print", "after_move:FILE|%(filepath)s",
+        // The resolution keeps different qualities of one video from sharing a name, which made yt-dlp
+        // skip a new download as "already downloaded". `&...|` leaves it out when there's no height.
+        "-P", folder, "-o", OUTPUT_TEMPLATE,
+    ]));
+    if let Some(ffmpeg) = ffmpeg {
+        args.extend(strings(&["--ffmpeg-location", ffmpeg]));
+    }
+    args.extend(strings(&["--", url]));
+    Ok(args)
+}
+
+/// Turns one line of yt-dlp output into an event for the UI, or None if it's noise.
+pub fn parse_line(line: &str) -> Option<Value> {
+    if let Some(file) = line.strip_prefix("FILE|") {
+        return Some(json!({ "file": file }));
+    }
+    if let Some(meta) = line.strip_prefix("META|") {
+        let m = serde_json::from_str::<Value>(meta).ok().filter(Value::is_object)?;
+        return Some(json!({ "title": m["title"], "thumbnail": m["thumbnail"] }));
+    }
+    let (vcodec, progress) = line.strip_prefix("DL|")?.split_once('|')?;
+    let p: Value = serde_json::from_str(progress).ok()?;
+    let stream = if vcodec == "none" { "audio" } else { "video" };
+    let filename = &p["filename"]; // the stream file being written, e.g. "…\Title [id].f701.mp4"
+    let or = |v: &Value, fallback: Value| if v.is_null() { fallback } else { v.clone() };
+    match p["status"].as_str() {
+        Some("finished") => Some(json!({ "state": "processing", "stream": stream, "filename": filename })),
+        Some("downloading") => Some(json!({
+            "state": "downloading", "stream": stream, "filename": filename,
+            "downloaded": or(&p["downloaded_bytes"], json!(0)),
+            "total": or(&p["total_bytes"], p["total_bytes_estimate"].clone()),
+            "speed": p["speed"],
+            "eta": p["eta"],
+        })),
+        _ => None,
+    }
+}
+
+// "Title [id].f701.mp4" -> "Title [id]": what the JS regex /(\.f[^.]+)?\.[^.]+$/ strips.
+fn stem(name: &str) -> &str {
+    let Some((base, _)) = name.rsplit_once('.').filter(|(_, ext)| !ext.is_empty()) else { return name };
+    match base.rsplit_once('.') {
+        Some((stem, format)) if format.len() > 1 && format.starts_with('f') => stem,
+        _ => base,
+    }
+}
+
+/// Which entries of a folder listing are leftovers of one download. `streams` are the file names yt-dlp
+/// reported writing ("Title [id].f701.mp4"); leftovers are those files, their .part / .part-FragN /
+/// .ytdl files, and ffmpeg's merge temp file ("Title [id].temp.mkv"). Anything else, like an earlier
+/// download of the same video in another quality, never matches.
+pub fn leftover_names<'a>(streams: &[String], names: &'a [String]) -> Vec<&'a String> {
+    let stems: Vec<String> = streams.iter().map(|s| format!("{}.temp.", stem(s))).collect();
+    names
+        .iter()
+        .filter(|n| {
+            streams.iter().any(|s| *n == s || n.starts_with(&format!("{s}.part")) || **n == format!("{s}.ytdl"))
+                || stems.iter().any(|temp| n.starts_with(temp))
+        })
+        .collect()
+}
+
+/// "ERROR: [youtube] abc123: Video unavailable" -> "Video unavailable"
+pub fn error_text(output: &str) -> Option<String> {
+    let line = output.lines().filter(|l| l.starts_with("ERROR:")).last()?;
+    let rest = line["ERROR:".len()..].trim_start();
+    // drop a leading "[extractor] id: "
+    let message = rest
+        .strip_prefix('[')
+        .and_then(|r| r.split_once(']'))
+        .filter(|(extractor, _)| !extractor.is_empty())
+        .and_then(|(_, r)| r.trim_start().split_once(':'))
+        .filter(|(id, _)| !id.is_empty() && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'))
+        .map_or(rest, |(_, msg)| msg.trim_start());
+    Some(message.to_string())
+}
+
+/// "ffmpeg version 6.1.1-essentials_build-www.gyan.dev Copyright…" -> "6.1.1"
+pub fn ffmpeg_version(output: &str) -> Option<String> {
+    output.match_indices("version ").find_map(|(i, m)| {
+        let v: String = output[i + m.len()..]
+            .chars()
+            .take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '.')
+            .collect();
+        v.starts_with(|c: char| c.is_ascii_digit()).then_some(v)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn after<'a>(args: &'a [String], flag: &str) -> &'a str {
+        &args[args.iter().position(|a| a == flag).unwrap() + 1]
+    }
+
+    #[test]
+    fn every_quality_builds_args_that_end_with_dashdash_url() {
+        for quality in QUALITIES {
+            let args = download_args("https://youtu.be/x", quality, "C:\\out", Some("ff.exe")).unwrap();
+            assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
+            assert!(args.iter().any(|a| a == "--no-playlist"));
+            assert_eq!(after(&args, "-P"), "C:\\out");
+            assert_eq!(after(&args, "-o"), OUTPUT_TEMPLATE);
+            assert_eq!(after(&args, "--ffmpeg-location"), "ff.exe");
+        }
+        let args = download_args("https://youtu.be/x", "mp4_720", ".", None).unwrap();
+        assert!(!args.iter().any(|a| a == "--ffmpeg-location"));
+    }
+
+    #[test]
+    fn quality_presets_pick_the_right_container_and_resolution_cap() {
+        let q = |k| quality_args(k).unwrap();
+        assert_eq!(after(&q("best4k"), "-S"), "res:2160");
+        assert!(q("best4k").iter().any(|a| a == "mkv"));
+        assert_eq!(after(&q("mp4_4k"), "-S"), "res:2160,vcodec:h264");
+        assert_eq!(after(&q("mp4_1080"), "-S"), "res:1080,vcodec:h264");
+        assert_eq!(after(&q("mp4_720"), "-S"), "res:720,vcodec:h264");
+        for k in ["mp4_4k", "mp4_1080", "mp4_720"] {
+            assert!(q(k).iter().any(|a| a == "mp4"));
+        }
+        assert_eq!(q("mp4_default"), ["-t", "mp4"]);
+        // exactly the Electron app's arguments, in the same order
+        assert_eq!(q("mp4_1080"), [
+            "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4", "--remux-video", "mp4",
+            "-S", "res:1080,vcodec:h264",
+        ]);
+        assert_eq!(q("best4k"), ["-f", "bv*+ba/b", "-S", "res:2160", "--merge-output-format", "mkv"]);
+    }
+
+    #[test]
+    fn unknown_quality_is_rejected() {
+        for quality in ["nope", "toString", "custom-mp4-1000", "custom-avi-1080", "custom-mp4-1080 --exec x", "custom-mp4-+1080", "custom-mp4-"] {
+            let err = download_args("https://youtu.be/x", quality, ".", None).unwrap_err();
+            assert!(err.contains("Unknown quality"), "{quality}");
+        }
+    }
+
+    #[test]
+    fn custom_quality_maps_resolution_and_file_type_to_ytdlp_options() {
+        let q = |k| quality_args(k).unwrap();
+        assert_eq!(after(&q("custom-mp4-1440"), "-S"), "res:1440,vcodec:h264");
+        assert_eq!(after(&q("custom-mp4-1440"), "--merge-output-format"), "mp4");
+        assert_eq!(after(&q("custom-mkv-4320"), "-S"), "res:4320");
+        assert_eq!(after(&q("custom-mkv-4320"), "--merge-output-format"), "mkv");
+        assert_eq!(after(&q("custom-webm-480"), "-S"), "res:480");
+        assert_eq!(after(&q("custom-webm-480"), "--merge-output-format"), "webm/mkv");
+        for h in HEIGHTS {
+            assert!(quality_args(&format!("custom-mkv-{h}")).is_ok());
+        }
+        // the fixed presets are the same builders, so 4K Best == Custom MKV at 2160p
+        assert_eq!(q("best4k"), q("custom-mkv-2160"));
+    }
+
+    #[test]
+    fn assert_url_only_lets_web_links_through() {
+        assert_eq!(assert_url(" https://www.youtube.com/watch?v=abc ").unwrap(), "https://www.youtube.com/watch?v=abc");
+        assert!(assert_url("--exec calc").is_err());
+        assert!(assert_url("file:///C:/Windows/win.ini").unwrap_err().contains("http"));
+        assert!(assert_url("").is_err());
+        assert!(info_args("https://youtu.be/x").ends_with(&["--".to_string(), "https://youtu.be/x".to_string()]));
+    }
+
+    #[test]
+    fn parse_line_reads_progress_finish_file_and_ignores_noise() {
+        let p = json!({ "status": "downloading", "downloaded_bytes": 50, "total_bytes": 200, "speed": 10.5, "eta": 15, "filename": "C:\\out\\T [x].f701.mp4" });
+        assert_eq!(
+            parse_line(&format!("DL|avc1.640028|{p}")),
+            Some(json!({ "state": "downloading", "stream": "video", "filename": "C:\\out\\T [x].f701.mp4", "downloaded": 50, "total": 200, "speed": 10.5, "eta": 15 }))
+        );
+        assert_eq!(
+            parse_line(r#"DL|none|{"status":"downloading","total_bytes_estimate":9}"#),
+            Some(json!({ "state": "downloading", "stream": "audio", "filename": null, "downloaded": 0, "total": 9, "speed": null, "eta": null }))
+        );
+        assert_eq!(
+            parse_line(r#"DL|none|{"status":"finished","filename":"T [x].f251.webm"}"#),
+            Some(json!({ "state": "processing", "stream": "audio", "filename": "T [x].f251.webm" }))
+        );
+        assert_eq!(parse_line("FILE|C:\\out\\a | b [x].mp4"), Some(json!({ "file": "C:\\out\\a | b [x].mp4" })));
+        assert_eq!(
+            parse_line(r#"META|{"title": "강남 | Style", "thumbnail": "https://i.ytimg.com/x.jpg"}"#),
+            Some(json!({ "title": "강남 | Style", "thumbnail": "https://i.ytimg.com/x.jpg" }))
+        );
+        assert_eq!(parse_line("META|{broken"), None);
+        assert_eq!(parse_line(r#"[Merger] Merging formats into "x.mp4""#), None);
+        assert_eq!(parse_line("DL|avc1|{not json"), None);
+        assert_eq!(parse_line(r#"DL|avc1|{"status":"error"}"#), None);
+    }
+
+    #[test]
+    fn leftover_names_finds_only_this_downloads_partial_and_temporary_files() {
+        let s = |v: &[&str]| strings(v);
+        let streams = s(&["Mr. T [abc].f701.mp4", "Mr. T [abc].f251.webm"]);
+        let folder = s(&[
+            "Mr. T [abc].f701.mp4.part",       // video stream, interrupted
+            "Mr. T [abc].f701.mp4.part-Frag12", // a leftover fragment
+            "Mr. T [abc].f251.webm",            // audio stream, finished before the cancel
+            "Mr. T [abc].f251.webm.ytdl",
+            "Mr. T [abc].temp.mkv",   // ffmpeg was merging
+            "Mr. T [abc].mp4",        // an earlier, finished download of the same video: keep
+            "Mr. T [abc].f22.mp4.part", // a different format, not written by this download: keep
+            "Other [xyz].f701.mp4.part", // another video: keep
+        ]);
+        assert_eq!(leftover_names(&streams, &folder), folder[..5].iter().collect::<Vec<_>>());
+        // single-file downloads have no ".fNNN" part; the merge temp rule still uses the right stem
+        let folder = s(&["A [q].mp4.part", "A [q].temp.mp4", "A [q].mkv"]);
+        assert_eq!(leftover_names(&s(&["A [q].mp4"]), &folder), folder[..2].iter().collect::<Vec<_>>());
+        assert!(leftover_names(&[], &s(&["Mr. T [abc].f701.mp4.part"])).is_empty());
+    }
+
+    #[test]
+    fn stem_matches_the_electron_regex() {
+        assert_eq!(stem("Mr. T [abc].f701.mp4"), "Mr. T [abc]");
+        assert_eq!(stem("A [q].mp4"), "A [q]");
+        assert_eq!(stem("A."), "A.");
+        assert_eq!(stem("noext"), "noext");
+        assert_eq!(stem("x.f.mp4"), "x.f"); // "\.f[^.]+" needs a character after the f
+    }
+
+    #[test]
+    fn error_text_keeps_only_the_human_part_of_the_last_error_line() {
+        let out = "WARNING: something\nERROR: [youtube] Xk29aLq0P1c: Video unavailable. This video is private\n";
+        assert_eq!(error_text(out).as_deref(), Some("Video unavailable. This video is private"));
+        assert_eq!(error_text("ERROR: Unable to download webpage").as_deref(), Some("Unable to download webpage"));
+        assert_eq!(error_text("all good"), None);
+        assert_eq!(error_text(""), None);
+    }
+
+    #[test]
+    fn ffmpeg_version_reads_the_banner() {
+        let out = "ffmpeg version 6.1.1-essentials_build-www.gyan.dev Copyright (c) 2000-2023";
+        assert_eq!(ffmpeg_version(out).as_deref(), Some("6.1.1"));
+        assert_eq!(ffmpeg_version("built with gcc version 12.2.0"), Some("12.2.0".into())); // first match wins, like the JS regex
+        assert_eq!(ffmpeg_version("no banner"), None);
+    }
+}
