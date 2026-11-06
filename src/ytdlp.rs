@@ -142,7 +142,7 @@ pub fn leftover_names<'a>(streams: &[String], names: &'a [String]) -> Vec<&'a St
 
 /// "ERROR: [youtube] abc123: Video unavailable" -> "Video unavailable"
 pub fn error_text(output: &str) -> Option<String> {
-    let line = output.lines().filter(|l| l.starts_with("ERROR:")).last()?;
+    let line = output.lines().rev().find(|l| l.starts_with("ERROR:"))?;
     let rest = line["ERROR:".len()..].trim_start();
     // drop a leading "[extractor] id: "
     let message = rest

@@ -42,3 +42,20 @@ syncMaximized();
 document.addEventListener('contextmenu', e => {
   if (!e.target.closest('input')) e.preventDefault();
 });
+
+// WebView2 also keeps browser shortcuts Electron never had (Tauri can't switch them off). A reload would make the
+// page forget every running download while yt-dlp keeps going; print, find and history navigation mean nothing here.
+const BROWSER_KEYS = new Set(['F3', 'F5', 'BrowserBack', 'BrowserForward', 'BrowserRefresh']);
+document.addEventListener('keydown', e => {
+  const ctrl = (e.ctrlKey || e.metaKey) && ['r', 'p', 'f', 'g'].includes(e.key.toLowerCase());
+  const history = e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight');
+  if (BROWSER_KEYS.has(e.key) || ctrl || history) e.preventDefault();
+});
+
+// main.rs turns off Tauri's own drop handler so a link dragged from the browser can be dropped into the link box,
+// as in Electron. Anything dropped elsewhere, and any file, would otherwise replace the app page: refuse those.
+for (const type of ['dragover', 'drop']) {
+  document.addEventListener(type, e => {
+    if (e.dataTransfer?.types.includes('Files') || !e.target.closest('input')) e.preventDefault();
+  });
+}

@@ -328,10 +328,13 @@ fn apply_settings(window: &WebviewWindow, settings: &Value) {
         _ => None, // Desktop: follow Windows
     };
     let _ = window.set_theme(theme);
-    // the page's background color, so the window never flashes the other theme while it paints
-    let dark = theme.or(window.theme().ok()) != Some(Theme::Light);
-    let _ = window.set_background_color(Some(if dark { Color(0x13, 0x11, 0x0F, 255) } else { Color(0xF2, 0xF1, 0xEE, 255) }));
+    let _ = window.set_background_color(Some(ground(theme.or(window.theme().ok()))));
     let _ = window.set_zoom(settings["scale"].as_str().and_then(|s| s.parse().ok()).unwrap_or(1.0));
+}
+
+// The page's background color for a theme, so the window never flashes the other theme while it paints.
+fn ground(theme: Option<Theme>) -> Color {
+    if theme == Some(Theme::Light) { Color(0xF2, 0xF1, 0xEE, 255) } else { Color(0x13, 0x11, 0x0F, 255) }
 }
 
 #[tauri::command]
@@ -381,12 +384,20 @@ fn main() {
                 .inner_size(1040.0, 760.0)
                 .min_inner_size(900.0, 600.0)
                 .decorations(false) // the page draws the whole title bar, window buttons included
+                // Tauri's drop handler would swallow a link dragged into the link box; api.js refuses other drops
+                .disable_drag_drop_handler()
                 .visible(false)
                 .build()?;
             apply_settings(&window, &settings); // before it's shown, so there's no flash of the other theme
             *app.state::<AppState>().settings.lock().unwrap() = settings;
             window.show()?;
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // On "Desktop", Windows switching light/dark changes the window's theme; keep its background in step
+            if let tauri::WindowEvent::ThemeChanged(theme) = event {
+                let _ = window.set_background_color(Some(ground(Some(*theme))));
+            }
         })
         .build(tauri::generate_context!())
         .expect("couldn't start YT Downloader");
