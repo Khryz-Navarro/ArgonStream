@@ -62,8 +62,10 @@ and "Show in folder" opening File Explorer. The Rust build makes the size claim 
 ## Brand Commitments
 
 - Name: **YT Downloader**. Credit: **"Developed by Khryz"**, centered in the status bar and in About.
-- The approved v1 UI is the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE, with its HTML
-  source in the Electron repo's `design/mockup.html`. Both builds must keep that look and stay identical to each other.
+- The approved look is **Contact Sheet** (chosen 2026-11-07, recorded in DESIGN.md), which replaced the v1 look
+  from the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE. The redesign kept the two-tab
+  layout and dark by default. The Rust build has it first; the Electron build is to follow, and then both
+  stay identical to each other.
 - Icons are Lucide (ISC). The Rust build's app icon (`icons/icon.svg`) is the title-bar logo tile;
   the Electron build still uses Electron's default icon.
 - The README keeps the legal note: only download videos you have the right to save.
