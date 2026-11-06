@@ -41,7 +41,7 @@ installs itself on first launch and keeps itself up to date.
 - **yt-dlp is managed for you:** downloaded on first launch and updated with `yt-dlp -U` every time the app starts. The status bar shows its version and update state, with "Developed by Khryz" in the middle.
 - **ffmpeg is bundled**, so the separate video and audio streams are merged automatically.
 - **Settings** (the cog, top right): **Theme** (Light, Dark, or Desktop, which follows Windows) and **Text and page size** (100%, 125%, 150% or 175%). Both are remembered.
-- **About:** the `v0.1.0` button shows the app version and the yt-dlp, ffmpeg and Tauri versions.
+- **About:** the version button in the title bar shows the app version and the yt-dlp, ffmpeg and Tauri versions.
 - **Remembers** your last quality choice and download folder.
 - **Keyboard friendly:** <kbd>Enter</kbd> in the link box starts the download; every control is reachable with <kbd>Tab</kbd>.
 
@@ -223,8 +223,9 @@ whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh c
 | Release a big change (0.x → 1.0.0) | `.\scripts\release.ps1 major` |
 | Push without the checks (emergency only) | `git push --no-verify` |
 
-If PowerShell refuses to run the script ("running scripts is disabled"), use
-`powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1`.
+The script compares your branch only with `main`. If your branch builds on another pull request that isn't
+merged yet, bump past that pull request's version yourself (in `Cargo.toml`, then `cargo update --workspace`)
+before running it; otherwise both would ship the same version.
 
 ## Troubleshooting
 
@@ -232,6 +233,8 @@ If PowerShell refuses to run the script ("running scripts is disabled"), use
 |---|---|
 | `cargo run` fails with *resource path `binaries\ffmpeg-x86_64-pc-windows-msvc.exe` doesn't exist* | Run `.\scripts\get-ffmpeg.ps1` once. |
 | `cargo` fails with *link.exe not found* | Install the "Desktop development with C++" workload in the Visual Studio Installer. |
+| PowerShell says *running scripts is disabled* for a script in `scripts\` | Run it as `powershell -ExecutionPolicy Bypass -File .\scripts\<name>.ps1`. |
+| `get-ffmpeg.ps1` says *checksum mismatch* | The download isn't the expected ffmpeg build; the script deleted it. Try again later, and don't build with a different file. |
 | Status bar: *Couldn't set up yt-dlp* | First launch needs internet to download yt-dlp. Connect and restart the app. |
 | Status bar: *couldn't check for updates* | You're offline or GitHub is unreachable. The app keeps using the installed version. |
 | A download fails with "Sign in to confirm your age" or a members-only error | These videos need your YouTube cookies, which this version doesn't support yet. |

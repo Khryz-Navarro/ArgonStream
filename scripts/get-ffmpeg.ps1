@@ -17,4 +17,9 @@ $out = [IO.File]::Create($exe)
 try { (New-Object IO.Compression.GZipStream($in, [IO.Compression.CompressionMode]::Decompress)).CopyTo($out) }
 finally { $out.Dispose(); $in.Dispose() }
 Remove-Item "$exe.gz"
+
+# The installer ships this file, so check it is exactly the known build (the same bytes ffmpeg-static installs).
+$expected = '04e1307997530f9cf2fe35cba2ca7e8875ca91da02f89d6c7243df819c94ad00'
+$actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+if ($actual -ne $expected) { Remove-Item $exe; throw "ffmpeg checksum mismatch (got $actual), refusing to use it" }
 & $exe -hide_banner -version | Select-Object -First 1
