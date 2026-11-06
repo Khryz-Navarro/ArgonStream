@@ -155,6 +155,8 @@ youtube-downloader-rust/
 ├─ .github/workflows/
 │  └─ release.yml      After a merge to main: builds the installer and publishes the GitHub Release
 ├─ tauri.conf.json     App name, content security policy, installer settings
+├─ PRODUCT.md          Who the app is for, what it does, its constraints and principles
+├─ DESIGN.md           The visual system: tokens, components and rules ("The Quiet Utility")
 └─ Cargo.toml          Dependencies and the app version
 ```
 
@@ -182,6 +184,9 @@ cargo run     # run the app (debug build, with a console for logs)
 The UI files in `ui/` come from the Electron version's `src/renderer/`. When the design changes there,
 copy the files over and keep this version's few changes: the Tauri bridge script, the window buttons,
 "Tauri" in the About box, and `await confirm(...)` in the Delete handler (Tauri's `confirm()` is async).
+
+Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). They are
+shared with the Electron version, so update them in both repositories.
 
 ### Releasing: pull request → merge → automatic release
 
