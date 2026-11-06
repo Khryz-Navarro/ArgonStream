@@ -1,0 +1,350 @@
+const $ = id => document.getElementById(id);
+
+const QUALITY_LABEL = {
+  best4k: '4K Best · MKV', mp4_4k: '4K · MP4', mp4_1080: '1080p · MP4', mp4_720: '720p · MP4', mp4_default: 'Default · MP4',
+};
+const ACTIVE = ['starting', 'downloading', 'processing'];
+const FINISHED = ['done', 'error', 'canceled'];
+
+// localStorage can be unavailable; settings are a convenience, so fall back silently.
+const store = {
+  get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
+};
+
+const isUrl = s => { try { return /^https?:$/.test(new URL(s).protocol); } catch { return false; } };
+
+function fmtBytes(b) {
+  if (b == null) return '?';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (b >= 1024 && i < units.length - 1) { b /= 1024; i++; }
+  return `${b.toFixed(i ? 1 : 0)} ${units[i]}`;
+}
+function fmtEta(s) {
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor(s / 60) % 60}m`;
+}
+function setImg(img, src) {
+  if (src) img.src = src; else img.removeAttribute('src');
+  img.hidden = !src;
+}
+
+let ytReady = false;
+let folder = store.get('folder', null);
+let info = null; // metadata for the link currently in the box
+let infoFor = ''; // the link `info` belongs to
+const jobs = new Map(); // id -> job
+
+/* ---------- tabs ---------- */
+
+const tabs = [...document.querySelectorAll('[role=tab]')];
+function selectTab(tab) {
+  for (const t of tabs) {
+    const on = t === tab;
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+    $(t.getAttribute('aria-controls')).hidden = !on;
+  }
+}
+for (const tab of tabs) {
+  tab.addEventListener('click', () => selectTab(tab));
+  tab.addEventListener('keydown', e => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    const next = tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length];
+    selectTab(next);
+    next.focus();
+  });
+}
+
+/* ---------- settings ---------- */
+
+const savedQuality = document.querySelector(`input[name=quality][value="${store.get('quality', 'best4k')}"]`);
+(savedQuality || document.querySelector('input[name=quality]')).checked = true;
+document.querySelector('.opts').addEventListener('change', e => {
+  if (e.target.name === 'quality') store.set('quality', e.target.value);
+});
+
+// Custom row: restore the dropdowns, and using either one selects Custom.
+const pickCustom = () => {
+  document.querySelector('input[name=quality][value=custom]').checked = true;
+  store.set('quality', 'custom');
+};
+for (const select of [$('customRes'), $('customExt')]) {
+  const saved = store.get(select.id, null);
+  if ([...select.options].some(o => o.value === saved)) select.value = saved;
+  select.addEventListener('pointerdown', pickCustom);
+  select.addEventListener('change', () => { store.set(select.id, select.value); pickCustom(); });
+}
+
+// The value sent to main, plus the chip text shown on the download item.
+function chosenQuality() {
+  const q = document.querySelector('input[name=quality]:checked').value;
+  if (q !== 'custom') return { quality: q, label: QUALITY_LABEL[q] };
+  const res = $('customRes');
+  const ext = $('customExt');
+  return { quality: `custom-${ext.value}-${res.value}`, label: `${res.selectedOptions[0].text} · ${ext.selectedOptions[0].text}` };
+}
+
+function showFolder() {
+  $('folder').textContent = folder;
+  $('folder').title = folder;
+}
+(async () => {
+  folder ||= await window.api.defaultFolder();
+  showFolder();
+})();
+$('change').onclick = async () => {
+  const picked = await window.api.pickFolder(folder);
+  if (!picked) return;
+  folder = picked;
+  store.set('folder', picked);
+  showFolder();
+};
+
+/* ---------- link box + preview ---------- */
+
+function syncButtons() {
+  const url = $('url').value.trim();
+  $('paste').hidden = url !== '';
+  $('clear').hidden = url === '';
+  $('download').disabled = !ytReady || !isUrl(url);
+}
+
+let previewState = null;
+function showPreview(p) {
+  previewState = p;
+  $('preview').hidden = !p;
+  if (!p) return;
+  $('preview').classList.toggle('error', !!p.error);
+  setImg($('pv-img'), p.thumbnail);
+  $('pv-dur').textContent = p.duration_string || '';
+  if (p.loading) {
+    $('pv-title').textContent = 'Loading video info…';
+    $('pv-sub').textContent = ytReady ? '' : 'Waiting for yt-dlp to finish updating';
+  } else if (p.error) {
+    $('pv-title').textContent = "Couldn't load this link";
+    $('pv-sub').textContent = p.error;
+  } else {
+    $('pv-title').textContent = p.title;
+    const res = p.height ? `up to ${p.height}p${p.fps > 30 ? Math.round(p.fps) : ''}` : null;
+    $('pv-sub').textContent = [p.channel || p.uploader, res].filter(Boolean).join(' · ');
+  }
+}
+
+async function onUrl() {
+  syncButtons();
+  const url = $('url').value.trim();
+  if (url === infoFor) return;
+  infoFor = url;
+  info = null;
+  if (!isUrl(url)) return showPreview(null);
+  showPreview({ loading: true });
+  const res = await window.api.info(url);
+  if (url !== infoFor) return; // the link changed while we were waiting
+  if (res.error) return showPreview({ error: res.error });
+  info = res;
+  showPreview(res);
+}
+
+let debounce;
+$('url').addEventListener('input', () => {
+  syncButtons();
+  clearTimeout(debounce);
+  debounce = setTimeout(onUrl, 350);
+});
+$('url').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !$('download').disabled) $('download').click();
+});
+$('paste').onclick = async () => {
+  $('url').value = (await window.api.paste()).trim();
+  $('url').focus();
+  onUrl();
+};
+$('clear').onclick = () => {
+  $('url').value = '';
+  $('url').focus();
+  onUrl();
+};
+
+/* ---------- downloads ---------- */
+
+function refreshList() {
+  const n = jobs.size;
+  $('count').textContent = n;
+  $('count').hidden = n === 0;
+  $('count').classList.toggle('active', [...jobs.values()].some(j => ACTIVE.includes(j.state)));
+  $('empty').hidden = n > 0;
+  $('clear-finished').hidden = ![...jobs.values()].some(j => FINISHED.includes(j.state));
+}
+
+function render(job) {
+  const el = job.el;
+  const q = sel => el.querySelector(sel);
+  el.className = `item ${job.state}`;
+  const active = ACTIVE.includes(job.state);
+  const paused = job.state === 'paused';
+  q('.pause').hidden = job.state !== 'downloading'; // not while merging: that step can't be resumed
+  q('.resume').hidden = !paused;
+  q('.cancel').hidden = !active && !paused;
+  q('.reveal').hidden = job.state !== 'done' || !job.file;
+  q('.retry').hidden = !['error', 'canceled'].includes(job.state);
+  q('.delete').hidden = !FINISHED.includes(job.state);
+  const deleteLabel = job.state === 'done' ? 'Delete the video (moves it to the Recycle Bin)' : 'Delete the leftover partial files';
+  q('.delete').title = deleteLabel;
+  q('.delete').setAttribute('aria-label', deleteLabel);
+  q('.bar').hidden = !active && !paused;
+
+  let pct = null;
+  let msg;
+  if (job.state === 'starting') msg = ytReady ? 'Starting…' : 'Waiting for yt-dlp update…';
+  else if (job.state === 'downloading') {
+    pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
+    msg = [
+      job.stream === 'audio' ? 'Audio' : 'Video',
+      job.total ? `${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}` : fmtBytes(job.downloaded),
+      job.speed && `${fmtBytes(job.speed)}/s`,
+      job.eta != null && `${fmtEta(job.eta)} left`,
+    ].filter(Boolean).join(' · ');
+  } else if (job.state === 'processing') {
+    pct = 100;
+    msg = job.stream === 'audio' ? 'Merging video and audio…' : 'Processing…';
+  } else if (job.state === 'done') msg = job.size != null ? `Done · ${fmtBytes(job.size)}` : 'Done';
+  else if (paused) {
+    pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
+    msg = job.total ? `Paused · ${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}` : 'Paused';
+  } else if (job.state === 'canceled') msg = 'Canceled';
+  else msg = job.error || 'Download failed';
+
+  q('.msg').textContent = msg;
+  q('.msg').title = msg;
+  q('.pct').textContent = pct == null ? '' : `${Math.floor(pct)}%`;
+  q('.fill').style.width = `${pct ?? 0}%`;
+  q('.bar').setAttribute('aria-valuenow', String(Math.floor(pct ?? 0)));
+  refreshList();
+}
+
+function showMeta(job) {
+  job.el.querySelector('.title').textContent = job.title;
+  job.el.querySelector('.title').title = job.title;
+  setImg(job.el.querySelector('img'), job.thumbnail);
+}
+
+function makeItem(job) {
+  const el = $('item-tpl').content.firstElementChild.cloneNode(true);
+  el.querySelector('.chip').textContent = job.label;
+  el.querySelector('.cancel').onclick = () => {
+    if (job.state !== 'paused') return window.api.cancel(job.id);
+    job.state = 'canceled'; // nothing is running while paused, so there's no process to stop
+    render(job);
+  };
+  el.querySelector('.pause').onclick = () => window.api.pause(job.id);
+  el.querySelector('.delete').onclick = async () => {
+    // await: under Tauri, confirm() is the dialog plugin's native message box and returns a Promise
+    if (job.state === 'done' && !(await confirm(`Move "${job.title}" to the Recycle Bin?`))) return;
+    await window.api.deleteFiles(job.id);
+    job.el.remove();
+    jobs.delete(job.id);
+    refreshList();
+  };
+  el.querySelector('.resume').onclick = () => start(job); // yt-dlp continues the kept .part file
+  el.querySelector('.reveal').onclick = () => window.api.showFile(job.file);
+  el.querySelector('.retry').onclick = () => start(job);
+  return el;
+}
+
+function start(job) {
+  if (!job.el) {
+    job.el = makeItem(job);
+    showMeta(job);
+    $('list').prepend(job.el);
+    jobs.set(job.id, job);
+  }
+  Object.assign(job, { state: 'starting', error: null, total: null, downloaded: 0 });
+  render(job);
+  window.api.download({ id: job.id, url: job.url, quality: job.quality, folder: job.folder });
+}
+
+$('download').onclick = () => {
+  const url = $('url').value.trim();
+  const meta = url === infoFor && info ? info : {};
+  start({
+    id: crypto.randomUUID(),
+    url,
+    ...chosenQuality(),
+    folder,
+    title: meta.title || url.replace(/^https?:\/\/(www\.)?/, ''),
+    thumbnail: meta.thumbnail,
+  });
+  $('url').value = '';
+  onUrl();
+};
+
+$('clear-finished').onclick = () => {
+  for (const [id, job] of jobs) {
+    if (!FINISHED.includes(job.state)) continue;
+    job.el.remove();
+    jobs.delete(id);
+  }
+  refreshList();
+};
+
+window.api.onProgress(ev => {
+  const job = jobs.get(ev.id);
+  if (!job) return;
+  Object.assign(job, ev);
+  if (ev.title) showMeta(job); // yt-dlp reports the real title/thumbnail as each download starts
+  render(job);
+});
+
+/* ---------- status bar: yt-dlp setup / auto-update ---------- */
+
+function showStatus(s) {
+  ytReady = !!s.version;
+  $('dot').className = `dot ${{ ok: '', warn: 'warn', busy: 'warn', error: 'err' }[s.state]}`;
+  const bold = text => Object.assign(document.createElement('b'), { textContent: text });
+  if (s.version) {
+    const note = s.state === 'warn' ? "couldn't check for updates" : s.updated ? 'updated just now' : 'up to date';
+    $('status-text').replaceChildren('yt-dlp ', bold(s.version), ` · ${note}`);
+  } else {
+    $('status-text').textContent = s.text;
+  }
+  const time = s.checkedAt && s.state === 'ok'
+    ? `checked at ${new Date(s.checkedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    : null;
+  $('status-right').textContent = [s.ffmpeg && `ffmpeg ${s.ffmpeg}`, time].filter(Boolean).join(' · ');
+  $('about-ytdlp').textContent = s.version || (s.state === 'error' ? 'unavailable' : 'checking…');
+  $('about-ffmpeg').textContent = s.ffmpeg || (s.state === 'busy' ? 'checking…' : 'unavailable');
+  $('status-text').title = $('status-text').textContent; // full text on hover when it's cut off
+  $('status-right').title = $('status-right').textContent;
+  syncButtons();
+  for (const job of jobs.values()) if (job.state === 'starting') render(job);
+  if (previewState?.loading) showPreview(previewState);
+}
+
+/* ---------- Settings window: theme and text/page size (main applies and saves them) ---------- */
+
+window.api.settings().then(s => {
+  for (const input of $('settings').querySelectorAll('input[type=radio]')) input.checked = s[input.name] === input.value;
+});
+$('settings').addEventListener('change', e => window.api.setSetting(e.target.name, e.target.value));
+$('settings-btn').onclick = () => $('settings').showModal();
+$('settings-close').onclick = () => $('settings').close();
+$('settings').addEventListener('click', e => { // a click on the dimmed backdrop closes it
+  if (e.target !== $('settings')) return; // clicks on controls (incl. keyboard "clicks" at 0,0) aren't backdrop clicks
+  const r = $('settings').getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) $('settings').close();
+});
+
+window.api.about().then(({ version, tauri }) => {
+  $('app-version').textContent = `v${version}`;
+  $('about-btn').setAttribute('aria-label', `About YT Downloader v${version}`); // keeps the visible text in the name
+  $('about-version').textContent = `Version ${version}`;
+  $('about-tauri').textContent = tauri;
+});
+
+window.api.onStatus(showStatus);
+window.api.status().then(showStatus);
+refreshList();

@@ -1,0 +1,49 @@
+# Runs when main changes (a pull request was merged). If Cargo.toml's version has no GitHub Release
+# yet, it builds the Windows installer and publishes the release (which also creates the v<version> tag).
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # create the Release/tag and upload the installer
+
+jobs:
+  release:
+    runs-on: windows-latest # comes with Rust (MSVC), Node.js and the Windows SDK
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Is this version already released?
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(tr -d '\r' < Cargo.toml | sed -n 's/^version = "\(.*\)"$/\1/p' | head -n 1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" > /dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "v$version is already released; nothing to do."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.version.outputs.new == 'true'
+        run: cargo test
+      - if: steps.version.outputs.new == 'true'
+        run: ./scripts/get-ffmpeg.ps1
+      - if: steps.version.outputs.new == 'true'
+        run: npx --yes @tauri-apps/cli@2 build
+
+      - name: Publish the GitHub Release
+        if: steps.version.outputs.new == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Tauri names it "YT Downloader_<version>_x64-setup.exe"; keep the Electron app's asset name
+          cp "target/release/bundle/nsis/YT Downloader_${VERSION}_x64-setup.exe" "YT-Downloader-Setup-${VERSION}.exe"
+          gh release create "v$VERSION" "YT-Downloader-Setup-${VERSION}.exe" --target "$GITHUB_SHA" --title "YT Downloader v$VERSION" --generate-notes

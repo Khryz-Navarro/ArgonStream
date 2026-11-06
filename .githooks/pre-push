@@ -1,0 +1,28 @@
+#!/bin/sh
+# Changes reach main only through pull requests, and every pushed branch must carry a version newer
+# than main's, so each merged PR becomes a new release. scripts/release.ps1 bumps, pushes and opens the PR.
+# Emergency bypass: git push --no-verify
+
+zero=0000000000000000000000000000000000000000
+# Cargo.toml's [package] version: its first line that starts with `version =`
+version() { git show "$1:Cargo.toml" 2>/dev/null | tr -d '\r' | sed -n 's/^version = "\(.*\)"$/\1/p' | head -n 1; }
+main_version=$(version refs/remotes/origin/main)
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in refs/heads/*) ;; *) continue ;; esac  # tags etc. are fine
+  [ "$local_sha" = "$zero" ] && continue                      # deleting a branch
+  branch=${remote_ref#refs/heads/}
+  if [ "$branch" = main ]; then
+    echo "pre-push: don't push to main directly. Push a branch and open a pull request (scripts/release.ps1 does both)." >&2
+    exit 1
+  fi
+  [ -z "$main_version" ] && continue                          # main has no version yet: nothing to compare with
+  new=$(version "$local_sha")
+  newest=$(printf '%s\n%s\n' "$main_version" "$new" | sort -V | tail -n 1)
+  if [ "$new" = "$main_version" ] || [ "$newest" != "$new" ]; then
+    echo "pre-push: $branch is at v$new, but main is already at v$main_version." >&2
+    echo "pre-push: run scripts/release.ps1 to bump the version, push and open the pull request." >&2
+    exit 1
+  fi
+done
+exit 0
