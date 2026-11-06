@@ -9,15 +9,17 @@ of a bundled Chromium. The installer is about 23 MB, most of it ffmpeg (the Elec
 Paste a link, pick a quality preset (or your own resolution and file type), and download. yt-dlp
 installs itself on first launch and keeps itself up to date.
 
-> **Status:** early version (0.x) for Windows 10/11, run from source or built into an installer
-> yourself. The UI follows the [Figma design](https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE)
-> and is shared with the Electron version.
+> **Status:** early versions (0.x) for Windows 10/11. Download the installer from
+> [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases), or run from source.
+> The UI follows the [Figma design](https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE) and is
+> shared with the Electron version.
 
 ## Contents
 
 - [Features](#features)
 - [Quality options](#quality-options)
 - [Requirements](#requirements)
+- [Install](#install)
 - [Run from source](#run-from-source)
 - [Using the app](#using-the-app)
 - [Where things are stored](#where-things-are-stored)
@@ -71,6 +73,15 @@ saved as `.mkv`.
 
 You don't need to install yt-dlp, ffmpeg or Python yourself.
 
+## Install
+
+1. Open [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases) and download
+   `YT-Downloader-Setup-<version>.exe` from the newest release.
+2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
+   click **More info → Run anyway**.
+
+To update, install the newer release over the old one. Uninstall from *Settings → Apps*.
+
 ## Run from source
 
 ```powershell
@@ -86,8 +97,7 @@ The first `cargo run` compiles Tauri and takes a few minutes; later runs start i
 
 To build the installer (`target\release\bundle\nsis\YT Downloader_<version>_x64-setup.exe`), use the
 Tauri CLI, either `cargo install tauri-cli --version "^2" --locked` once and then `cargo tauri build`,
-or, with Node.js installed, `npx @tauri-apps/cli@2 build`. The installer isn't code-signed, so Windows
-may say **"Windows protected your PC"**: click **More info → Run anyway**.
+or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
 
 ## Using the app
 
@@ -139,9 +149,13 @@ youtube-downloader-rust/
 ├─ capabilities/       What the page may call (Tauri permissions)
 ├─ icons/              App icon (icon.svg is the source)
 ├─ scripts/
-│  └─ get-ffmpeg.ps1   Downloads the bundled ffmpeg
+│  ├─ get-ffmpeg.ps1   Downloads the bundled ffmpeg
+│  └─ release.ps1      Bump the version, push the branch, open the pull request
+├─ .githooks/pre-push  Blocks direct pushes to main and branch pushes without a newer version
+├─ .github/workflows/
+│  └─ release.yml      After a merge to main: builds the installer and publishes the GitHub Release
 ├─ tauri.conf.json     App name, content security policy, installer settings
-└─ Cargo.toml
+└─ Cargo.toml          Dependencies and the app version
 ```
 
 - **Same page, new backend.** `renderer.js` calls the same `window.api` functions it did under
@@ -167,10 +181,42 @@ cargo run     # run the app (debug build, with a console for logs)
 
 The UI files in `ui/` come from the Electron version's `src/renderer/`. When the design changes there,
 copy the files over and keep this version's few changes: the Tauri bridge script, the window buttons,
-and "Tauri" in the About box.
+"Tauri" in the About box, and `await confirm(...)` in the Delete handler (Tauri's `confirm()` is async).
 
-Changes reach `main` only through a pull request, and every pull request bumps the version in
-`Cargo.toml`.
+### Releasing: pull request → merge → automatic release
+
+Changes reach `main` only through a **pull request**, and every pull request carries a new version.
+
+1. Work on a branch: `git switch -c my-change`, then commit your changes.
+2. Run, from the repository folder:
+
+   ```powershell
+   .\scripts\release.ps1
+   ```
+
+   It bumps the patch version in `Cargo.toml` and `Cargo.lock` (0.1.0 → 0.1.1) and commits
+   `Release v0.1.1` (only once per branch: running it again just pushes), pushes the branch, and opens
+   a pull request into `main` with the [GitHub CLI](https://cli.github.com/) (`gh`). It refuses to run
+   on `main` or with uncommitted changes, and turns on the pre-push hook.
+3. Review and **merge the pull request** on GitHub.
+4. **GitHub publishes the release by itself.** The merge starts the
+   [Release workflow](.github/workflows/release.yml): if `v0.1.1` has no release yet, it runs the tests,
+   builds the installer, and creates the GitHub Release *YT Downloader v0.1.1* (and its `v0.1.1` tag)
+   with `YT-Downloader-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
+
+The **pre-push hook** (`.githooks/pre-push`) blocks pushes straight to `main`, and blocks a branch push
+whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh clone you can also run
+`git config core.hooksPath .githooks` once.
+
+| To… | Run |
+|---|---|
+| Release a fix or small change (0.1.0 → 0.1.1) | `.\scripts\release.ps1` |
+| Release new features (0.1.x → 0.2.0) | `.\scripts\release.ps1 minor` |
+| Release a big change (0.x → 1.0.0) | `.\scripts\release.ps1 major` |
+| Push without the checks (emergency only) | `git push --no-verify` |
+
+If PowerShell refuses to run the script ("running scripts is disabled"), use
+`powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1`.
 
 ## Troubleshooting
 
@@ -185,7 +231,6 @@ Changes reach `main` only through a pull request, and every pull request bumps t
 
 ## Known limitations
 
-- No ready-made installer on GitHub Releases yet: build it yourself (see [Run from source](#run-from-source)).
 - The installer isn't code-signed, so Windows SmartScreen warns the first time it runs.
 - The app doesn't update itself. (yt-dlp does, at every start.)
 - Playlists are ignored: a link with `&list=` downloads only that one video.
