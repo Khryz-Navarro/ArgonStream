@@ -1,0 +1,22 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": ["ui/index.html"],
+        "createdAt": "2026-11-07T02:00:00.000Z",
+        "reason": "Claude: false positive - preview/queue thumbnails get src at runtime from renderer.js setImg(), which hides the img when there is none"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": ["ui/index.html"],
+        "createdAt": "2026-11-07T02:00:00.000Z",
+        "reason": "Claude: false positive - .input/.save are fixed 44px rows with vertically centered text; verified in screenshots"
+      }
+    ]
+  }
+}

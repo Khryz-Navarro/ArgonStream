@@ -120,7 +120,10 @@ function showPreview(p) {
   if (!p) return;
   $('preview').classList.toggle('error', !!p.error);
   setImg($('pv-img'), p.thumbnail);
-  $('pv-dur').textContent = p.duration_string || '';
+  // the edge code printed along the film: video ID · best resolution · length
+  const res = p.height ? `${p.height}p${p.fps > 30 ? Math.round(p.fps) : ''}` : null;
+  const length = /^\d+$/.test(p.duration_string ?? '') ? `0:${p.duration_string.padStart(2, '0')}` : p.duration_string; // yt-dlp gives "19" for 19 seconds
+  $('pv-code').textContent = p.loading || p.error ? '' : [p.id, res, length].filter(Boolean).join(' · ');
   if (p.loading) {
     $('pv-title').textContent = 'Loading video info…';
     $('pv-sub').textContent = ytReady ? '' : 'Waiting for yt-dlp to finish updating';
@@ -129,8 +132,7 @@ function showPreview(p) {
     $('pv-sub').textContent = p.error;
   } else {
     $('pv-title').textContent = p.title;
-    const res = p.height ? `up to ${p.height}p${p.fps > 30 ? Math.round(p.fps) : ''}` : null;
-    $('pv-sub').textContent = [p.channel || p.uploader, res].filter(Boolean).join(' · ');
+    $('pv-sub').textContent = p.channel || p.uploader || '';
   }
 }
 
@@ -195,7 +197,6 @@ function render(job) {
   const deleteLabel = job.state === 'done' ? 'Delete the video (moves it to the Recycle Bin)' : 'Delete the leftover partial files';
   q('.delete').title = deleteLabel;
   q('.delete').setAttribute('aria-label', deleteLabel);
-  q('.bar').hidden = !active && !paused;
 
   let pct = null;
   let msg;
@@ -211,7 +212,7 @@ function render(job) {
   } else if (job.state === 'processing') {
     pct = 100;
     msg = job.stream === 'audio' ? 'Merging video and audio…' : 'Processing…';
-  } else if (job.state === 'done') msg = job.size != null ? `Done · ${fmtBytes(job.size)}` : 'Done';
+  } else if (job.state === 'done') msg = 'Done'; // the size is the row's big number
   else if (paused) {
     pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
     msg = job.total ? `Paused · ${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}` : 'Paused';
@@ -220,9 +221,14 @@ function render(job) {
 
   q('.msg').textContent = msg;
   q('.msg').title = msg;
-  q('.pct').textContent = pct == null ? '' : `${Math.floor(pct)}%`;
-  q('.fill').style.width = `${pct ?? 0}%`;
-  q('.bar').setAttribute('aria-valuenow', String(Math.floor(pct ?? 0)));
+  // the row's one big number: percent while it runs, the file size once it's done
+  const big = job.state === 'done' ? (job.size != null ? fmtBytes(job.size) : '') : pct == null ? '' : `${Math.floor(pct)}%`;
+  q('.pct').textContent = big;
+  // The strip stays in every state: full when done, stopped where it failed, undeveloped when canceled.
+  const reached = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : 0;
+  const strip = { done: 100, canceled: 0, error: reached }[job.state] ?? pct ?? 0;
+  q('.fill').style.setProperty('--p', `${strip}%`);
+  q('.bar').setAttribute('aria-valuenow', String(Math.floor(strip)));
   refreshList();
 }
 
