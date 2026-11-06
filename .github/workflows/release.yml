@@ -30,10 +30,11 @@ jobs:
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - if: steps.version.outputs.new == 'true'
-        run: cargo test
+      # before `cargo test`: compiling the app at all (tauri-build) requires the bundled ffmpeg to exist
       - if: steps.version.outputs.new == 'true'
         run: ./scripts/get-ffmpeg.ps1
+      - if: steps.version.outputs.new == 'true'
+        run: cargo test
       - if: steps.version.outputs.new == 'true'
         run: npx --yes @tauri-apps/cli@2 build
 

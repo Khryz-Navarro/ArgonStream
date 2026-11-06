@@ -1,0 +1,97 @@
+# Product
+
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
+## Users
+
+- **The public:** people on Windows 10/11 who want to save YouTube videos to their PC. Both repositories are
+  private today; a public release is the intent, with no date set.
+- **People evaluating Khryz's work:** the app is also a portfolio piece, so its code, README and release
+  flow are read by employers or clients, not only used.
+
+## Product Purpose
+
+YT Downloader turns a YouTube link into a video file on disk. Paste a link, see what it is, pick a
+quality, download; yt-dlp does the downloading and ffmpeg merges the video and audio streams. Success is
+the video landing in the chosen folder, in the expected quality, as one playable file, without the user
+touching yt-dlp, ffmpeg or a command line.
+
+## Positioning
+
+A small, quiet app that feels at home on Windows 11, rather than a web page in a window or a front-end
+that exposes yt-dlp's options. It follows Windows conventions: its own title bar with Windows-style
+window buttons, a theme that can follow the Windows setting, finished videos deleted to the Recycle Bin,
+and "Show in folder" opening File Explorer. The Rust build makes the size claim concrete: its installer is
+22.6 MiB against 137 MiB for the Electron build.
+
+## Operating Context
+
+- A Windows desktop app built twice from one UI: **Electron** (`Khryz-Navarro/youtube-downloader`) and
+  **Rust/Tauri 2** (`Khryz-Navarro/youtube-downloader-rust`, this repo, rendered by WebView2). The UI is
+  HTML/CSS/JS; the Electron repo's `src/renderer/` is the original and this repo's `ui/` is a copy with
+  a few Tauri-only edits.
+- Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
+  right) and **Downloads** (the full-width list). Several downloads run at once.
+- People use it on large and high-DPI monitors; that is why "Text and page size" exists.
+- Installed from GitHub Releases (`YT-Downloader-Setup-<version>.exe`); each merged pull request publishes a
+  new version.
+
+## Capabilities and Constraints
+
+- **Quality:** five presets (4K Best MKV; 4K, 1080p and 720p MP4 preferring H.264; Default MP4 via `-t mp4`)
+  and a Custom row (max resolution 8K–144p × MP4/MKV/WebM). Every option includes the best audio. The
+  exact yt-dlp arguments are in `src/ytdlp.rs` and the README.
+- **Downloads list:** progress, size, speed and time left; Pause/Resume, Cancel, Retry, Show in folder,
+  Delete, Clear finished. Delete removes only files yt-dlp reported for that download: leftovers
+  permanently, a finished video to the Recycle Bin after a confirm.
+- **Managed tools:** yt-dlp downloads on first launch and runs `yt-dlp -U` every launch; the status bar
+  shows its version and update state. ffmpeg is bundled.
+- **Settings:** Theme (Light, Dark, Desktop = follow Windows) and Text and page size (100/125/150/175%).
+  About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
+- **Terminology in the UI:** New download, Downloads, Quality, Custom, Paste, Change, Download, Show in
+  folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size.
+- **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
+  cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
+  installer is not code-signed. The app doesn't update itself (yt-dlp does).
+- **Undecided:** no license has been chosen; no date for making the repositories public.
+
+## Brand Commitments
+
+- Name: **YT Downloader**. Credit: **"Developed by Khryz"**, centered in the status bar and in About.
+- The approved v1 UI is the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE, with its HTML
+  source in the Electron repo's `design/mockup.html`. Both builds must keep that look and stay identical to each other.
+- Icons are Lucide (ISC). The Rust build's app icon (`icons/icon.svg`) is the title-bar logo tile;
+  the Electron build still uses Electron's default icon.
+- The README keeps the legal note: only download videos you have the right to save.
+
+## Evidence on Hand
+
+- Screenshots, in the Electron repo: `docs/images/app.png` (New download), `docs/images/downloads.png`
+  (Downloads).
+- README tables of each preset's yt-dlp options and what each picked for a 4K/60fps test video.
+- Installer sizes: Electron 137 MiB, Rust 22.6 MiB (Release v0.1.0 of this repo).
+- There are no users, download counts, reviews, testimonials or press yet. Don't invent any.
+
+## Product Principles
+
+1. **Belong on Windows 11.** Prefer the platform's conventions (window buttons, theme, Recycle Bin, File
+   Explorer) over web-app habits.
+2. **Stay small and quiet.** Weigh every addition against size and calm; the footprint is part of the pitch.
+3. **Public-grade, portfolio-grade.** A stranger installs and uses it without help, and the code, README
+   and release flow hold up when someone reviews them.
+4. **One product, two builds.** Electron and Rust/Tauri keep the same features and look; a UI change lands
+   in both.
+5. **Never surprise people with their files.** Delete only what this app created; anything finished goes
+   to the Recycle Bin, and only after asking.
+
+## Accessibility & Inclusion
+
+- "Text and page size" (up to 175%) exists for large and high-DPI screens; every screen must stay usable
+  at each size.
+- Keyboard: every control is reachable with Tab, Enter in the link box starts the download, arrow keys
+  switch tabs.
+- Text colors are chosen for at least 4.5:1 contrast in both themes.
