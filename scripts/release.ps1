@@ -9,7 +9,7 @@ function Run { & $args[0] @($args | Select-Object -Skip 1); if (-not $?) { Fail 
 # The [package] version: Cargo.toml's first line that starts with `version =`.
 function VersionOf([string]$toml) { if ($toml -match '(?m)^version = "(\d+\.\d+\.\d+)"') { [version]$Matches[1] } }
 
-git config core.hooksPath .githooks # turns on the pre-push check (npm's `prepare` did this in the Electron repo)
+git config core.hooksPath .githooks # turns on the pre-push check
 $branch = git branch --show-current
 if (-not $branch -or $branch -eq 'main') { Fail 'changes reach main through a pull request. Create a branch first: git switch -c my-change' }
 if (git status --porcelain) { Fail 'commit your changes first.' }

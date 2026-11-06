@@ -1,18 +1,15 @@
-# YT Downloader (Rust)
+# YT Downloader
 
-The Rust version of [YT Downloader](https://github.com/Khryz-Navarro/youtube-downloader), a small
-Windows app for downloading YouTube videos on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**.
-It does the same things and looks the same, but runs on **[Tauri 2](https://tauri.app/)**: a Rust
-backend replaces Electron's main process, and the page is drawn by Windows' built-in WebView2 instead
-of a bundled Chromium. The installer is about 23 MB, most of it ffmpeg (the Electron one is about 140 MB).
+A small Windows app for downloading YouTube videos on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
+built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs yt-dlp and ffmpeg, and the
+window is drawn by Windows' built-in WebView2. The installer is about 23 MB, most of it ffmpeg.
 
 Paste a link, pick a quality preset (or your own resolution and file type), and download. yt-dlp
 installs itself on first launch and keeps itself up to date.
 
 > **Status:** early versions (0.x) for Windows 10/11. Download the installer from
 > [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases), or run from source.
-> The UI follows the [Figma design](https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE) and is
-> shared with the Electron version.
+> The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md).
 
 ## Contents
 
@@ -48,8 +45,8 @@ installs itself on first launch and keeps itself up to date.
 ## Quality options
 
 YouTube stores the high-quality video and the audio as separate streams. Each preset tells yt-dlp
-which video stream to pick, adds the best audio stream, and merges them with ffmpeg. The arguments are
-exactly the Electron version's.
+which video stream to pick, adds the best audio stream, and merges them with ffmpeg. The arguments live
+in `src/ytdlp.rs`.
 
 | Preset | What you get | File | yt-dlp options |
 |---|---|---|---|
@@ -143,10 +140,10 @@ youtube-downloader-rust/
 │  ├─ main.rs          Backend: window, yt-dlp install/update, downloads, pause/cancel, Delete, settings
 │  └─ ytdlp.rs         Quality presets, yt-dlp arguments, output parsing, leftover matching (unit-tested)
 ├─ ui/
-│  ├─ index.html       The window's markup (from the Electron version, plus window buttons)
+│  ├─ index.html       The window's markup, title bar and window buttons included
 │  ├─ styles.css       Dark and light themes
-│  ├─ renderer.js      UI logic, the Electron version's renderer
-│  └─ api.js           Tauri bridge: `window.api` for renderer.js, window buttons
+│  ├─ renderer.js      UI logic: tabs, link box, preview, download list, Settings, status bar
+│  └─ api.js           Bridge to the backend (`window.api`), window buttons, WebView2 guards
 ├─ capabilities/       What the page may call (Tauri permissions)
 ├─ icons/              App icon (icon.svg is the source)
 ├─ scripts/
@@ -161,9 +158,8 @@ youtube-downloader-rust/
 └─ Cargo.toml          Dependencies and the app version
 ```
 
-- **Same page, new backend.** `renderer.js` calls the same `window.api` functions it did under
-  Electron; `api.js` implements them with Tauri `invoke` calls and events. Each Electron IPC handler
-  in `src/main.js` is a `#[tauri::command]` in `src/main.rs`.
+- **Page and backend.** `renderer.js` only talks to the backend through `window.api`; `api.js`
+  implements it with Tauri `invoke` calls and events, one `#[tauri::command]` in `src/main.rs` per call.
 - **Downloads** run `yt-dlp.exe` with a machine-readable progress template; each output line becomes a
   `progress` event for the page. **Pause** and **Cancel** end the whole process tree with
   `taskkill /T /F` (yt-dlp starts its own child and ffmpeg); a paused download keeps its `.part` file,
@@ -172,8 +168,9 @@ youtube-downloader-rust/
   options. Quality and settings values from the page are checked against fixed lists. Delete only
   removes files yt-dlp reported for that download, never a path sent by the page. The page has a
   strict content security policy and can only call the app's own commands and the window buttons.
-- **Window:** frameless, like the Electron version; the page draws the title bar, including the
-  minimize, maximize and close buttons.
+- **Window:** frameless; the page draws the title bar, including the minimize, maximize and close
+  buttons. `api.js` turns off WebView2's browser shortcuts (F5 reload, print, find) and refuses drops
+  that would replace the page.
 
 ## Development
 
@@ -182,14 +179,12 @@ cargo test    # presets, argument building, output parsing, leftover matching
 cargo run     # run the app (debug build, with a console for logs)
 ```
 
-The UI files in `ui/` started as the Electron version's `src/renderer/`. The Contact Sheet redesign
-landed here first; the Electron version gets the same `index.html`, `styles.css` and `renderer.js` next.
-Its copy keeps Electron's own differences: no `api.js` (its preload script provides `window.api`), native
-window buttons, and "Electron" in the About box. This version's `renderer.js` awaits `confirm(...)` in the
-Delete handler because Tauri's `confirm()` is async; that's harmless under Electron.
+Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). The design
+tools used to make them (Impeccable and other skills, listed in `skills-lock.json`) live in `.claude/`, so
+Claude Code sessions in this folder have them.
 
-Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). They are
-shared with the Electron version, so update them in both repositories.
+YT Downloader started as an Electron app (`Khryz-Navarro/youtube-downloader`). That version is
+discontinued; all development happens here.
 
 ### Releasing: pull request → merge → automatic release
 
