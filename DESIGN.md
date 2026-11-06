@@ -1,45 +1,67 @@
 ---
 name: YT Downloader
-description: A quiet Windows 11 app for turning a YouTube link into a video file.
+description: A Windows 11 app that turns a YouTube link into a video file, drawn as a darkroom contact sheet.
 colors:
-  bg: "#0E0E10"
-  panel: "#141416"
-  surface: "#1A1A1D"
-  surface-2: "#222226"
-  hover: "#2A2A2F"
-  border: "#26262B"
-  border-2: "#34343B"
-  text: "#EDEDF0"
-  muted: "#A0A0AA"
-  faint: "#8A8A94"
-  accent: "#7B93FF"
-  accent-weak: "rgba(123, 147, 255, .12)"
-  ok: "#3ECF8E"
-  warn: "#F5B54A"
-  err: "#FF6B6B"
+  bg: "#13110F"
+  field: "#0B0A09"
+  table: "#1B1815"
+  panel: "#1E1A17"
+  surface: "#24201C"
+  surface-2: "#2E2924"
+  hover: "#3A342D"
+  border: "#2E2924"
+  border-2: "#4A4239"
+  text: "#F2EDE4"
+  muted: "#ADA497"
+  faint: "#A08F7B"
+  accent: "#F08A3C"
+  accent-weak: "rgba(240, 138, 60, .12)"
+  on-accent: "#13110F"
+  ok: "#8FC79A"
+  warn: "#E6C35C"
+  err: "#F07560"
+  film: "#070605"
+  hole: "#2E2924"
   primary-hover: "#FFFFFF"
-  bg-light: "#F7F7F8"
-  panel-light: "#FFFFFF"
+  bg-light: "#F2F1EE"
+  field-light: "#E5E3DE"
+  table-light: "#E9E7E2"
+  panel-light: "#FBFAF8"
   surface-light: "#FFFFFF"
-  surface-2-light: "#EFEFF2"
-  hover-light: "#E5E5EA"
-  border-light: "#E3E3E8"
-  border-2-light: "#D0D0D7"
-  text-light: "#17171A"
-  muted-light: "#55555F"
-  faint-light: "#6B6B75"
-  accent-light: "#4059E8"
-  accent-weak-light: "rgba(64, 89, 232, .08)"
-  ok-light: "#17804F"
-  warn-light: "#C27803"
-  err-light: "#D3262C"
+  surface-2-light: "#E3E0DA"
+  hover-light: "#D8D4CC"
+  border-light: "#DCD8D1"
+  border-2-light: "#BDB6AB"
+  text-light: "#1A1714"
+  muted-light: "#57504A"
+  faint-light: "#6D6255"
+  accent-light: "#A0480B"
+  accent-weak-light: "rgba(160, 72, 11, .09)"
+  on-accent-light: "#FFFFFF"
+  ok-light: "#2C7A43"
+  warn-light: "#8C6300"
+  err-light: "#BF301C"
+  film-light: "#1A1714"
+  hole-light: "#F2F1EE"
   primary-hover-light: "#000000"
 typography:
+  figure:
+    fontFamily: "Bahnschrift SemiCondensed, Bahnschrift, Segoe UI, sans-serif"
+    fontSize: "20px"
+    fontWeight: 600
+    lineHeight: "22px"
+    letterSpacing: "0.02em"
+    fontFeature: "tnum"
   headline:
     fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 600
     lineHeight: "20px"
+  action:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 700
+    lineHeight: "18px"
   title:
     fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
     fontSize: "13.5px"
@@ -50,55 +72,64 @@ typography:
     fontSize: "13px"
     fontWeight: 400
     lineHeight: "18px"
-  body-small:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
-    fontSize: "12px"
-    fontWeight: 400
-    lineHeight: "16px"
   control:
     fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
     fontSize: "12.5px"
     fontWeight: 500
     lineHeight: "18px"
-  action:
+  body-small:
     fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 600
-    lineHeight: "18px"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: "16px"
   label:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
-    fontSize: "11px"
+    fontFamily: "Bahnschrift SemiCondensed, Bahnschrift, Segoe UI, sans-serif"
+    fontSize: "12px"
+    fontWeight: 600
+    letterSpacing: "0.14em"
+  chip:
+    fontFamily: "Bahnschrift SemiCondensed, Bahnschrift, Segoe UI, sans-serif"
+    fontSize: "12px"
     fontWeight: 600
     lineHeight: "14px"
-    letterSpacing: "0.07em"
-  tag:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, system-ui, sans-serif"
+    letterSpacing: "0.08em"
+  edge-code:
+    fontFamily: "Bahnschrift SemiCondensed, Bahnschrift, Segoe UI, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: "14px"
+    letterSpacing: "0.06em"
+    fontFeature: "tnum"
+  count:
+    fontFamily: "Bahnschrift SemiCondensed, Bahnschrift, Segoe UI, sans-serif"
     fontSize: "11px"
     fontWeight: 600
-    lineHeight: "14px"
-    letterSpacing: "0.03em"
+    lineHeight: "16px"
+    letterSpacing: "0.04em"
+    fontFeature: "tnum"
 rounded:
-  chip: "5px"
-  sm: "6px"
-  md: "7px"
-  group: "8px"
-  lg: "10px"
-  xl: "12px"
-  dialog: "14px"
+  frame: "1px"
+  film: "2px"
+  sm: "3px"
+  md: "4px"
+  round: "50%"
 spacing:
   xs: "4px"
   sm: "8px"
   md: "12px"
+  inset: "14px"
   lg: "16px"
+  dialog: "22px"
   xl: "24px"
   gutter: "32px"
+  column-gap: "64px"
 components:
   button-primary:
     backgroundColor: "{colors.text}"
     textColor: "{colors.bg}"
     typography: "{typography.action}"
-    rounded: "{rounded.lg}"
-    height: "44px"
+    rounded: "{rounded.md}"
+    height: "48px"
   button-primary-hover:
     backgroundColor: "{colors.primary-hover}"
   button-primary-disabled:
@@ -108,14 +139,14 @@ components:
     backgroundColor: "{colors.surface-2}"
     textColor: "{colors.text}"
     typography: "{typography.control}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.sm}"
     padding: "0 12px"
     height: "32px"
   button-secondary-hover:
     backgroundColor: "{colors.hover}"
   button-icon:
     textColor: "{colors.muted}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.sm}"
     size: "32px"
   button-icon-hover:
     backgroundColor: "{colors.surface-2}"
@@ -124,41 +155,80 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
     typography: "{typography.body}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.md}"
     padding: "0 6px 0 14px"
     height: "44px"
+  save-row:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.muted}"
+    rounded: "{rounded.md}"
+    padding: "0 6px 0 12px"
+    height: "44px"
+  title-bar:
+    backgroundColor: "{colors.field}"
+    height: "40px"
   tab:
     textColor: "{colors.muted}"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: "26px"
+    typography: "{typography.control}"
   tab-selected:
+    textColor: "{colors.text}"
+  count:
     backgroundColor: "{colors.surface-2}"
-    textColor: "{colors.text}"
+    textColor: "{colors.muted}"
+    typography: "{typography.count}"
+    rounded: "{rounded.sm}"
+    padding: "0 5px"
+  count-active:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
   quality-option:
-    backgroundColor: "{colors.panel}"
     textColor: "{colors.text}"
-    rounded: "{rounded.lg}"
-    padding: "0 14px"
-    height: "46px"
+    padding: "6px 14px"
+    height: "48px"
   quality-option-selected:
     backgroundColor: "{colors.accent-weak}"
+    rounded: "{rounded.md}"
   chip:
+    textColor: "{colors.faint}"
+    typography: "{typography.chip}"
+  segmented-option:
+    backgroundColor: "{colors.surface-2}"
     textColor: "{colors.muted}"
-    typography: "{typography.tag}"
-    rounded: "{rounded.chip}"
-    padding: "2px 6px"
+    rounded: "{rounded.md}"
+    height: "34px"
+  segmented-option-selected:
+    backgroundColor: "{colors.accent-weak}"
+    textColor: "{colors.text}"
+  preview-frame:
+    backgroundColor: "{colors.film}"
+    rounded: "{rounded.film}"
   download-item:
     backgroundColor: "{colors.panel}"
-    rounded: "{rounded.xl}"
-    padding: "12px"
+    rounded: "{rounded.md}"
+    padding: "12px 12px 12px 14px"
+  edge-strip:
+    backgroundColor: "{colors.surface-2}"
+    height: "8px"
+  edge-strip-fill:
+    backgroundColor: "{colors.accent}"
+  edge-strip-fill-done:
+    backgroundColor: "{colors.ok}"
+  edge-strip-fill-error:
+    backgroundColor: "{colors.err}"
   dialog:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    rounded: "{rounded.dialog}"
-    padding: "20px"
+    rounded: "{rounded.md}"
+    padding: "22px"
     width: "460px"
+  popover:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.md}"
+    padding: "16px"
+    width: "264px"
   status-bar:
+    backgroundColor: "{colors.field}"
     textColor: "{colors.faint}"
     typography: "{typography.body-small}"
     padding: "0 16px"
@@ -169,243 +239,188 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Quiet Utility"**
+**Creative North Star: "Contact Sheet"**
 
-YT Downloader is a tool that gets out of the way. It opens to calm, near-black layers (or their soft
-off-white counterparts), with small, steady Segoe UI type and one blue that appears only where something
-is chosen, moving, or focused. Nothing competes with the link box and the quality choice; the window
-reads as a native Windows 11 app, not a web page and certainly not a download website.
+YT Downloader is a darkroom contact sheet. The window is warm darkroom black; the video you paste is printed as a single frame on a strip of film, sprocket holes along its top rebate and its edge code (video ID · best resolution · length) printed underneath. On Downloads every download is its own strip coming out of the developer: a row of sprocket holes that develops orange as bytes arrive, ends fixer green when the file lands, and stops in safelight red where a download failed. The light theme is the light table: the same sheet laid on a lit, warm off-white surface, with the film itself staying dark.
 
-The feel is **calm, precise, compact and friendly**. Calm comes from low contrast between surfaces and
-color that always means something. Precision comes from fixed control heights, tabular numbers and crisp
-1px borders. Compactness comes from a 13px body and dense, evenly spaced rows. Friendliness comes from
-plain words and soft corners: every control is gently rounded and nothing jumps.
+The feel is quiet, exact and tactile. Regions are separated by tinted fields, not lines: the title bar and status bar sit on a darker field, and the Quality column sits on its own light-table tint beside the darkroom ground. One negative-mask orange carries every meaning that has to stand out: what is chosen, what is moving, what has focus, how many downloads are active. Words are set in Windows' own Segoe UI Variable; everything printed on film or counted (edge codes, chips, labels, counts, versions and each row's big number) is set in Bahnschrift semi-condensed, the edge-print voice. Corners are tight (1 to 4px), rules are one pixel, and each theme has three ink values.
 
-Two looks are explicitly rejected: the **ad-site downloader** (big green DOWNLOAD buttons, badges,
-flashing banners) and the **neon gamer** (glows, gradients, RGB accents, glassy blur).
+Two looks are rejected: the ad-site downloader (big green DOWNLOAD buttons, badges, flashing banners) and the neon gamer (glows, gradients, RGB, glassy blur). This look also replaces the earlier graphite-panels-plus-one-blue look, which is retired.
 
 **Key Characteristics:**
-- Dark-first, with a complete light theme; "Desktop" follows Windows.
-- Depth from stepped surface tones and 1px hairlines, not shadows.
-- One accent, Soft Cobalt, reserved for meaning.
-- The single primary action is the text color inverted, not the accent.
-- Small type (13px body, nothing above 15px); hierarchy from weight and tone.
-- Soft, steady controls: 7–12px corners, quiet hover tints, motion only for progress.
+- Dark by default, warm darkroom black; a full light-table theme under the same token names.
+- Regions divided by tinted fields (field, table) instead of borders.
+- One negative-mask orange for selection, progress, focus and the active count.
+- The single primary action is print white on darkroom black (ink on paper in light), never orange.
+- Two voices: Segoe UI Variable for words, Bahnschrift semi-condensed for edge codes and figures.
+- The edge strip: progress drawn as whole sprocket holes on a 14px pitch.
+- Tight corners (1–4px), one-pixel rules, flat at rest.
 
 ## Colors
 
-A near-neutral graphite palette with a single soft blue accent and three status colors, defined twice
-(dark by default, light under `prefers-color-scheme: light`) under the same token names.
+A warm brown-black palette with one orange, three developer-chemistry status colors, and a film black that stays dark in both themes; every token is defined twice, dark on `:root` and light under `prefers-color-scheme: light`, as `name` / `name-light` pairs.
 
 ### Primary
-- **Soft Cobalt** (`accent`; `accent-light` in the light theme): the only accent. It marks the selected
-  quality option (border plus the Soft Cobalt Wash `accent-weak` tint), the radio dot, progress bar fills,
-  focus rings, and the Downloads count while something is downloading.
+- **Negative-Mask Orange** (`accent` / `accent-light`, a burnt sienna on the light table): the selected quality row's border, the radio dot, the developing sprocket holes, the selected tab's underline, focus outlines, the link box caret, the active Downloads count, the logo tile and the QUALITY label. Its wash, **Mask Wash** (`accent-weak` / `accent-weak-light`), fills the selected and hovered quality row, the selected Settings segment and the link box's focus ring. **On-Mask** (`on-accent` / `on-accent-light`) is the ink on orange fills: the logo arrow and the active count.
 
 ### Neutral
-- **Near-Black Canvas** (`bg` / `bg-light`, a cool off-white): the window background.
-- **Graphite Panel** (`panel` / `panel-light`): resting rows and cards, such as quality options, the save
-  folder row, download items and the tab group.
-- **Raised Graphite** (`surface` / `surface-light`): the link box, preview card, Settings dialog and About
-  popover.
-- **Control Gray** (`surface-2` / `surface-2-light`): secondary buttons, selected tabs and segments, the
-  progress track, thumbnails before they load.
-- **Hover Gray** (`hover` / `hover-light`): the hover state of secondary buttons and selects.
-- **Hairline** (`border` / `border-light`): 1px dividers and resting card outlines.
-- **Strong Hairline** (`border-2` / `border-2-light`): outlines of fields, buttons, chips, dialogs and the
-  radio ring.
-- **Soft White / Ink** (`text` / `text-light`): primary text, and the fill of the primary button.
-- **Quiet Gray** (`muted` / `muted-light`): secondary text, icons, unselected tabs, labels.
-- **Whisper Gray** (`faint` / `faint-light`): placeholders, notes, the status bar, disabled text.
+- **Darkroom Black** (`bg` / `bg-light`, the light table's warm off-white): the window ground, including the left half of New download and the whole Downloads list.
+- **Safelight Shadow** (`field` / `field-light`): the title bar and status bar fields, darker than the ground in dark and slightly deeper than it in light.
+- **Light Table** (`table` / `table-light`): the Quality column's field on New download; the tint is what divides the two columns.
+- **Contact Paper** (`panel` / `panel-light`): resting containers that sit on the ground: download rows and the save-folder row.
+- **Easel** (`surface` / `surface-light`): the link box, the Settings dialog and the About popover.
+- **Tray** (`surface-2` / `surface-2-light`): secondary buttons, Settings segments, the count at rest, undeveloped sprocket holes, thumbnails before they load, hover behind icon and title-bar buttons, the disabled primary button.
+- **Tray Hover** (`hover` / `hover-light`): hover for secondary buttons, segments and selects.
+- **Rule** (`border` / `border-light`): the one-pixel rule between quality rows.
+- **Strong Rule** (`border-2` / `border-2-light`): outlines of the link box, selects, dialog and popover, the radio ring, the scrollbar thumb.
+- **Print White** (`text` / `text-light`, ink on the light table): primary text and the primary button's fill. **Print Hover** (`primary-hover` / `primary-hover-light`) is the primary button's hover: pure white in dark, pure black in light.
+- **Proof Gray** (`muted` / `muted-light`): secondary text, icons at rest, unselected tabs, Settings labels, the count at rest.
+- **Rebate Tan** (`faint` / `faint-light`): placeholders, notes, chips, the status bar, the edge code, the empty-state icon, disabled text.
 
 ### Status
-- **Mint Done** (`ok` / `ok-light`): "Done" text and check, the yt-dlp-ready dot.
-- **Amber Wait** (`warn` / `warn-light`): the status dot while yt-dlp is starting, updating or couldn't
-  check for updates.
-- **Coral Error** (`err` / `err-light`): error messages and the failed-setup dot.
+- **Fixer Green** (`ok` / `ok-light`): Done text and check, a finished strip, the ready status dot.
+- **Amber Toner** (`warn` / `warn-light`): the status dot while yt-dlp is starting, updating or couldn't check.
+- **Safelight Red** (`err` / `err-light`): error messages, a failed strip, the failed-setup dot, a preview that couldn't load.
+
+### Film
+- **Film Base** (`film` / `film-light`): the preview frame, the 3px frame around list thumbnails and the empty-state film tile. Near-black in dark, ink in light: film is always dark.
+- **Sprocket** (`hole` / `hole-light`): the holes punched in the film rebate (the preview and the empty-state tile), so they read as the ground showing through.
 
 ### Named Rules
-**The Cobalt Means Something Rule.** Soft Cobalt appears only for selection, progress, focus and the
-active-download count. Never use it for decoration, headings, icons at rest, or large fills; its Soft
-Cobalt Wash tint (`accent-weak`) is the largest area it may cover.
+**The Negative-Mask Rule.** Orange means selection, progress, focus or the active count, plus the two marks this world names: the logo tile and the QUALITY label. It never colors headings, body text, resting icons or large fills; the Mask Wash is the largest area it covers.
 
-**The Inverted Primary Rule.** The one primary action on a screen (Download) is filled with the text color
-and labeled in the background color, so it is white on dark and black on light. It is never Soft Cobalt
-and never a status color. There is at most one per screen.
+**The Print White Rule.** The one primary action (Download) is filled with the text color and labeled in the ground color: print white on darkroom black, ink on paper on the light table. It is never orange and never a status color.
 
-**The Status Words Rule.** Mint, Amber and Coral color only status text, icons and dots. They never fill
-a button or a card.
+**The Developer Colors Rule.** Fixer Green, Amber Toner and Safelight Red color only status text, icons, dots and the strip of a finished or failed download. They never fill a button or a container.
 
-**The Both Themes Rule.** Every new color is defined for dark and light under the same token name, and
-text tokens keep at least 4.5:1 contrast on `bg` and `surface-2` in both.
+**The Film Stays Dark Rule.** Film is dark in both themes. Type printed on film uses the dark theme's ink values (Print White, Proof Gray, Rebate Tan, Safelight Red) whatever the window theme.
+
+**The Paired Tokens Rule.** Every color exists in both themes under one name, and text tokens keep at least 4.5:1 on every ground they sit on.
 
 ## Typography
 
 **Body Font:** Segoe UI Variable Text (with Segoe UI, system-ui, sans-serif)
+**Label/Mono Font:** Bahnschrift SemiCondensed (with Bahnschrift, Segoe UI, sans-serif)
 
-**Character:** Windows' own UI face at small sizes, so the app reads as part of the system. One family
-does everything; weight (400, 500, 600) and tone (text, muted, faint) carry the hierarchy, not size.
+**Character:** Segoe UI Variable is Windows' own voice for words, so the app belongs on the desktop. Bahnschrift, a DIN-style face set semi-condensed, is the edge-print voice: the numbers and codes a lab prints along a film's rebate. Both ship with Windows.
 
 ### Hierarchy
-- **Headline** (600, 15px, 20px): dialog titles, such as "Settings". The largest type in the app.
-- **Title** (600, 13.5px, 18px): quality option names; video titles in the preview and download list use
-  the same weight at 13px.
-- **Body** (400, 13px, 18px): the default for everything, including the link box text.
-- **Body small** (400, 12px, 16px): secondary lines such as option descriptions, preview channel and
-  resolution, download status, notes, the status bar.
-- **Control** (500, 12.5px): labels on secondary buttons, selects and text links.
-- **Action** (600, 14px): the primary Download button.
-- **Label** (600, 11px, 0.07em, uppercase): section labels such as QUALITY, THEME, TEXT AND PAGE SIZE.
-- **Tag** (600, 11px, 0.03em): chips with short codes such as MKV, MP4, "1080p · MP4".
+- **Figure** (Bahnschrift 600, 20px, 22px, 0.02em, tabular): each download row's one big number, the percent while it runs and the file size when it's done. The largest type in the app.
+- **Headline** (600, 15px, 20px): the Settings title and the video title in the preview frame (13px/18px when the frame turns sideways).
+- **Action** (700, 15px): the Download button.
+- **Title** (600, 13.5px): quality option names; list titles use 600 at the body size.
+- **Body** (400, 13px, 18px): the default, including the link box.
+- **Control** (500, 12.5px): secondary buttons, selects, the Clear finished link; tabs are 500 at body size.
+- **Body small** (400, 12px, 16px): option descriptions, the channel line, download status, notes, About, the status bar.
+- **Label** (Bahnschrift 600, 12px, 0.14em, uppercase): QUALITY, THEME, TEXT AND PAGE SIZE.
+- **Chip** (Bahnschrift 600, 12px, 0.08em, uppercase): MKV, MP4, "1080P · MP4".
+- **Edge code** (Bahnschrift 400, 12px, 14px, 0.06em, tabular): the preview's "ID · resolution · length" line, kept in its original case because video IDs are case-sensitive; the version button, About values and the status bar's right side use the same face at 0.04–0.05em.
+- **Count** (Bahnschrift 600, 11px, 16px, 0.04em, tabular): the Downloads tab count.
 
 ### Named Rules
-**The 15px Ceiling Rule.** Nothing in the app is larger than 15px. Emphasis comes from weight 600 and
-from the text tone against muted and faint, never from bigger type.
+**The Two Voices Rule.** Words are Segoe UI Variable; anything printed on film or counted is Bahnschrift semi-condensed with tabular figures. Uppercase belongs only to the Bahnschrift voice, and never to an ID.
 
-**The Lined-Up Numbers Rule.** Numbers that change or get compared (percentages, versions, sizes in the
-About list, the version button) use tabular figures.
+**The One Big Number Rule.** The 20px Figure is the only type above 15px, and each download row has exactly one. Everywhere else hierarchy comes from weight and the three ink values.
 
 ## Layout
 
-A fixed desktop frame: a 40px title bar on top, a 32px status bar at the bottom, and the active tab's
-content between them. The window opens at 1040×760 and can't go below 900×600.
+A fixed desktop frame at 1040×760: a 40px title bar field on top, a 32px status bar field at the bottom, and the active tab between them.
 
-- **New download** is a two-column grid of equal halves with a 32px gutter and 24px/32px page padding:
-  link box, preview, save folder and Download stack on the left with 16px between them; Quality fills the
-  right. The order in the page stays link → quality → folder → Download, so Tab follows the steps.
-- **Downloads** is one full-width list, padded 32px at the sides, with 10px between items and the "Clear
-  finished" link above it.
-- **Rows are fixed heights:** 44px for the link box, save folder and Download button; 46px for quality
-  options; 32px for buttons and icon buttons; 26px for tabs; 28px for title-bar buttons.
-- **Spacing rhythm:** 4px between quality options, 8–12px inside rows, 16px between stacked blocks, 24px
-  and 32px for page padding and gutters.
-- **Text and page size** (100%, 125%, 150%, 175%) zooms the whole page, title bar included. Every screen
-  must stay usable at each step; long titles and paths truncate with an ellipsis instead of wrapping.
-- The status bar is three columns, two equal sides and the center, so "Developed by Khryz" is exactly
-  centered.
+- **New download** is a two-column grid of equal halves, padded 24px top and bottom and 32px at the sides, with 16px between rows and 64px between columns. The left column (link box, preview frame, save folder, Download) sits on the darkroom ground; the right (Quality) on the light-table field. The field edge falls exactly at 50%, which is the only divider. The page order stays link → quality → folder → Download so Tab follows the steps.
+- **Downloads** is one full-width list padded 32px at the sides, 8px between rows, the Clear finished link above it at the right. Each row is thumbnail, info, then a fixed 176px action column, so every row's strip and big number end on the same vertical line.
+- **Fixed heights:** 48px for Download and quality rows; 44px for the link box and save-folder row; 34px Settings segments; 32px buttons and icon buttons; 30px selects; 28px title-bar buttons.
+- **Rhythm:** 4px between segments, 8px and 12px inside rows, 14px insets that echo the sprocket pitch, 16px between stacked blocks, 22px inside the Settings dialog, 24px and 32px page padding.
+- **Text and page size** (100/125/150/175%) zooms the whole page. When the page is shorter than 520px (150% and 175%), the preview frame turns sideways: a 112px thumbnail beside the title, the edge code on its own full-width line below, allowed to wrap rather than lose the ID, so the folder row and Download stay in the first viewport. When the page is narrower than 720px (175%), the logo tile alone carries the brand and Resume, Retry and Show in folder become 32px icon buttons in a 72px action column.
+- The status bar is three columns with equal sides, so "Developed by Khryz" stays exactly centered.
 
 ## Elevation & Depth
 
-Flat at rest. Depth comes from stepping through the surface tones (`bg` → `panel` → `surface` →
-`surface-2`) and from 1px hairlines. Shadows belong to layers that float above the window: the Settings
-dialog and the About popover use the one shadow token, over a dimmed backdrop for the dialog. A faint lift
-on hover is allowed for cards and rows (download items, quality options), much softer than the floating
-shadow; no token exists yet, so define one in the stylesheet the first time it is used.
+Flat at rest. Depth comes from fields and tones: the darker field for the bars, the light-table tint for the Quality column, Contact Paper and Easel for containers, and the film base, which is always the darkest thing on screen. Only layers that float above the window cast a shadow: the Settings dialog (over a dimmed backdrop) and the About popover.
 
 ### Shadow Vocabulary
-- **Floating** (`box-shadow: 0 12px 32px rgba(0, 0, 0, .45)` dark, `0 12px 32px rgba(17, 17, 26, .14)`
-  light): the Settings dialog and the About popover only.
-- **Backdrop** (`rgba(0, 0, 0, .45)`): behind the modal Settings dialog.
+- **Floating** (`box-shadow: 0 14px 36px rgba(0, 0, 0, .5)` dark, `0 14px 36px rgba(26, 23, 20, .16)` light): the Settings dialog and About popover only.
+- **Backdrop** (`rgba(7, 6, 5, .6)`): behind the modal Settings dialog, in both themes.
 
 ### Named Rules
-**The Flat-At-Rest Rule.** Nothing casts a shadow while it sits still. Hover may add a faint lift to a
-card or row; only floating layers get the full shadow.
+**The Fields Not Lines Rule.** Regions are divided by tinted fields, never by borders. One-pixel rules belong inside a list (between quality rows) and around fields and floating layers.
+
+**The Flat-At-Rest Rule.** Nothing casts a shadow while it sits in the page; only the dialog and the popover float.
 
 ## Shapes
 
-Gently rounded throughout, with corners that grow with the size of the thing: 5px chips, 6px tabs and
-thumbnails, 7px buttons and selects, 8–9px segmented groups, 10px fields, rows and the primary button,
-12px download cards and the About popover, 14px for the Settings dialog. Radio buttons, status dots and
-the empty-state ring are full circles. Borders are always 1px. Thumbnails are 16:9 crops (112×63 in the
-preview, 96×54 in the list) with `object-fit: cover`.
+Tight, nearly square corners, like cut film and trimmed prints: 4px for fields, rows, the primary button, the dialog and the popover; 3px for buttons, selects and the count; 2px for film (the preview frame, list thumbnail frames, the empty-state tile); 1px for the picture inside the preview frame. Only radio buttons and status dots are round. Rules and outlines are one pixel; the radio ring is 1.5px. Quality rows are square at rest and take 4px corners only when selected. Thumbnails are 16:9 crops (112×63 sideways, 96×54 in the list inside a 3px film frame).
 
-**The Nested Corners Rule.** An element inside another always has a smaller radius than its container (a
-7px button inside a 10px row inside a 12px card), so corners stay concentric.
+The sprocket hole is the recurring silhouette: a 9×6px rounded rectangle (1.5px corners) repeated every 14px, drawn as a mask over a color so the same holes form the preview's rebate, the empty-state tile and every download's edge strip.
+
+**The Square Darkroom Rule.** No corner is larger than 4px. Pills, soft cards and large radii belong to another world.
 
 ## Components
 
-Soft and steady: gently rounded, quiet hover tints, and no motion beyond what shows progress.
+Exact and tactile: square-cut controls, quiet hover tints, and motion only where film develops.
 
 ### Buttons
-- **Shape:** gently rounded (7px); the primary button 10px.
-- **Primary (Download):** full column width, 44px tall, inverted fill (text color on background color),
-  Action type with a leading download icon. Hover goes to pure white (dark) or pure black (light).
-  Disabled is Control Gray with Whisper Gray text until there's a valid link and yt-dlp is ready.
-- **Secondary (Paste, Change, Resume, Retry, Show in folder):** 32px, Control Gray fill, Strong Hairline
-  border, Control type, optional 14px leading icon. Hover: Hover Gray.
-- **Icon button (Pause, Cancel, Delete, Clear link, dialog close):** 32px square, no fill, Quiet Gray icon;
-  hover adds Control Gray and the text color.
-- **Text link (Clear finished):** Quiet Gray Control type with no underline; hover turns it to the text
-  color.
-- **Focus:** a 2px Soft Cobalt outline with a 2px offset on every control.
+- **Shape:** 3px corners; the primary button 4px.
+- **Primary (Download):** full column width, 48px, Print White fill with Darkroom Black Action type and a leading download icon. Hover goes to Print Hover. Disabled is Tray with Rebate Tan until there's a valid link and yt-dlp is ready.
+- **Secondary (Paste, Change, Resume, Retry, Show in folder):** 32px, Tray fill, no border, Control type, optional 14px leading icon; hover Tray Hover.
+- **Icon button (Pause, Cancel, Delete, Clear link, dialog close):** 32px square, no fill, Proof Gray icon; hover adds Tray and Print White.
+- **Text link (Clear finished):** Proof Gray Control type, no underline; hover Print White.
+- **Focus:** a 2px orange outline, 2px offset, on every control (inset on tabs).
 
 ### Chips
-- **Style:** transparent with a 1px Strong Hairline border, 5px corners, 2px/6px padding, Quiet Gray Tag
-  type, never wraps. Short uppercase codes: MKV, MP4, "1080p · MP4".
-- **Count badge:** the Downloads tab count is a pill of Strong Hairline; while a download is active it
-  turns Soft Cobalt with background-colored text.
+- **Style:** no fill and no border: Rebate Tan Chip type, uppercase, never wraps; right-aligned in quality rows, beside the title in download rows.
+- **Count:** the Downloads tab count is a 3px-corner Tray tile in Proof Gray Count type; while something downloads it turns orange with On-Mask figures.
 
 ### Cards / Containers
-- **Corner Style:** 10px (preview, rows), 12px (download items, About).
-- **Background:** Graphite Panel for list items and rows; Raised Graphite for the preview and floating
-  layers.
-- **Shadow Strategy:** flat at rest; see Elevation & Depth.
-- **Border:** 1px Hairline.
-- **Internal Padding:** 10–12px; download items 12px with 14px between thumbnail, text and buttons.
+- **Download row:** Contact Paper, 4px corners, 12px padding (14px on the left), 16px between thumbnail, info and actions.
+- **Save-folder row:** Contact Paper, 4px, 44px, folder icon in Proof Gray, the path in Print White truncating.
+- **Settings dialog:** 460px Easel with a Strong Rule outline, 4px corners, 22px padding and gaps, Floating shadow over the Backdrop; Theme and Text and page size as segmented rows.
+- **About popover:** 264px Easel, Strong Rule outline, 4px, 16px padding, Floating shadow; a 32px logo tile, then versions as a two-column list (Rebate Tan names, Bahnschrift values) and "Developed by Khryz".
 
 ### Inputs / Fields
-- **Link box:** 44px, Raised Graphite fill, Strong Hairline border, 10px corners, a link icon in Whisper
-  Gray, Body text, Whisper Gray placeholder. The Paste button sits inside on the right and swaps for a
-  clear (×) icon button once there's text.
-- **Focus:** the border turns Soft Cobalt and a 3px Soft Cobalt Wash ring appears around the field.
-- **Selects (Custom row):** 30px, Control Gray fill, Strong Hairline border, 7px corners, Control type;
-  hover Hover Gray.
-- **Save folder row:** the same 44px shape on Graphite Panel with a Hairline border; the path truncates.
+- **Link box:** 44px Easel with a Strong Rule outline and 4px corners, a Rebate Tan link icon, Body text, an orange caret, Rebate Tan placeholder. Paste sits inside on the right and swaps for a clear icon button once there's text.
+- **Focus:** the outline turns orange and a 3px Mask Wash ring surrounds the field.
+- **Selects (Custom row):** 30px Tray with a Strong Rule outline, 3px corners, Control type; hover Tray Hover.
+- **Segmented control (Settings):** equal 34px segments, 4px gap, Tray at rest with Proof Gray labels; hover Tray Hover; selected takes the Mask Wash, an orange one-pixel outline and Print White.
 
 ### Navigation
-- **Tabs (title bar):** a segmented group on Graphite Panel with a Hairline border, 8px corners and 3px
-  padding. Each tab is 26px with 6px corners in Quiet Gray, weight 500; the selected tab gets a Control
-  Gray fill and the text color. Arrow keys move between tabs.
-- **Segmented control (Settings):** the same pattern at 32px, with an optional 14px icon before each label.
-- **Title bar:** 40px with a 1px Hairline below. The brand on the left (20px Soft Cobalt logo tile with a
-  background-colored download arrow, then "YT Downloader" at 600), the tabs, then the Settings cog and
-  version button on the right (28px, Quiet Gray, Control Gray on hover). Window buttons are Windows 11's:
-  native in the Electron build, drawn by the page at 46px wide in the Tauri build, where Close turns
-  `#C42B1C` with white on hover.
+- **Title bar:** a 40px Safelight Shadow field. Left: the 20px orange logo tile (4px corners, On-Mask download arrow) and "YT Downloader" at 600. Then the tabs, then Settings and the version button (28px, Proof Gray, Tray on hover), then Windows 11 caption buttons drawn by the page: 46px wide, full height, Tray on hover, Close turning Windows' own red with white on hover.
+- **Tabs:** text tabs across the title bar's full height, 20px apart, Proof Gray at 500; hover Print White; selected Print White with a 2px orange underline. Arrow keys move between them.
 
-### Quality option (signature)
-A 46px row on Graphite Panel with a Hairline border and 10px corners: a 16px radio ring, a Title over a
-Body-small description, and a chip on the right. Hover strengthens the border to Strong Hairline. Selected:
-Soft Cobalt border, Soft Cobalt Wash fill, and the radio becomes a 5px Soft Cobalt ring around a
-background-colored dot. The Custom row keeps the same shell with two selects beside the label; using
-either select chooses Custom.
+### Quality option
+A 48px row on the light-table field, square, divided from the next row by a one-pixel Rule: a 16px Strong Rule radio ring, a Title over a Body-small description, and a chip at the right. Hover lays the Mask Wash. Selected: an orange one-pixel outline, Mask Wash, 4px corners, the rule above it hidden, and the radio becomes a 5px orange ring around a light-table center. The QUALITY label above is orange Label type with a Rebate Tan note at the right. The Custom row keeps the shell with two selects beside the label and wraps them under it when the column is narrow.
 
-### Download item (signature)
-A 12px-corner card: a 96×54 thumbnail, then the title (600, truncated) with its quality chip, a status
-line (Body small, Quiet Gray) with the percentage right-aligned in the text color, and a 4px progress bar
-(Control Gray track, Soft Cobalt fill, 2px corners). Done shows a Mint check and Mint text; errors are
-Coral and may wrap; canceled is Whisper Gray. While merging or paused, the fill drops to 45% opacity.
-Actions sit on the right as icon buttons (Pause, Cancel, Delete) or secondary buttons (Resume, Retry,
-Show in folder), showing only what applies to the current state.
+### Preview frame (signature)
+The video as one frame on a strip of film: a Film Base frame with 2px corners, a 16px rebate of Sprocket holes across the top, the 16:9 picture inset 14px, the edge code printed below in Rebate Tan, then the title in Print White (Headline, two lines at most) and the channel in Proof Gray. A preview that fails hides the picture and edge code and shows its message in Safelight Red.
+
+### Edge strip (signature)
+A download's progress is an 8px row of sprocket holes on the 14px pitch, masked over Tray so the undeveloped holes read as the row's own tone. The fill underneath develops orange as bytes arrive and eases its width over 0.5s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it jumps to the same state. While merging or paused the fill drops to half opacity. The strip stays in every state: fully developed in Fixer Green when done, stopped in Safelight Red where a download failed, undeveloped when canceled. Beside it, at the row's right edge, the Figure shows the percent while it runs and the file size when it's done.
+
+**The Whole Holes Rule.** The strip's width is rounded down to the 14px pitch and its fill snaps to the pitch, so a hole is either developed or not; never a sliver.
 
 ### Status bar
-32px with a 1px Hairline above, Body small in Whisper Gray. Left: a 7px status dot (Mint, Amber or Coral)
-and "yt-dlp **version** · up to date", with the version in Quiet Gray at 500. Center: "Developed by Khryz"
-in Quiet Gray. Right: ffmpeg version and check time. Long text truncates.
+A 32px Safelight Shadow field in Rebate Tan Body small. Left: a 7px status dot (Fixer Green, Amber Toner or Safelight Red) and "yt-dlp **version** · up to date", the version in Proof Gray Bahnschrift. Center: "Developed by Khryz" in Proof Gray. Right: ffmpeg version and check time in Bahnschrift. Long text truncates.
 
-### Motion
-The only animation is the progress fill easing its width over 0.2s linear; it is turned off under
-`prefers-reduced-motion`. Hover and selection changes are instant.
+### Empty state
+A 64×44 Film Base tile with sprocket rows top and bottom around a Rebate Tan download arrow, then "No downloads yet" at 600 and one Proof Gray line.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use Segoe UI Variable Text at 13px for body copy, and stay at or below 15px everywhere.
-- **Do** keep Soft Cobalt for selection, progress, focus and the active count only.
-- **Do** make the one primary action an inverted fill (text color on background color), 44px, 10px
-  corners.
-- **Do** build depth from `bg` → `panel` → `surface` → `surface-2` and 1px hairlines; save the floating
-  shadow for dialogs and popovers.
-- **Do** define every new color for both themes under one token name, with text at 4.5:1 or better.
-- **Do** keep corners concentric: 7px controls inside 10px rows inside 12px cards.
-- **Do** check new screens at 175% text and page size and in both themes.
-- **Do** keep window chrome looking like Windows 11 (caption buttons, Segoe UI, theme following Windows).
+- **Do** keep orange for selection, progress, focus, the active count, the logo tile and the QUALITY label.
+- **Do** make the one primary action print white on darkroom black (ink on paper in light), 48px, 4px corners.
+- **Do** divide regions with the field and table tints; keep one-pixel rules for list rows, fields and floating layers.
+- **Do** set edge codes, chips, labels, counts, versions and the big number in Bahnschrift semi-condensed with tabular figures; set words in Segoe UI Variable.
+- **Do** draw progress as the edge strip: whole sprocket holes on the 14px pitch, orange while running, Fixer Green when done, Safelight Red where it stopped.
+- **Do** keep film dark in both themes and print on it with the dark theme's inks.
+- **Do** define every color for both themes under one name, with text at 4.5:1 or better.
+- **Do** check every screen at 100% and 175% text and page size, and in both themes.
 
 ### Don't:
-- **Don't** make it look like an ad-site downloader: no big green DOWNLOAD buttons, badges, starbursts or
-  flashing banners.
-- **Don't** go neon: no glows, gradients, RGB accents or glassy blur.
-- **Don't** use Mint, Amber or Coral on buttons or backgrounds; they color status only.
-- **Don't** put shadows on resting cards and rows; at most a faint lift on hover.
-- **Don't** add animation beyond progress; state changes are instant.
-- **Don't** introduce a second accent color or a second font family.
+- **Don't** make it look like an ad-site downloader: no big green DOWNLOAD buttons, badges or flashing banners.
+- **Don't** go neon: no glows, color gradients, RGB accents or glassy blur. The hard 50% edge that paints the two New download fields is a field edge, not a gradient.
+- **Don't** bring back the graphite-and-blue look: no cool grays, no blue accent.
+- **Don't** fill buttons or containers with Fixer Green, Amber Toner or Safelight Red; they color status only.
+- **Don't** round anything past 4px except radios and status dots.
+- **Don't** draw progress as a continuous bar or let a strip end on a partial hole.
+- **Don't** put shadows on anything that sits in the page; only the dialog and the popover float.
+- **Don't** uppercase a video ID or any other case-sensitive code.

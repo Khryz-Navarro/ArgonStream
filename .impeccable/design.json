@@ -1,0 +1,1019 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T18:01:03.867Z",
+  "title": "Design System: YT Downloader",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Darkroom Black",
+        "canonical": "#13110F",
+        "oklch": "oklch(17.9% 0.005 67.5)",
+        "theme": "dark",
+        "cssVar": "--bg",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 67.5)",
+          "oklch(26.4% 0.004 67.5)",
+          "oklch(37.9% 0.005 67.5)",
+          "oklch(49.3% 0.005 67.5)",
+          "oklch(60.7% 0.005 67.5)",
+          "oklch(72.1% 0.004 67.5)",
+          "oklch(83.6% 0.003 67.5)",
+          "oklch(95.0% 0.001 67.5)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Safelight Shadow",
+        "canonical": "#0B0A09",
+        "oklch": "oklch(14.6% 0.003 68.6)",
+        "theme": "dark",
+        "cssVar": "--field",
+        "tonalRamp": [
+          "oklch(15.0% 0.001 68.6)",
+          "oklch(26.4% 0.002 68.6)",
+          "oklch(37.9% 0.003 68.6)",
+          "oklch(49.3% 0.003 68.6)",
+          "oklch(60.7% 0.003 68.6)",
+          "oklch(72.1% 0.002 68.6)",
+          "oklch(83.6% 0.002 68.6)",
+          "oklch(95.0% 0.001 68.6)"
+        ]
+      },
+      "table": {
+        "role": "neutral",
+        "displayName": "Light Table",
+        "canonical": "#1B1815",
+        "oklch": "oklch(21.1% 0.007 67.4)",
+        "theme": "dark",
+        "cssVar": "--table",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 67.4)",
+          "oklch(26.4% 0.006 67.4)",
+          "oklch(37.9% 0.007 67.4)",
+          "oklch(49.3% 0.007 67.4)",
+          "oklch(60.7% 0.007 67.4)",
+          "oklch(72.1% 0.006 67.4)",
+          "oklch(83.6% 0.004 67.4)",
+          "oklch(95.0% 0.001 67.4)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Contact Paper",
+        "canonical": "#1E1A17",
+        "oklch": "oklch(22.1% 0.009 59.2)",
+        "theme": "dark",
+        "cssVar": "--panel",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 59.2)",
+          "oklch(26.4% 0.007 59.2)",
+          "oklch(37.9% 0.008 59.2)",
+          "oklch(49.3% 0.009 59.2)",
+          "oklch(60.7% 0.008 59.2)",
+          "oklch(72.1% 0.007 59.2)",
+          "oklch(83.6% 0.005 59.2)",
+          "oklch(95.0% 0.002 59.2)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Easel",
+        "canonical": "#24201C",
+        "oklch": "oklch(24.7% 0.010 67.4)",
+        "theme": "dark",
+        "cssVar": "--surface",
+        "tonalRamp": [
+          "oklch(15.0% 0.005 67.4)",
+          "oklch(26.4% 0.007 67.4)",
+          "oklch(37.9% 0.009 67.4)",
+          "oklch(49.3% 0.010 67.4)",
+          "oklch(60.7% 0.009 67.4)",
+          "oklch(72.1% 0.008 67.4)",
+          "oklch(83.6% 0.005 67.4)",
+          "oklch(95.0% 0.002 67.4)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Tray",
+        "canonical": "#2E2924",
+        "oklch": "oklch(28.5% 0.012 67.3)",
+        "theme": "dark",
+        "cssVar": "--surface-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 67.3)",
+          "oklch(26.4% 0.009 67.3)",
+          "oklch(37.9% 0.011 67.3)",
+          "oklch(49.3% 0.012 67.3)",
+          "oklch(60.7% 0.011 67.3)",
+          "oklch(72.1% 0.009 67.3)",
+          "oklch(83.6% 0.006 67.3)",
+          "oklch(95.0% 0.002 67.3)"
+        ]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Tray Hover",
+        "canonical": "#3A342D",
+        "oklch": "oklch(32.9% 0.015 71.6)",
+        "theme": "dark",
+        "cssVar": "--hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.008 71.6)",
+          "oklch(26.4% 0.011 71.6)",
+          "oklch(37.9% 0.014 71.6)",
+          "oklch(49.3% 0.015 71.6)",
+          "oklch(60.7% 0.014 71.6)",
+          "oklch(72.1% 0.012 71.6)",
+          "oklch(83.6% 0.008 71.6)",
+          "oklch(95.0% 0.003 71.6)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#2E2924",
+        "oklch": "oklch(28.5% 0.012 67.3)",
+        "theme": "dark",
+        "cssVar": "--border",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 67.3)",
+          "oklch(26.4% 0.009 67.3)",
+          "oklch(37.9% 0.011 67.3)",
+          "oklch(49.3% 0.012 67.3)",
+          "oklch(60.7% 0.011 67.3)",
+          "oklch(72.1% 0.009 67.3)",
+          "oklch(83.6% 0.006 67.3)",
+          "oklch(95.0% 0.002 67.3)"
+        ]
+      },
+      "border-2": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#4A4239",
+        "oklch": "oklch(38.4% 0.018 70.5)",
+        "theme": "dark",
+        "cssVar": "--border-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 70.5)",
+          "oklch(26.4% 0.014 70.5)",
+          "oklch(37.9% 0.017 70.5)",
+          "oklch(49.3% 0.018 70.5)",
+          "oklch(60.7% 0.018 70.5)",
+          "oklch(72.1% 0.015 70.5)",
+          "oklch(83.6% 0.010 70.5)",
+          "oklch(95.0% 0.004 70.5)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Print White",
+        "canonical": "#F2EDE4",
+        "oklch": "oklch(94.8% 0.013 82.4)",
+        "theme": "dark",
+        "cssVar": "--text",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 82.4)",
+          "oklch(26.4% 0.010 82.4)",
+          "oklch(37.9% 0.012 82.4)",
+          "oklch(49.3% 0.013 82.4)",
+          "oklch(60.7% 0.013 82.4)",
+          "oklch(72.1% 0.011 82.4)",
+          "oklch(83.6% 0.007 82.4)",
+          "oklch(95.0% 0.002 82.4)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Proof Gray",
+        "canonical": "#ADA497",
+        "oklch": "oklch(72.3% 0.021 77.3)",
+        "theme": "dark",
+        "cssVar": "--muted",
+        "tonalRamp": [
+          "oklch(15.0% 0.011 77.3)",
+          "oklch(26.4% 0.016 77.3)",
+          "oklch(37.9% 0.020 77.3)",
+          "oklch(49.3% 0.021 77.3)",
+          "oklch(60.7% 0.020 77.3)",
+          "oklch(72.1% 0.017 77.3)",
+          "oklch(83.6% 0.012 77.3)",
+          "oklch(95.0% 0.004 77.3)"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Rebate Tan",
+        "canonical": "#A08F7B",
+        "oklch": "oklch(66.0% 0.035 71.7)",
+        "theme": "dark",
+        "cssVar": "--faint",
+        "tonalRamp": [
+          "oklch(15.0% 0.018 71.7)",
+          "oklch(26.4% 0.027 71.7)",
+          "oklch(37.9% 0.033 71.7)",
+          "oklch(49.3% 0.035 71.7)",
+          "oklch(60.7% 0.034 71.7)",
+          "oklch(72.1% 0.028 71.7)",
+          "oklch(83.6% 0.019 71.7)",
+          "oklch(95.0% 0.007 71.7)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Negative-Mask Orange",
+        "canonical": "#F08A3C",
+        "oklch": "oklch(73.0% 0.153 54.5)",
+        "theme": "dark",
+        "cssVar": "--accent",
+        "tonalRamp": [
+          "oklch(15.0% 0.078 54.5)",
+          "oklch(26.4% 0.119 54.5)",
+          "oklch(37.9% 0.144 54.5)",
+          "oklch(49.3% 0.153 54.5)",
+          "oklch(60.7% 0.146 54.5)",
+          "oklch(72.1% 0.123 54.5)",
+          "oklch(83.6% 0.084 54.5)",
+          "oklch(95.0% 0.029 54.5)"
+        ]
+      },
+      "accent-weak": {
+        "role": "primary",
+        "displayName": "Mask Wash",
+        "canonical": "rgba(240, 138, 60, .12)",
+        "oklch": "oklch(73.0% 0.153 54.5)",
+        "theme": "dark",
+        "cssVar": "--accent-weak",
+        "tonalRamp": [
+          "oklch(15.0% 0.078 54.5)",
+          "oklch(26.4% 0.119 54.5)",
+          "oklch(37.9% 0.144 54.5)",
+          "oklch(49.3% 0.153 54.5)",
+          "oklch(60.7% 0.146 54.5)",
+          "oklch(72.1% 0.123 54.5)",
+          "oklch(83.6% 0.084 54.5)",
+          "oklch(95.0% 0.029 54.5)"
+        ]
+      },
+      "on-accent": {
+        "role": "primary",
+        "displayName": "On-Mask",
+        "canonical": "#13110F",
+        "oklch": "oklch(17.9% 0.005 67.5)",
+        "theme": "dark",
+        "cssVar": "--on-accent",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 67.5)",
+          "oklch(26.4% 0.004 67.5)",
+          "oklch(37.9% 0.005 67.5)",
+          "oklch(49.3% 0.005 67.5)",
+          "oklch(60.7% 0.005 67.5)",
+          "oklch(72.1% 0.004 67.5)",
+          "oklch(83.6% 0.003 67.5)",
+          "oklch(95.0% 0.001 67.5)"
+        ]
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Fixer Green",
+        "canonical": "#8FC79A",
+        "oklch": "oklch(77.9% 0.086 150.1)",
+        "theme": "dark",
+        "cssVar": "--ok",
+        "tonalRamp": [
+          "oklch(15.0% 0.044 150.1)",
+          "oklch(26.4% 0.067 150.1)",
+          "oklch(37.9% 0.081 150.1)",
+          "oklch(49.3% 0.086 150.1)",
+          "oklch(60.7% 0.082 150.1)",
+          "oklch(72.1% 0.069 150.1)",
+          "oklch(83.6% 0.047 150.1)",
+          "oklch(95.0% 0.016 150.1)"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Amber Toner",
+        "canonical": "#E6C35C",
+        "oklch": "oklch(82.8% 0.128 90.6)",
+        "theme": "dark",
+        "cssVar": "--warn",
+        "tonalRamp": [
+          "oklch(15.0% 0.065 90.6)",
+          "oklch(26.4% 0.099 90.6)",
+          "oklch(37.9% 0.120 90.6)",
+          "oklch(49.3% 0.128 90.6)",
+          "oklch(60.7% 0.122 90.6)",
+          "oklch(72.1% 0.103 90.6)",
+          "oklch(83.6% 0.070 90.6)",
+          "oklch(95.0% 0.024 90.6)"
+        ]
+      },
+      "err": {
+        "role": "status",
+        "displayName": "Safelight Red",
+        "canonical": "#F07560",
+        "oklch": "oklch(70.2% 0.156 31.3)",
+        "theme": "dark",
+        "cssVar": "--err",
+        "tonalRamp": [
+          "oklch(15.0% 0.080 31.3)",
+          "oklch(26.4% 0.121 31.3)",
+          "oklch(37.9% 0.147 31.3)",
+          "oklch(49.3% 0.156 31.3)",
+          "oklch(60.7% 0.149 31.3)",
+          "oklch(72.1% 0.125 31.3)",
+          "oklch(83.6% 0.086 31.3)",
+          "oklch(95.0% 0.030 31.3)"
+        ]
+      },
+      "film": {
+        "role": "neutral",
+        "displayName": "Film Base",
+        "canonical": "#070605",
+        "oklch": "oklch(12.3% 0.004 70.2)",
+        "theme": "dark",
+        "cssVar": "--film",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 70.2)",
+          "oklch(26.4% 0.003 70.2)",
+          "oklch(37.9% 0.004 70.2)",
+          "oklch(49.3% 0.004 70.2)",
+          "oklch(60.7% 0.004 70.2)",
+          "oklch(72.1% 0.003 70.2)",
+          "oklch(83.6% 0.002 70.2)",
+          "oklch(95.0% 0.001 70.2)"
+        ]
+      },
+      "hole": {
+        "role": "neutral",
+        "displayName": "Sprocket",
+        "canonical": "#2E2924",
+        "oklch": "oklch(28.5% 0.012 67.3)",
+        "theme": "dark",
+        "cssVar": "--hole",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 67.3)",
+          "oklch(26.4% 0.009 67.3)",
+          "oklch(37.9% 0.011 67.3)",
+          "oklch(49.3% 0.012 67.3)",
+          "oklch(60.7% 0.011 67.3)",
+          "oklch(72.1% 0.009 67.3)",
+          "oklch(83.6% 0.006 67.3)",
+          "oklch(95.0% 0.002 67.3)"
+        ]
+      },
+      "primary-hover": {
+        "role": "neutral",
+        "displayName": "Print Hover",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "theme": "dark",
+        "cssVar": "--primary-hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.4% 0.000 89.9)",
+          "oklch(37.9% 0.000 89.9)",
+          "oklch(49.3% 0.000 89.9)",
+          "oklch(60.7% 0.000 89.9)",
+          "oklch(72.1% 0.000 89.9)",
+          "oklch(83.6% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ]
+      },
+      "bg-light": {
+        "role": "neutral",
+        "displayName": "Darkroom Black (light table)",
+        "canonical": "#F2F1EE",
+        "oklch": "oklch(95.8% 0.004 91.4)",
+        "theme": "light",
+        "cssVar": "--bg",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 91.4)",
+          "oklch(26.4% 0.003 91.4)",
+          "oklch(37.9% 0.004 91.4)",
+          "oklch(49.3% 0.004 91.4)",
+          "oklch(60.7% 0.004 91.4)",
+          "oklch(72.1% 0.003 91.4)",
+          "oklch(83.6% 0.002 91.4)",
+          "oklch(95.0% 0.001 91.4)"
+        ]
+      },
+      "field-light": {
+        "role": "neutral",
+        "displayName": "Safelight Shadow (light table)",
+        "canonical": "#E5E3DE",
+        "oklch": "oklch(91.6% 0.007 88.6)",
+        "theme": "light",
+        "cssVar": "--field",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 88.6)",
+          "oklch(26.4% 0.005 88.6)",
+          "oklch(37.9% 0.007 88.6)",
+          "oklch(49.3% 0.007 88.6)",
+          "oklch(60.7% 0.007 88.6)",
+          "oklch(72.1% 0.006 88.6)",
+          "oklch(83.6% 0.004 88.6)",
+          "oklch(95.0% 0.001 88.6)"
+        ]
+      },
+      "table-light": {
+        "role": "neutral",
+        "displayName": "Light Table (light table)",
+        "canonical": "#E9E7E2",
+        "oklch": "oklch(92.8% 0.007 88.6)",
+        "theme": "light",
+        "cssVar": "--table",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 88.6)",
+          "oklch(26.4% 0.005 88.6)",
+          "oklch(37.9% 0.007 88.6)",
+          "oklch(49.3% 0.007 88.6)",
+          "oklch(60.7% 0.007 88.6)",
+          "oklch(72.1% 0.006 88.6)",
+          "oklch(83.6% 0.004 88.6)",
+          "oklch(95.0% 0.001 88.6)"
+        ]
+      },
+      "panel-light": {
+        "role": "neutral",
+        "displayName": "Contact Paper (light table)",
+        "canonical": "#FBFAF8",
+        "oklch": "oklch(98.5% 0.003 84.6)",
+        "theme": "light",
+        "cssVar": "--panel",
+        "tonalRamp": [
+          "oklch(15.0% 0.001 84.6)",
+          "oklch(26.4% 0.002 84.6)",
+          "oklch(37.9% 0.003 84.6)",
+          "oklch(49.3% 0.003 84.6)",
+          "oklch(60.7% 0.003 84.6)",
+          "oklch(72.1% 0.002 84.6)",
+          "oklch(83.6% 0.002 84.6)",
+          "oklch(95.0% 0.001 84.6)"
+        ]
+      },
+      "surface-light": {
+        "role": "neutral",
+        "displayName": "Easel (light table)",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "theme": "light",
+        "cssVar": "--surface",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.4% 0.000 89.9)",
+          "oklch(37.9% 0.000 89.9)",
+          "oklch(49.3% 0.000 89.9)",
+          "oklch(60.7% 0.000 89.9)",
+          "oklch(72.1% 0.000 89.9)",
+          "oklch(83.6% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ]
+      },
+      "surface-2-light": {
+        "role": "neutral",
+        "displayName": "Tray (light table)",
+        "canonical": "#E3E0DA",
+        "oklch": "oklch(90.7% 0.009 84.6)",
+        "theme": "light",
+        "cssVar": "--surface-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 84.6)",
+          "oklch(26.4% 0.007 84.6)",
+          "oklch(37.9% 0.008 84.6)",
+          "oklch(49.3% 0.009 84.6)",
+          "oklch(60.7% 0.008 84.6)",
+          "oklch(72.1% 0.007 84.6)",
+          "oklch(83.6% 0.005 84.6)",
+          "oklch(95.0% 0.002 84.6)"
+        ]
+      },
+      "hover-light": {
+        "role": "neutral",
+        "displayName": "Tray Hover (light table)",
+        "canonical": "#D8D4CC",
+        "oklch": "oklch(87.1% 0.012 84.6)",
+        "theme": "light",
+        "cssVar": "--hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 84.6)",
+          "oklch(26.4% 0.009 84.6)",
+          "oklch(37.9% 0.011 84.6)",
+          "oklch(49.3% 0.012 84.6)",
+          "oklch(60.7% 0.011 84.6)",
+          "oklch(72.1% 0.009 84.6)",
+          "oklch(83.6% 0.006 84.6)",
+          "oklch(95.0% 0.002 84.6)"
+        ]
+      },
+      "border-light": {
+        "role": "neutral",
+        "displayName": "Rule (light table)",
+        "canonical": "#DCD8D1",
+        "oklch": "oklch(88.3% 0.010 81.8)",
+        "theme": "light",
+        "cssVar": "--border",
+        "tonalRamp": [
+          "oklch(15.0% 0.005 81.8)",
+          "oklch(26.4% 0.008 81.8)",
+          "oklch(37.9% 0.010 81.8)",
+          "oklch(49.3% 0.010 81.8)",
+          "oklch(60.7% 0.010 81.8)",
+          "oklch(72.1% 0.008 81.8)",
+          "oklch(83.6% 0.006 81.8)",
+          "oklch(95.0% 0.002 81.8)"
+        ]
+      },
+      "border-2-light": {
+        "role": "neutral",
+        "displayName": "Strong Rule (light table)",
+        "canonical": "#BDB6AB",
+        "oklch": "oklch(77.9% 0.017 79.3)",
+        "theme": "light",
+        "cssVar": "--border-2",
+        "tonalRamp": [
+          "oklch(15.0% 0.009 79.3)",
+          "oklch(26.4% 0.013 79.3)",
+          "oklch(37.9% 0.016 79.3)",
+          "oklch(49.3% 0.017 79.3)",
+          "oklch(60.7% 0.016 79.3)",
+          "oklch(72.1% 0.014 79.3)",
+          "oklch(83.6% 0.009 79.3)",
+          "oklch(95.0% 0.003 79.3)"
+        ]
+      },
+      "text-light": {
+        "role": "neutral",
+        "displayName": "Print White (light table)",
+        "canonical": "#1A1714",
+        "oklch": "oklch(20.7% 0.008 67.4)",
+        "theme": "light",
+        "cssVar": "--text",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 67.4)",
+          "oklch(26.4% 0.006 67.4)",
+          "oklch(37.9% 0.007 67.4)",
+          "oklch(49.3% 0.008 67.4)",
+          "oklch(60.7% 0.007 67.4)",
+          "oklch(72.1% 0.006 67.4)",
+          "oklch(83.6% 0.004 67.4)",
+          "oklch(95.0% 0.001 67.4)"
+        ]
+      },
+      "muted-light": {
+        "role": "neutral",
+        "displayName": "Proof Gray (light table)",
+        "canonical": "#57504A",
+        "oklch": "oklch(43.6% 0.013 63.1)",
+        "theme": "light",
+        "cssVar": "--muted",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 63.1)",
+          "oklch(26.4% 0.010 63.1)",
+          "oklch(37.9% 0.013 63.1)",
+          "oklch(49.3% 0.013 63.1)",
+          "oklch(60.7% 0.013 63.1)",
+          "oklch(72.1% 0.011 63.1)",
+          "oklch(83.6% 0.007 63.1)",
+          "oklch(95.0% 0.003 63.1)"
+        ]
+      },
+      "faint-light": {
+        "role": "neutral",
+        "displayName": "Rebate Tan (light table)",
+        "canonical": "#6D6255",
+        "oklch": "oklch(50.3% 0.024 71.9)",
+        "theme": "light",
+        "cssVar": "--faint",
+        "tonalRamp": [
+          "oklch(15.0% 0.012 71.9)",
+          "oklch(26.4% 0.019 71.9)",
+          "oklch(37.9% 0.023 71.9)",
+          "oklch(49.3% 0.024 71.9)",
+          "oklch(60.7% 0.023 71.9)",
+          "oklch(72.1% 0.020 71.9)",
+          "oklch(83.6% 0.013 71.9)",
+          "oklch(95.0% 0.005 71.9)"
+        ]
+      },
+      "accent-light": {
+        "role": "primary",
+        "displayName": "Negative-Mask Orange (light table)",
+        "canonical": "#A0480B",
+        "oklch": "oklch(50.8% 0.133 47.8)",
+        "theme": "light",
+        "cssVar": "--accent",
+        "tonalRamp": [
+          "oklch(15.0% 0.068 47.8)",
+          "oklch(26.4% 0.104 47.8)",
+          "oklch(37.9% 0.126 47.8)",
+          "oklch(49.3% 0.133 47.8)",
+          "oklch(60.7% 0.127 47.8)",
+          "oklch(72.1% 0.107 47.8)",
+          "oklch(83.6% 0.073 47.8)",
+          "oklch(95.0% 0.025 47.8)"
+        ]
+      },
+      "accent-weak-light": {
+        "role": "primary",
+        "displayName": "Mask Wash (light table)",
+        "canonical": "rgba(160, 72, 11, .09)",
+        "oklch": "oklch(50.8% 0.133 47.8)",
+        "theme": "light",
+        "cssVar": "--accent-weak",
+        "tonalRamp": [
+          "oklch(15.0% 0.068 47.8)",
+          "oklch(26.4% 0.104 47.8)",
+          "oklch(37.9% 0.126 47.8)",
+          "oklch(49.3% 0.133 47.8)",
+          "oklch(60.7% 0.127 47.8)",
+          "oklch(72.1% 0.107 47.8)",
+          "oklch(83.6% 0.073 47.8)",
+          "oklch(95.0% 0.025 47.8)"
+        ]
+      },
+      "on-accent-light": {
+        "role": "primary",
+        "displayName": "On-Mask (light table)",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "theme": "light",
+        "cssVar": "--on-accent",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.4% 0.000 89.9)",
+          "oklch(37.9% 0.000 89.9)",
+          "oklch(49.3% 0.000 89.9)",
+          "oklch(60.7% 0.000 89.9)",
+          "oklch(72.1% 0.000 89.9)",
+          "oklch(83.6% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ]
+      },
+      "ok-light": {
+        "role": "status",
+        "displayName": "Fixer Green (light table)",
+        "canonical": "#2C7A43",
+        "oklch": "oklch(51.7% 0.115 150.1)",
+        "theme": "light",
+        "cssVar": "--ok",
+        "tonalRamp": [
+          "oklch(15.0% 0.059 150.1)",
+          "oklch(26.4% 0.089 150.1)",
+          "oklch(37.9% 0.108 150.1)",
+          "oklch(49.3% 0.115 150.1)",
+          "oklch(60.7% 0.110 150.1)",
+          "oklch(72.1% 0.092 150.1)",
+          "oklch(83.6% 0.063 150.1)",
+          "oklch(95.0% 0.022 150.1)"
+        ]
+      },
+      "warn-light": {
+        "role": "status",
+        "displayName": "Amber Toner (light table)",
+        "canonical": "#8C6300",
+        "oklch": "oklch(52.9% 0.109 80.2)",
+        "theme": "light",
+        "cssVar": "--warn",
+        "tonalRamp": [
+          "oklch(15.0% 0.056 80.2)",
+          "oklch(26.4% 0.085 80.2)",
+          "oklch(37.9% 0.103 80.2)",
+          "oklch(49.3% 0.109 80.2)",
+          "oklch(60.7% 0.104 80.2)",
+          "oklch(72.1% 0.088 80.2)",
+          "oklch(83.6% 0.060 80.2)",
+          "oklch(95.0% 0.021 80.2)"
+        ]
+      },
+      "err-light": {
+        "role": "status",
+        "displayName": "Safelight Red (light table)",
+        "canonical": "#BF301C",
+        "oklch": "oklch(53.1% 0.183 31.2)",
+        "theme": "light",
+        "cssVar": "--err",
+        "tonalRamp": [
+          "oklch(15.0% 0.093 31.2)",
+          "oklch(26.4% 0.142 31.2)",
+          "oklch(37.9% 0.172 31.2)",
+          "oklch(49.3% 0.183 31.2)",
+          "oklch(60.7% 0.174 31.2)",
+          "oklch(72.1% 0.147 31.2)",
+          "oklch(83.6% 0.100 31.2)",
+          "oklch(95.0% 0.035 31.2)"
+        ]
+      },
+      "film-light": {
+        "role": "neutral",
+        "displayName": "Film Base (light table)",
+        "canonical": "#1A1714",
+        "oklch": "oklch(20.7% 0.008 67.4)",
+        "theme": "light",
+        "cssVar": "--film",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 67.4)",
+          "oklch(26.4% 0.006 67.4)",
+          "oklch(37.9% 0.007 67.4)",
+          "oklch(49.3% 0.008 67.4)",
+          "oklch(60.7% 0.007 67.4)",
+          "oklch(72.1% 0.006 67.4)",
+          "oklch(83.6% 0.004 67.4)",
+          "oklch(95.0% 0.001 67.4)"
+        ]
+      },
+      "hole-light": {
+        "role": "neutral",
+        "displayName": "Sprocket (light table)",
+        "canonical": "#F2F1EE",
+        "oklch": "oklch(95.8% 0.004 91.4)",
+        "theme": "light",
+        "cssVar": "--hole",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 91.4)",
+          "oklch(26.4% 0.003 91.4)",
+          "oklch(37.9% 0.004 91.4)",
+          "oklch(49.3% 0.004 91.4)",
+          "oklch(60.7% 0.004 91.4)",
+          "oklch(72.1% 0.003 91.4)",
+          "oklch(83.6% 0.002 91.4)",
+          "oklch(95.0% 0.001 91.4)"
+        ]
+      },
+      "primary-hover-light": {
+        "role": "neutral",
+        "displayName": "Print Hover (light table)",
+        "canonical": "#000000",
+        "oklch": "oklch(0.0% 0.000 0.0)",
+        "theme": "light",
+        "cssVar": "--primary-hover",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0.0)",
+          "oklch(26.4% 0.000 0.0)",
+          "oklch(37.9% 0.000 0.0)",
+          "oklch(49.3% 0.000 0.0)",
+          "oklch(60.7% 0.000 0.0)",
+          "oklch(72.1% 0.000 0.0)",
+          "oklch(83.6% 0.000 0.0)",
+          "oklch(95.0% 0.000 0.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Each download row's one big number: percent while running, file size when done."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Settings title and the video title in the preview frame."
+      },
+      "action": {
+        "displayName": "Action",
+        "purpose": "The Download button."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Quality option names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text, including the link box."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Secondary buttons, selects, text links."
+      },
+      "body-small": {
+        "displayName": "Body small",
+        "purpose": "Descriptions, status lines, notes, About, the status bar."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase section labels: QUALITY, THEME, TEXT AND PAGE SIZE."
+      },
+      "chip": {
+        "displayName": "Chip",
+        "purpose": "Uppercase format codes: MKV, MP4, 1080P · MP4."
+      },
+      "edge-code": {
+        "displayName": "Edge code",
+        "purpose": "The preview edge code (ID · resolution · length), original case; versions."
+      },
+      "count": {
+        "displayName": "Count",
+        "purpose": "The Downloads tab count."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "0 14px 36px rgba(0, 0, 0, .5)",
+        "valueLight": "0 14px 36px rgba(26, 23, 20, .16)",
+        "cssVar": "--shadow",
+        "purpose": "Settings dialog and About popover only."
+      },
+      {
+        "name": "backdrop",
+        "value": "rgba(7, 6, 5, .6)",
+        "purpose": "Behind the modal Settings dialog, both themes."
+      },
+      {
+        "name": "focus-ring-field",
+        "value": "0 0 0 3px var(--accent-weak)",
+        "purpose": "The link box focus ring, with an orange outline."
+      }
+    ],
+    "motion": [
+      {
+        "name": "develop",
+        "value": "width .5s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "The edge strip fill developing; removed under prefers-reduced-motion. Hover and selection changes are instant."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "short",
+        "value": "(max-height: 520px)",
+        "purpose": "150% and 175% page size: the preview frame turns sideways."
+      },
+      {
+        "name": "narrow",
+        "value": "(max-width: 720px)",
+        "purpose": "175% page size: brand name hidden, row actions become icon buttons."
+      }
+    ],
+    "perforation": {
+      "cssVar": "--perfs",
+      "pitch": "14px",
+      "hole": "9x6px, 1.5px corners",
+      "purpose": "Mask for the preview rebate, the empty-state tile and the edge strip."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Download: the one primary action, print white on darkroom black (ink on paper in light).",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v12\"/><path d=\"m6 11 6 6 6-6\"/><path d=\"M5 21h14\"/></svg>Download</button>",
+      "css": ".ds-btn-primary { height: 48px; width: 320px; border: 0; border-radius: 4px; background: var(--text); color: var(--bg); font: 700 15px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; } .ds-btn-primary:hover { background: var(--primary-hover); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-btn-primary:disabled { background: var(--surface-2); color: var(--faint); cursor: default; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paste, Change, Resume, Retry, Show in folder: a Tray tile with optional leading icon.",
+      "html": "<button class=\"ds-btn\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg>Paste</button>",
+      "css": ".ds-btn { height: 32px; padding: 0 12px; border: 0; border-radius: 3px; background: var(--surface-2); color: var(--text); font: 500 12.5px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; } .ds-btn:hover { background: var(--hover); } .ds-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Pause, Cancel, Delete, Clear link, dialog close: no fill until hover.",
+      "html": "<button class=\"ds-icon-btn\" type=\"button\" aria-label=\"Pause download\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/></svg></button>",
+      "css": ".ds-icon-btn { width: 32px; height: 32px; border: 0; border-radius: 3px; background: none; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; } .ds-icon-btn:hover { background: var(--surface-2); color: var(--text); } .ds-icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Link Box",
+      "kind": "input",
+      "refersTo": "input-link",
+      "description": "The 44px link field with an orange caret and a Mask Wash focus ring; Paste sits inside.",
+      "html": "<label class=\"ds-input\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/></svg><input placeholder=\"Paste a YouTube link\" aria-label=\"Video link\"><button class=\"ds-input-btn\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg>Paste</button></label>",
+      "css": ".ds-input { width: 420px; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 6px 0 14px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 4px; color: var(--faint); } .ds-input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); } .ds-input input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text); font: 13px/18px \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif; caret-color: var(--accent); } .ds-input input::placeholder { color: var(--faint); } .ds-input-btn { height: 32px; padding: 0 12px; border: 0; border-radius: 3px; background: var(--surface-2); color: var(--text); font: 500 12.5px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; display: flex; align-items: center; gap: 6px; cursor: pointer; } .ds-input-btn:hover { background: var(--hover); }"
+    },
+    {
+      "name": "Title Bar Tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Text tabs on the title bar field, orange underline when selected, orange count while downloading.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">New download</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Downloads<span class=\"ds-count\">7</span></button></div>",
+      "css": ".ds-tabs { height: 40px; display: flex; gap: 20px; padding: 0 14px; background: var(--field); } .ds-tab { padding: 2px 0 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font: 500 13px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; display: flex; align-items: center; gap: 7px; cursor: pointer; } .ds-tab:hover { color: var(--text); } .ds-tab[aria-selected=\"true\"] { color: var(--text); border-bottom-color: var(--accent); } .ds-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; } .ds-count { font: 600 11px/16px var(--edge-font); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 5px; border-radius: 3px; background: var(--accent); color: var(--on-accent); }"
+    },
+    {
+      "name": "Format Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Uppercase Bahnschrift format code in Rebate Tan; no fill, no border.",
+      "html": "<span class=\"ds-chip\">1080p · MP4</span>",
+      "css": ".ds-chip { font: 600 12px/14px var(--edge-font); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }"
+    },
+    {
+      "name": "Quality Option",
+      "kind": "custom",
+      "refersTo": "quality-option",
+      "description": "Ruled rows on the light-table field; the chosen row takes the orange outline, wash and radio.",
+      "html": "<div class=\"ds-opts\" role=\"radiogroup\" aria-label=\"Quality\"><label class=\"ds-opt\"><input type=\"radio\" name=\"ds-q\" checked><span class=\"ds-radio\"></span><span class=\"ds-txt\"><b>1080p</b><small>Full HD</small></span><span class=\"ds-opt-chip\">MP4</span></label><label class=\"ds-opt\"><input type=\"radio\" name=\"ds-q\"><span class=\"ds-radio\"></span><span class=\"ds-txt\"><b>720p</b><small>HD, smaller files</small></span><span class=\"ds-opt-chip\">MP4</span></label></div>",
+      "css": ".ds-opts { width: 440px; padding: 16px; background: var(--table); display: flex; flex-direction: column; } .ds-opt { min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 6px 14px; position: relative; cursor: pointer; border: 1px solid transparent; border-bottom-color: var(--border); color: var(--text); } .ds-opt:hover { background: var(--accent-weak); } .ds-opt input { position: absolute; opacity: 0; pointer-events: none; } .ds-opt:has(input:checked) { border-color: var(--accent); background: var(--accent-weak); border-radius: 4px; } .ds-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; } .ds-radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border-2); flex: none; } .ds-opt:has(input:checked) .ds-radio { border: 5px solid var(--accent); background: var(--table); } .ds-txt { display: flex; flex-direction: column; } .ds-txt b { font: 600 13.5px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; } .ds-txt small { font: 12px/16px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; color: var(--muted); } .ds-opt-chip { margin-left: auto; font: 600 12px/14px var(--edge-font); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }"
+    },
+    {
+      "name": "Preview Frame",
+      "kind": "card",
+      "refersTo": "preview-frame",
+      "description": "The pasted video as one film frame: sprocket rebate, picture, edge code, title. Film stays dark in both themes.",
+      "html": "<div class=\"ds-frame\"><div class=\"ds-pic\"></div><div class=\"ds-code\">aqz-KE-bpKQ · 2160p60 · 10:35</div><div class=\"ds-meta\"><b>Big Buck Bunny 60fps 4K</b><span>Blender</span></div></div>",
+      "css": ".ds-frame { width: 360px; display: flex; flex-direction: column; background: var(--film); border-radius: 2px; padding-bottom: 12px; } .ds-frame::before { content: \"\"; height: 16px; margin: 0 6px; background: var(--hole); -webkit-mask: var(--perfs) left center / 14px 8px repeat-x; mask: var(--perfs) left center / 14px 8px repeat-x; } .ds-pic { aspect-ratio: 16 / 9; margin: 0 14px; border-radius: 1px; background: var(--surface-2); } .ds-code { margin: 6px 14px 0; font: 12px/14px var(--edge-font); letter-spacing: .06em; font-variant-numeric: tabular-nums; color: #A08F7B; } .ds-meta { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px 0; color: #F2EDE4; } .ds-meta b { font: 600 15px/20px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; } .ds-meta span { font: 12px/16px \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif; color: #ADA497; }"
+    },
+    {
+      "name": "Download Row with Edge Strip",
+      "kind": "custom",
+      "refersTo": "edge-strip",
+      "description": "A download as a strip coming out of the developer: whole sprocket holes develop orange; green when done, red where it failed.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-thumb\"></div><div class=\"ds-info\"><div class=\"ds-r1\"><b>Big Buck Bunny 60fps 4K</b><span class=\"ds-row-chip\">1080p · MP4</span></div><div class=\"ds-status\"><span>Video · 47.5 MB of 245.7 MB · 19s left</span><span class=\"ds-pct\">19%</span></div><div class=\"ds-bar\" role=\"progressbar\" aria-valuenow=\"19\" aria-valuemin=\"0\" aria-valuemax=\"100\"><div class=\"ds-fill\" style=\"--p: 19%\"></div></div></div></div><div class=\"ds-row ds-done\"><div class=\"ds-thumb\"></div><div class=\"ds-info\"><div class=\"ds-r1\"><b>Me at the zoo</b><span class=\"ds-row-chip\">720p · MP4</span></div><div class=\"ds-status\"><span>Done</span><span class=\"ds-pct\">727.0 KB</span></div><div class=\"ds-bar\" role=\"progressbar\" aria-valuenow=\"100\" aria-valuemin=\"0\" aria-valuemax=\"100\"><div class=\"ds-fill\" style=\"--p: 100%\"></div></div></div></div>",
+      "css": ".ds-row { width: 640px; display: flex; align-items: center; gap: 16px; padding: 12px 12px 12px 14px; margin-bottom: 8px; border-radius: 4px; background: var(--panel); color: var(--text); font: 13px/18px \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif; } .ds-thumb { width: 96px; height: 54px; flex: none; border: 3px solid var(--film); border-radius: 2px; background: var(--surface-2); } .ds-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; } .ds-r1 { display: flex; align-items: center; gap: 10px; } .ds-row-chip { font: 600 12px/14px var(--edge-font); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); } .ds-status { display: flex; align-items: baseline; gap: 6px; font-size: 12px; line-height: 16px; color: var(--muted); } .ds-pct { margin-left: auto; color: var(--text); font: 600 20px/22px var(--edge-font); letter-spacing: .02em; font-variant-numeric: tabular-nums; } .ds-bar { height: 8px; width: round(down, 100%, 14px); position: relative; background: var(--surface-2); -webkit-mask: var(--perfs) left center / 14px 8px repeat-x; mask: var(--perfs) left center / 14px 8px repeat-x; } .ds-fill { position: absolute; inset: 0 auto 0 0; width: min(100%, round(nearest, var(--p, 0%), 14px)); background: var(--accent); transition: width .5s cubic-bezier(.16, 1, .3, 1); } .ds-done .ds-status span:first-child { color: var(--ok); } .ds-done .ds-fill { background: var(--ok); } @media (prefers-reduced-motion: reduce) { .ds-fill { transition: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Contact Sheet",
+    "overview": "YT Downloader is a darkroom contact sheet. The window is warm darkroom black; the video you paste is printed as a single frame on a strip of film, sprocket holes along its top rebate and its edge code (video ID · best resolution · length) printed underneath. On Downloads every download is its own strip coming out of the developer: a row of sprocket holes that develops orange as bytes arrive, ends fixer green when the file lands, and stops in safelight red where a download failed. The light theme is the light table: the same sheet laid on a lit, warm off-white surface, with the film itself staying dark.\n\nThe feel is quiet, exact and tactile. Regions are separated by tinted fields, not lines: the title bar and status bar sit on a darker field, and the Quality column sits on its own light-table tint beside the darkroom ground. One negative-mask orange carries every meaning that has to stand out: what is chosen, what is moving, what has focus, how many downloads are active. Words are set in Windows' own Segoe UI Variable; everything printed on film or counted (edge codes, chips, labels, counts, versions and each row's big number) is set in Bahnschrift semi-condensed, the edge-print voice. Corners are tight (1 to 4px), rules are one pixel, and each theme has three ink values.\n\nTwo looks are rejected: the ad-site downloader (big green DOWNLOAD buttons, badges, flashing banners) and the neon gamer (glows, gradients, RGB, glassy blur). This look also replaces the earlier graphite-panels-plus-one-blue look, which is retired.",
+    "keyCharacteristics": [
+      "Dark by default, warm darkroom black; a full light-table theme under the same token names.",
+      "Regions divided by tinted fields (field, table) instead of borders.",
+      "One negative-mask orange for selection, progress, focus and the active count.",
+      "The single primary action is print white on darkroom black (ink on paper in light), never orange.",
+      "Two voices: Segoe UI Variable for words, Bahnschrift semi-condensed for edge codes and figures.",
+      "The edge strip: progress drawn as whole sprocket holes on a 14px pitch.",
+      "Tight corners (1–4px), one-pixel rules, flat at rest."
+    ],
+    "rules": [
+      {
+        "name": "The Negative-Mask Rule",
+        "body": "Orange means selection, progress, focus or the active count, plus the two marks this world names: the logo tile and the QUALITY label. It never colors headings, body text, resting icons or large fills; the Mask Wash is the largest area it covers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Print White Rule",
+        "body": "The one primary action (Download) is filled with the text color and labeled in the ground color: print white on darkroom black, ink on paper on the light table. It is never orange and never a status color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Developer Colors Rule",
+        "body": "Fixer Green, Amber Toner and Safelight Red color only status text, icons, dots and the strip of a finished or failed download. They never fill a button or a container.",
+        "section": "colors"
+      },
+      {
+        "name": "The Film Stays Dark Rule",
+        "body": "Film is dark in both themes. Type printed on film uses the dark theme's ink values (Print White, Proof Gray, Rebate Tan, Safelight Red) whatever the window theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paired Tokens Rule",
+        "body": "Every color exists in both themes under one name, and text tokens keep at least 4.5:1 on every ground they sit on.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Words are Segoe UI Variable; anything printed on film or counted is Bahnschrift semi-condensed with tabular figures. Uppercase belongs only to the Bahnschrift voice, and never to an ID.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Big Number Rule",
+        "body": "The 20px Figure is the only type above 15px, and each download row has exactly one. Everywhere else hierarchy comes from weight and the three ink values.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fields Not Lines Rule",
+        "body": "Regions are divided by tinted fields, never by borders. One-pixel rules belong inside a list (between quality rows) and around fields and floating layers.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "Nothing casts a shadow while it sits in the page; only the dialog and the popover float.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square Darkroom Rule",
+        "body": "No corner is larger than 4px. Pills, soft cards and large radii belong to another world.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Whole Holes Rule",
+        "body": "The strip's width is rounded down to the 14px pitch and its fill snaps to the pitch, so a hole is either developed or not; never a sliver.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** keep orange for selection, progress, focus, the active count, the logo tile and the QUALITY label.",
+      "**Do** make the one primary action print white on darkroom black (ink on paper in light), 48px, 4px corners.",
+      "**Do** divide regions with the field and table tints; keep one-pixel rules for list rows, fields and floating layers.",
+      "**Do** set edge codes, chips, labels, counts, versions and the big number in Bahnschrift semi-condensed with tabular figures; set words in Segoe UI Variable.",
+      "**Do** draw progress as the edge strip: whole sprocket holes on the 14px pitch, orange while running, Fixer Green when done, Safelight Red where it stopped.",
+      "**Do** keep film dark in both themes and print on it with the dark theme's inks.",
+      "**Do** define every color for both themes under one name, with text at 4.5:1 or better.",
+      "**Do** check every screen at 100% and 175% text and page size, and in both themes."
+    ],
+    "donts": [
+      "**Don't** make it look like an ad-site downloader: no big green DOWNLOAD buttons, badges or flashing banners.",
+      "**Don't** go neon: no glows, color gradients, RGB accents or glassy blur. The hard 50% edge that paints the two New download fields is a field edge, not a gradient.",
+      "**Don't** bring back the graphite-and-blue look: no cool grays, no blue accent.",
+      "**Don't** fill buttons or containers with Fixer Green, Amber Toner or Safelight Red; they color status only.",
+      "**Don't** round anything past 4px except radios and status dots.",
+      "**Don't** draw progress as a continuous bar or let a strip end on a partial hole.",
+      "**Don't** put shadows on anything that sits in the page; only the dialog and the popover float.",
+      "**Don't** uppercase a video ID or any other case-sensitive code."
+    ]
+  }
+}

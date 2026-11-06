@@ -34,7 +34,8 @@ installs itself on first launch and keeps itself up to date.
 - **Five quality presets:** 4K Best (MKV), 4K, 1080p and 720p MP4 (H.264 preferred), and Default MP4.
 - **Custom quality:** any maximum resolution from 8K down to 144p, as MP4, MKV or WebM. Every option includes the best available audio.
 - **Video preview** as soon as you paste a link: thumbnail, title, channel, length and the highest resolution available.
-- **Two tabs:** *New download* (link box, preview, save folder and Download on the left, quality on the right) and *Downloads* (the full-width list). The Downloads tab shows a count that turns blue while something is downloading.
+- **Two tabs:** *New download* (link box, preview, save folder and Download on the left, quality on the right) and *Downloads* (the full-width list). The Downloads tab shows a count that turns orange while something is downloading.
+- **The look, "Contact Sheet":** the app as a darkroom contact sheet. The preview sits in a film frame with its edge code (video ID, resolution, length), and each download's progress is a row of sprocket holes that develop orange, ending green when done or red where it failed. The light theme is the light table.
 - **Download list** with live progress, size, speed and time left. Each item can be **paused and resumed**, canceled, retried, shown in File Explorer, or **deleted** with its files.
 - **Several downloads at once**, each in its own yt-dlp process.
 - **yt-dlp is managed for you:** downloaded on first launch and updated with `yt-dlp -U` every time the app starts. The status bar shows its version and update state, with "Developed by Khryz" in the middle.
@@ -156,7 +157,7 @@ youtube-downloader-rust/
 │  └─ release.yml      After a merge to main: builds the installer and publishes the GitHub Release
 ├─ tauri.conf.json     App name, content security policy, installer settings
 ├─ PRODUCT.md          Who the app is for, what it does, its constraints and principles
-├─ DESIGN.md           The visual system: tokens, components and rules ("The Quiet Utility")
+├─ DESIGN.md           The visual system: tokens, components and rules ("Contact Sheet")
 └─ Cargo.toml          Dependencies and the app version
 ```
 
@@ -181,9 +182,11 @@ cargo test    # presets, argument building, output parsing, leftover matching
 cargo run     # run the app (debug build, with a console for logs)
 ```
 
-The UI files in `ui/` come from the Electron version's `src/renderer/`. When the design changes there,
-copy the files over and keep this version's few changes: the Tauri bridge script, the window buttons,
-"Tauri" in the About box, and `await confirm(...)` in the Delete handler (Tauri's `confirm()` is async).
+The UI files in `ui/` started as the Electron version's `src/renderer/`. The Contact Sheet redesign
+landed here first; the Electron version gets the same `index.html`, `styles.css` and `renderer.js` next.
+Its copy keeps Electron's own differences: no `api.js` (its preload script provides `window.api`), native
+window buttons, and "Electron" in the About box. This version's `renderer.js` awaits `confirm(...)` in the
+Delete handler because Tauri's `confirm()` is async; that's harmless under Electron.
 
 Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). They are
 shared with the Electron version, so update them in both repositories.

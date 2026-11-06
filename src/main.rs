@@ -330,7 +330,7 @@ fn apply_settings(window: &WebviewWindow, settings: &Value) {
     let _ = window.set_theme(theme);
     // the page's background color, so the window never flashes the other theme while it paints
     let dark = theme.or(window.theme().ok()) != Some(Theme::Light);
-    let _ = window.set_background_color(Some(if dark { Color(0x0E, 0x0E, 0x10, 255) } else { Color(0xF7, 0xF7, 0xF8, 255) }));
+    let _ = window.set_background_color(Some(if dark { Color(0x13, 0x11, 0x0F, 255) } else { Color(0xF2, 0xF1, 0xEE, 255) }));
     let _ = window.set_zoom(settings["scale"].as_str().and_then(|s| s.parse().ok()).unwrap_or(1.0));
 }
 
