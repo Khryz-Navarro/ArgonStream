@@ -5,7 +5,14 @@
 param([ValidateSet('patch', 'minor', 'major')] [string]$Level = 'patch')
 
 function Fail([string]$msg) { Write-Host "release: $msg" -ForegroundColor Red; exit 1 }
-function Run { & $args[0] @($args | Select-Object -Skip 1); if (-not $?) { Fail "``$args`` failed." } } # $? is also false when the command isn't found
+# Judged by exit code: Windows PowerShell turns a tool's normal stderr output (git and cargo progress) into
+# errors when the script's output is redirected, so $? is unreliable for them.
+function Found([string]$cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
+function Run {
+  if (-not (Found $args[0])) { Fail "``$($args[0])`` isn't installed or isn't on PATH." }
+  & $args[0] @($args | Select-Object -Skip 1)
+  if ($LASTEXITCODE) { Fail "``$args`` failed." }
+}
 # The [package] version: Cargo.toml's first line that starts with `version =`.
 function VersionOf([string]$toml) { if ($toml -match '(?m)^version = "(\d+\.\d+\.\d+)"') { [version]$Matches[1] } }
 
@@ -30,8 +37,8 @@ if (-not $main -or $current -gt $main) {
   }
   $toml = [IO.File]::ReadAllText("$PWD\Cargo.toml")
   [IO.File]::WriteAllText("$PWD\Cargo.toml", ([regex]'(?m)^version = "[^"]*"').Replace($toml, "version = `"$new`"", 1))
-  cargo update --workspace --offline # writes the new version into Cargo.lock
-  if (-not $?) { git checkout -- Cargo.toml Cargo.lock; Fail '`cargo update` failed, so nothing was changed. Is Rust installed and on PATH?' }
+  if (Found cargo) { cargo update --workspace --offline } # writes the new version into Cargo.lock
+  if (-not (Found cargo) -or $LASTEXITCODE) { git checkout -- Cargo.toml Cargo.lock; Fail '`cargo update` failed, so nothing was changed. Is Rust installed and on PATH?' }
   Run git add Cargo.toml Cargo.lock
   Run git commit -m "Release v$new" # the tag is created by the Release workflow after the merge
   $current = $new
