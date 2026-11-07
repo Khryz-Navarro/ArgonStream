@@ -1,8 +1,9 @@
 [package]
 name = "yt-downloader"
-version = "0.1.8"
+version = "0.1.9"
 description = "Desktop YouTube downloader built on yt-dlp"
 authors = ["Khryz"]
+license = "MIT"
 edition = "2024"
 publish = false
 

@@ -21,8 +21,8 @@ change it.
 - **Anything bigger** (a new feature, a new setting, a change to how downloads work): open an
   [issue](https://github.com/Khryz-Navarro/youtube-downloader-rust/issues) first and describe it, so
   nobody builds something that won't be merged.
-- **License:** the project has no license yet (see [Credits and legal](README.md#credits-and-legal)).
-  Keep that in mind before contributing larger work.
+- **License:** the project is under the [MIT License](LICENSE). By contributing, you agree that your
+  contribution is released under it too.
 - **Electron version:** YT Downloader started as an Electron app (`Khryz-Navarro/youtube-downloader`).
   That version is discontinued; all work happens here.
 
