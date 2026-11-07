@@ -404,7 +404,7 @@ $('settings').addEventListener('click', e => { // a click on the dimmed backdrop
 
 window.api.about().then(({ version, tauri }) => {
   $('app-version').textContent = `v${version}`;
-  $('about-btn').setAttribute('aria-label', `About YT Downloader v${version}`); // keeps the visible text in the name
+  $('about-btn').setAttribute('aria-label', `About ArgonStream v${version}`); // keeps the visible text in the name
   $('about-version').textContent = `Version ${version}`;
   $('about-tauri').textContent = tauri;
 });

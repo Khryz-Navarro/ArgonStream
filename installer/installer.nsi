@@ -1,4 +1,4 @@
-; Tauri CLI 2.12.4's NSIS installer template, with changes marked "YT Downloader:".
+; Tauri CLI 2.12.4's NSIS installer template, with changes marked "ArgonStream:".
 ; tauri.conf.json points bundle.windows.nsis.template here, and the release workflow pins that CLI version.
 ; When upgrading the Tauri CLI, start again from its own template and re-apply the marked changes.
 Unicode true
@@ -79,11 +79,15 @@ Var UpdateMode
 Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
-; YT Downloader: the version this run updates (set in .onInit when an older one is installed), and the
+; ArgonStream: the version this run updates (set in .onInit when an older one is installed), and the
 ; welcome page's words, which say so
 Var UpdateFrom
 Var WelcomeTitle
 Var WelcomeText
+; ArgonStream: up to v0.1.10 the app was "YT Downloader", a different product name with its own folder and
+; uninstall entry. OldInstall is its version when it's installed: this run then replaces it
+!define OLDPRODUCTNAME "YT Downloader"
+Var OldInstall
 
 Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
@@ -175,7 +179,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 
 ; Installer pages, must be ordered as they appear
 ; 1. Welcome Page
-; YT Downloader: WelcomePre fills in the title and text, so an update says it's an update
+; ArgonStream: WelcomePre fills in the title and text, so an update says it's an update
 !define MUI_WELCOMEPAGE_TITLE "$WelcomeTitle"
 !define MUI_WELCOMEPAGE_TEXT "$WelcomeText"
 !define MUI_PAGE_CUSTOMFUNCTION_PRE WelcomePre
@@ -228,7 +232,7 @@ Function FindWixInstall
 FunctionEnd
 
 Function PageReinstall
-  ; YT Downloader: an update installs over the older version, in its folder, with no uninstall choice
+  ; ArgonStream: an update installs over the older version, in its folder, with no uninstall choice
   ${IfThen} $UpdateFrom != "" ${|} Abort ${|}
 
   ; Uninstall previous WiX installation if exists.
@@ -425,7 +429,7 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-; YT Downloader: not on an update, which keeps the folder the older version is in
+; ArgonStream: not on an update, which keeps the folder the older version is in
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassiveOrUpdate
 !insertmacro MUI_PAGE_DIRECTORY
 
@@ -602,7 +606,7 @@ Function .onInit
   ${EndIf}
   !endif
 
-  ; YT Downloader: an older version installed by this installer means this run is an update.
+  ; ArgonStream: an older version installed by this installer means this run is an update.
   ; RestorePreviousInstallLocation (above) already pointed $INSTDIR at its folder.
   ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayVersion"
   ${If} $R0 != ""
@@ -610,6 +614,9 @@ Function .onInit
     Pop $R1
     ${IfThen} $R1 = 1 ${|} StrCpy $UpdateFrom $R0 ${|}
   ${EndIf}
+
+  ; ArgonStream: an installed YT Downloader (the old name) is replaced, see WelcomePre and the install section
+  ReadRegStr $OldInstall SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${OLDPRODUCTNAME}" "DisplayVersion"
 FunctionEnd
 
 Section WebView2
@@ -712,6 +719,22 @@ Section Install
   !endif
 
   !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+
+  ; ArgonStream: remove the old "YT Downloader" install first (its files, shortcuts and uninstall entry) with its
+  ; own uninstaller, run silently: it closes the old app if it's open, and keeps the app data, which both names
+  ; share because the app ID didn't change. Like the reinstall page, run it in place (_?=) and tidy up after it.
+  ${If} $OldInstall != ""
+    ReadRegStr $R0 SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${OLDPRODUCTNAME}" "UninstallString"
+    ReadRegStr $R1 SHCTX "${MANUKEY}\${OLDPRODUCTNAME}" ""
+    ${If} $R0 != ""
+    ${AndIf} $R1 != ""
+      ExecWait '$R0 /S _?=$R1' $0
+      ${If} $0 = 0
+        Delete "$R1\uninstall.exe"
+        RMDir "$R1"
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
 
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
@@ -980,22 +1003,26 @@ Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
 FunctionEnd
 
-; YT Downloader: the welcome page, worded as an update when .onInit found an older version
+; ArgonStream: the welcome page, worded as an update when .onInit found an older version
 Function WelcomePre
   ${IfThen} $PassiveMode = 1 ${|} Abort ${|}
   ${If} $UpdateFrom != ""
     StrCpy $WelcomeTitle "Update ${PRODUCTNAME}"
     StrCpy $WelcomeText "${PRODUCTNAME} $UpdateFrom is installed on this computer. Setup will update it to version ${VERSION}, in the same folder.$\r$\n$\r$\nYour settings and downloaded videos are kept. Close ${PRODUCTNAME} before you continue: downloads still running in it will stop.$\r$\n$\r$\nClick Next to update."
+  ${ElseIf} $OldInstall != ""
+    StrCpy $WelcomeTitle "Update to ${PRODUCTNAME}"
+    StrCpy $WelcomeText "${OLDPRODUCTNAME} $OldInstall is installed on this computer. It's now called ${PRODUCTNAME}: Setup will replace it with ${PRODUCTNAME} ${VERSION}.$\r$\n$\r$\nYour settings and downloaded videos are kept. Close ${OLDPRODUCTNAME} before you continue: downloads still running in it will stop.$\r$\n$\r$\nClick Next to update."
   ${Else}
     StrCpy $WelcomeTitle "$(MUI_TEXT_WELCOME_INFO_TITLE)"
     StrCpy $WelcomeText "$(MUI_TEXT_WELCOME_INFO_TEXT)"
   ${EndIf}
 FunctionEnd
 
-; YT Downloader: pages an update skips (and passive mode, like SkipIfPassive)
+; ArgonStream: pages an update skips (and passive mode, like SkipIfPassive)
 Function SkipIfPassiveOrUpdate
   ${IfThen} $PassiveMode = 1 ${|} Abort ${|}
   ${IfThen} $UpdateFrom != "" ${|} Abort ${|}
+  ${IfThen} $OldInstall != "" ${|} Abort ${|}
 FunctionEnd
 
 Function CreateOrUpdateStartMenuShortcut

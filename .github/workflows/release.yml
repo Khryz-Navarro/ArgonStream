@@ -45,6 +45,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Tauri names it "YT Downloader_<version>_x64-setup.exe"; publish it under a name without spaces
-          cp "target/release/bundle/nsis/YT Downloader_${VERSION}_x64-setup.exe" "YT-Downloader-Setup-${VERSION}.exe"
-          gh release create "v$VERSION" "YT-Downloader-Setup-${VERSION}.exe" --target "$GITHUB_SHA" --title "YT Downloader v$VERSION" --generate-notes
+          # Tauri names it "ArgonStream_<version>_x64-setup.exe"; publish it under a name with the dash
+          cp "target/release/bundle/nsis/ArgonStream_${VERSION}_x64-setup.exe" "ArgonStream-Setup-${VERSION}.exe"
+          gh release create "v$VERSION" "ArgonStream-Setup-${VERSION}.exe" --target "$GITHUB_SHA" --title "ArgonStream v$VERSION" --generate-notes

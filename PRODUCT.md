@@ -15,7 +15,7 @@ web
 
 ## Product Purpose
 
-YT Downloader turns a YouTube link into a video file on disk. Paste a link, see what it is, pick a
+ArgonStream turns a YouTube link into a video file on disk. Paste a link, see what it is, pick a
 quality, download; yt-dlp does the downloading and ffmpeg merges the video and audio streams. Success is
 the video landing in the chosen folder, in the expected quality, as one playable file, without the user
 touching yt-dlp, ffmpeg or a command line.
@@ -35,7 +35,7 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
   right) and **Downloads History** (the full-width list). Several downloads run at once.
 - People use it on large and high-DPI monitors; that is why "Text and page size" exists.
-- Installed from GitHub Releases (`YT-Downloader-Setup-<version>.exe`); each merged pull request publishes a
+- Installed from GitHub Releases (`ArgonStream-Setup-<version>.exe`); each merged pull request publishes a
   new version.
 
 ## Capabilities and Constraints
@@ -66,7 +66,8 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 
 ## Brand Commitments
 
-- Name: **YT Downloader**. Credit: **"Developed by Khryz"**, centered in the status bar and in About.
+- Name: **ArgonStream** (called YT Downloader up to v0.1.10, renamed 2026-11-08; the app ID
+  `com.khryz.ytdownloader` is kept, so settings carry over). Credit: **"Developed by Khryz"**, centered in the status bar and in About.
 - The approved look is **Contact Sheet** (chosen 2026-11-07, recorded in DESIGN.md), which replaced the v1 look
   from the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE. The redesign kept the two-tab
   layout and dark by default.

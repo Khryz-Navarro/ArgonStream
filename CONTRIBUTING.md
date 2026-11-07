@@ -1,6 +1,6 @@
-# Contributing to YT Downloader
+# Contributing to ArgonStream
 
-Thanks for helping. YT Downloader is a small Windows app built with Rust and Tauri 2. It drives
+Thanks for helping. ArgonStream is a small Windows app built with Rust and Tauri 2. It drives
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) and a bundled ffmpeg so people can save a YouTube video or its
 audio without a command line. [README.md](README.md) explains what the app does. This file covers how to
 change it.
@@ -23,7 +23,7 @@ change it.
   nobody builds something that won't be merged.
 - **License:** the project is under the [MIT License](LICENSE). By contributing, you agree that your
   contribution is released under it too.
-- **Electron version:** YT Downloader started as an Electron app (`Khryz-Navarro/youtube-downloader`).
+- **Electron version:** ArgonStream started as YT Downloader, an Electron app (`Khryz-Navarro/youtube-downloader`).
   That version is discontinued; all work happens here.
 
 ## Set up
@@ -115,7 +115,7 @@ cargo run                   # try it for real
 - **UI changes:** look at both themes and at 175%.
 - **The installer:** build it with Tauri CLI 2.12.4 (`npx @tauri-apps/cli@2.12.4 build`) when you change packaging,
   `tauri.conf.json` or `installer/installer.nsi`. That file is the CLI's own installer template with changes marked
-  `YT Downloader:`; when upgrading the CLI, start from its new template, re-apply them, and update the pinned version in
+  `ArgonStream:`; when upgrading the CLI, start from its new template, re-apply them, and update the pinned version in
   `.github/workflows/release.yml` and the README.
 
 ## Branches, commits and pull requests

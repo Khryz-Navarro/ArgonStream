@@ -470,7 +470,7 @@ fn main() {
             });
             let settings = load_settings(app.handle());
             let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
-                .title("YT Downloader")
+                .title("ArgonStream")
                 .inner_size(1040.0, 760.0)
                 .min_inner_size(900.0, 600.0)
                 .decorations(false) // the page draws the whole title bar, window buttons included
@@ -490,7 +490,7 @@ fn main() {
             }
         })
         .build(tauri::generate_context!())
-        .expect("couldn't start YT Downloader");
+        .expect("couldn't start ArgonStream");
     app.run(|app, event| {
         if let RunEvent::Exit = event {
             // don't leave downloads running headless

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- The Content-Security-Policy is in tauri.conf.json (app.security.csp), which also allows Tauri's IPC. -->
-<title>YT Downloader</title>
+<title>ArgonStream</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <header class="titlebar" data-tauri-drag-region>
   <div class="brand" data-tauri-drag-region>
     <span class="logo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/></svg></span>
-    <span class="brand-name">YT Downloader</span>
+    <span class="brand-name">ArgonStream</span>
   </div>
   <div class="tabs" role="tablist" aria-label="Views">
     <button class="tab" type="button" role="tab" id="tab-new" aria-selected="true" aria-controls="panel-new">New download</button>
@@ -21,7 +21,7 @@
     <button id="settings-btn" class="title-btn" type="button" aria-label="Settings" title="Settings">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
-    <button id="about-btn" class="title-btn" type="button" popovertarget="about" aria-label="About YT Downloader">
+    <button id="about-btn" class="title-btn" type="button" popovertarget="about" aria-label="About ArgonStream">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
       <span id="app-version"></span>
     </button>
@@ -40,7 +40,7 @@
 <div id="about" class="about" popover>
   <div class="about-head">
     <span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/></svg></span>
-    <div><div class="strong">YT Downloader</div><div class="sub" id="about-version"></div></div>
+    <div><div class="strong">ArgonStream</div><div class="sub" id="about-version"></div></div>
   </div>
   <dl class="about-list">
     <dt>yt-dlp</dt><dd id="about-ytdlp">checking…</dd>

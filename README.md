@@ -1,4 +1,4 @@
-# YT Downloader
+# ArgonStream
 
 A small Windows app for downloading YouTube videos and audio on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
 built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs yt-dlp and ffmpeg, and the
@@ -9,7 +9,8 @@ installs itself on first launch and keeps itself up to date.
 
 > **Status:** early versions (0.x) for Windows 10/11. Download the installer from
 > [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases), or run from source.
-> The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md).
+> The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md). ArgonStream was called **YT Downloader** up to
+> v0.1.10; its installer replaces an installed YT Downloader and keeps its settings.
 
 ## Contents
 
@@ -29,7 +30,7 @@ installs itself on first launch and keeps itself up to date.
 
 ## What it does
 
-YT Downloader turns a YouTube link into a video or audio file on your PC, without a command line. Two
+ArgonStream turns a YouTube link into a video or audio file on your PC, without a command line. Two
 free tools do the heavy lifting: **yt-dlp** finds and downloads the streams, and **ffmpeg** joins or
 converts them. The app installs and updates them, turns your choices into the right options, shows what's
 happening, and cleans up after itself.
@@ -264,14 +265,17 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 ## Install
 
 1. Open [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases) and download
-   `YT-Downloader-Setup-<version>.exe` from the newest release.
+   `ArgonStream-Setup-<version>.exe` from the newest release.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
 
 **To update,** run the newer installer; there's no need to uninstall first. It sees the installed version, its
-first page says **Update YT Downloader** (from which version to which), and **Next** installs the new version
+first page says **Update ArgonStream** (from which version to which), and **Next** installs the new version
 over the old one in the same folder. Your settings, yt-dlp and downloaded videos are kept. Close the app first:
 downloads still running in it stop.
+
+An installed **YT Downloader** (the app's old name) is replaced the same way: the first page says **Update to
+ArgonStream**, and the old app, its shortcuts and its uninstall entry are removed.
 
 To go back to an older version, uninstall first. Uninstall from *Settings → Apps*.
 
@@ -288,7 +292,7 @@ On the first start the status bar shows **Downloading yt-dlp…** for a few seco
 **yt-dlp &lt;version&gt; · up to date**. The Download button unlocks once yt-dlp is ready.
 The first `cargo run` compiles Tauri and takes a few minutes; later runs start in seconds.
 
-To build the installer (`target\release\bundle\nsis\YT Downloader_<version>_x64-setup.exe`), use the
+To build the installer (`target\release\bundle\nsis\ArgonStream_<version>_x64-setup.exe`), use the
 Tauri CLI 2.12.4, either `cargo install tauri-cli --version "=2.12.4" --locked` once and then `cargo tauri build`,
 or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact version: the installer is built from
 `installer/installer.nsi`, which is that version's template with a few changes (updates install in place, see
@@ -384,7 +388,7 @@ Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DES
 tools used to make them (Impeccable and other skills, listed in `skills-lock.json`) live in `.claude/`, so
 Claude Code sessions in this folder have them.
 
-YT Downloader started as an Electron app (`Khryz-Navarro/youtube-downloader`). That version is
+ArgonStream started as YT Downloader, an Electron app (`Khryz-Navarro/youtube-downloader`). That version is
 discontinued; all development happens here.
 
 ### Releasing: pull request → merge → automatic release
@@ -405,8 +409,8 @@ Changes reach `main` only through a **pull request**, and every pull request car
 3. Review and **merge the pull request** on GitHub.
 4. **GitHub publishes the release by itself.** The merge starts the
    [Release workflow](.github/workflows/release.yml): if `v0.1.1` has no release yet, it runs the tests,
-   builds the installer, and creates the GitHub Release *YT Downloader v0.1.1* (and its `v0.1.1` tag)
-   with `YT-Downloader-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
+   builds the installer, and creates the GitHub Release *ArgonStream v0.1.1* (and its `v0.1.1` tag)
+   with `ArgonStream-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
 
 The **pre-push hook** (`.githooks/pre-push`) blocks pushes straight to `main`, and blocks a branch push
 whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh clone you can also run
@@ -454,5 +458,5 @@ before running it; otherwise both would ship the same version.
 Only download videos you have the right to save. Downloading may be against YouTube's Terms of
 Service and copyright law where you live; you are responsible for how you use this tool.
 
-YT Downloader's own code is released under the [MIT License](LICENSE). yt-dlp and ffmpeg are separate
+ArgonStream's own code is released under the [MIT License](LICENSE). yt-dlp and ffmpeg are separate
 programs under their own licenses (above); the app runs them but doesn't change them.
