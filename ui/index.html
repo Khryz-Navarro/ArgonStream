@@ -92,8 +92,15 @@
     </div>
 
     <div class="quality">
-      <div class="label"><span class="k" id="q-label">Quality</span><span class="note">All options include best audio</span></div>
-      <div class="opts" role="radiogroup" aria-labelledby="q-label">
+      <div class="label">
+        <span class="k" id="q-label">Quality</span>
+        <div class="kind" role="radiogroup" aria-label="Download as">
+          <label><input type="radio" name="kind" value="video">Video</label>
+          <label><input type="radio" name="kind" value="audio">Audio</label>
+        </div>
+      </div>
+      <p id="q-note" class="note">All options include best audio</p>
+      <div id="video-opts" class="opts" role="radiogroup" aria-labelledby="q-label">
         <label class="opt"><input type="radio" name="quality" value="best4k"><span class="radio"></span><span class="txt"><span class="t">4K Best</span><span class="d">Up to 2160p · original codec, highest bitrate</span></span><span class="chip">MKV</span></label>
         <label class="opt"><input type="radio" name="quality" value="mp4_4k"><span class="radio"></span><span class="txt"><span class="t">4K</span><span class="d">Up to 2160p</span></span><span class="chip">MP4</span></label>
         <label class="opt"><input type="radio" name="quality" value="mp4_1080"><span class="radio"></span><span class="txt"><span class="t">1080p</span><span class="d">Full HD</span></span><span class="chip">MP4</span></label>
@@ -110,6 +117,14 @@
             <option value="mp4" selected>MP4</option><option value="mkv">MKV</option><option value="webm">WebM</option>
           </select>
         </div>
+      </div>
+      <!-- Audio only: the best audio stream, converted by the bundled ffmpeg (only formats it can encode) -->
+      <div id="audio-opts" class="opts" role="radiogroup" aria-labelledby="q-label" hidden>
+        <label class="opt"><input type="radio" name="audio" value="audio-mp3"><span class="radio"></span><span class="txt"><span class="t">MP3</span><span class="d">Plays everywhere · best quality VBR</span></span><span class="chip">MP3</span></label>
+        <label class="opt"><input type="radio" name="audio" value="audio-aac"><span class="radio"></span><span class="txt"><span class="t">AAC</span><span class="d">Same quality, smaller files</span></span><span class="chip">M4A</span></label>
+        <label class="opt"><input type="radio" name="audio" value="audio-wav"><span class="radio"></span><span class="txt"><span class="t">WAV</span><span class="d">Uncompressed, very large files</span></span><span class="chip">WAV</span></label>
+        <label class="opt"><input type="radio" name="audio" value="audio-flac"><span class="radio"></span><span class="txt"><span class="t">FLAC</span><span class="d">Lossless, about half the size of WAV</span></span><span class="chip">FLAC</span></label>
+        <label class="opt"><input type="radio" name="audio" value="audio-wma"><span class="radio"></span><span class="txt"><span class="t">WMA</span><span class="d">Windows Media Audio</span></span><span class="chip">WMA</span></label>
       </div>
     </div>
 

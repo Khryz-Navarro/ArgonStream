@@ -38,7 +38,23 @@ fn container(ext: &str, h: u32) -> Option<Vec<String>> {
     })
 }
 
-/// A preset key, or "custom-<container>-<height>" from the Custom row (validated: it comes from the page).
+// Audio-only downloads: the page's key, the file extension, and the name shown in messages. yt-dlp fetches the
+// best audio stream as-is and the app converts it with the bundled ffmpeg (yt-dlp's own -x can't make WMA and
+// wants ffprobe, which isn't bundled). Only formats the bundled ffmpeg can encode are listed.
+const AUDIO: [(&str, &str, &str); 5] = [
+    ("audio-mp3", "mp3", "MP3"),
+    ("audio-aac", "m4a", "AAC"),
+    ("audio-wav", "wav", "WAV"),
+    ("audio-flac", "flac", "FLAC"),
+    ("audio-wma", "wma", "WMA"),
+];
+
+/// For an audio-only key, the file extension it ends up with and its display name.
+pub fn audio_target(quality: &str) -> Option<(&'static str, &'static str)> {
+    AUDIO.iter().find(|(key, ..)| *key == quality).map(|(_, ext, name)| (*ext, *name))
+}
+
+/// A preset key, an audio key, or "custom-<container>-<height>" from the Custom row (validated: it comes from the page).
 pub fn quality_args(quality: &str) -> Result<Vec<String>, String> {
     let args = match quality {
         "best4k" => container("mkv", 2160),
@@ -46,6 +62,9 @@ pub fn quality_args(quality: &str) -> Result<Vec<String>, String> {
         "mp4_1080" => container("mp4", 1080),
         "mp4_720" => container("mp4", 720),
         "mp4_default" => Some(strings(&["-t", "mp4"])), // yt-dlp's own MP4 preset (H.264 + AAC preferred)
+        // YouTube's AAC comes as .m4a, so AAC prefers it and needs no conversion
+        "audio-aac" => Some(strings(&["-f", "ba[ext=m4a]/ba/b"])),
+        q if audio_target(q).is_some() => Some(strings(&["-f", "ba/b"])),
         _ => quality.strip_prefix("custom-").and_then(|rest| rest.split_once('-')).and_then(|(ext, h)| {
             let h: u32 = h.bytes().all(|b| b.is_ascii_digit()).then(|| h.parse().ok())??;
             if HEIGHTS.contains(&h) { container(ext, h) } else { None }
@@ -71,6 +90,19 @@ pub fn info_args(url: &str) -> Vec<String> {
     ])
 }
 
+// Videos: the resolution keeps different qualities of one video from sharing a name, which made yt-dlp skip a
+// new download as "already downloaded"; `&...|` leaves it out when there's no height.
+// Audio: the stream is only the source for the conversion, so it gets yt-dlp's own ".f<format>" naming plus the
+// target ("Title [id].f251-mp3.webm"). It can never be mistaken for a finished "Title [id].mp3" (which yt-dlp
+// would report as already downloaded, and the conversion would then delete), and two formats of one video
+// downloading at once don't share a file.
+fn output_template(quality: &str) -> String {
+    match audio_target(quality) {
+        Some((ext, _)) => format!("%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"),
+        None => OUTPUT_TEMPLATE.to_string(),
+    }
+}
+
 pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str>) -> Result<Vec<String>, String> {
     let mut args = quality_args(quality)?;
     args.extend(strings(&[
@@ -78,9 +110,7 @@ pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str
         "--progress-template", "download:DL|%(info.vcodec)s|%(progress)j",
         "--print", "video:META|%(.{title,thumbnail})j",
         "--print", "after_move:FILE|%(filepath)s",
-        // The resolution keeps different qualities of one video from sharing a name, which made yt-dlp
-        // skip a new download as "already downloaded". `&...|` leaves it out when there's no height.
-        "-P", folder, "-o", OUTPUT_TEMPLATE,
+        "-P", folder, "-o", &output_template(quality),
     ]));
     if let Some(ffmpeg) = ffmpeg {
         args.extend(strings(&["--ffmpeg-location", ffmpeg]));
@@ -116,21 +146,49 @@ pub fn parse_line(line: &str) -> Option<Value> {
     }
 }
 
-// "Title [id].f701.mp4" -> "Title [id]": what the JS regex /(\.f[^.]+)?\.[^.]+$/ strips.
+// "Title [id].f701.mp4" -> "Title [id]": drops the extension and a yt-dlp format id (".f701"). Format ids have
+// no spaces, so a title like "Best.fails [id].webm" keeps its ".fails [id]".
 fn stem(name: &str) -> &str {
     let Some((base, _)) = name.rsplit_once('.').filter(|(_, ext)| !ext.is_empty()) else { return name };
     match base.rsplit_once('.') {
-        Some((stem, format)) if format.len() > 1 && format.starts_with('f') => stem,
+        Some((stem, format)) if format.len() > 1 && format.starts_with('f') && !format.contains(' ') => stem,
         _ => base,
     }
 }
 
+/// File names for converting a downloaded audio file: "Title [id].f251-mp3.webm" + "mp3" ->
+/// ("Title [id].f251-mp3.temp.mp3", "Title [id].mp3"). The temp name follows yt-dlp's own temp naming, so
+/// `leftover_names` cleans it up, and it never collides with another format's conversion.
+pub fn audio_names(name: &str, ext: &str) -> (String, String) {
+    let base = name.rsplit_once('.').map_or(name, |(base, _)| base);
+    (format!("{base}.temp.{ext}"), format!("{}.{ext}", stem(name)))
+}
+
+/// ffmpeg arguments that turn a downloaded audio file into `output` (the `.temp.` name from `audio_names`).
+pub fn convert_args(input: &str, output: &str, ext: &str) -> Vec<String> {
+    let codec: &[&str] = match ext {
+        "mp3" => &["-c:a", "libmp3lame", "-q:a", "0"], // LAME V0: the best VBR quality, about 245 kbps
+        "m4a" => &["-c:a", "aac", "-b:a", "192k"],
+        "wav" => &["-c:a", "pcm_s16le", "-rf64", "auto"], // RF64 only past 4 GB
+        "flac" => &["-c:a", "flac"],
+        // WMA can't hold more than 2 channels or rates above 48 kHz; 44.1 kHz stereo plays everywhere
+        "wma" => &["-c:a", "wmav2", "-b:a", "192k", "-ac", "2", "-ar", "44100"],
+        _ => &[], // not reachable from AUDIO; ffmpeg would pick the extension's default encoder
+    };
+    let mut args = strings(&["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-i", input, "-vn"]);
+    args.extend(strings(codec));
+    args.push(output.to_string());
+    args
+}
+
 /// Which entries of a folder listing are leftovers of one download. `streams` are the file names yt-dlp
 /// reported writing ("Title [id].f701.mp4"); leftovers are those files, their .part / .part-FragN /
-/// .ytdl files, and ffmpeg's merge temp file ("Title [id].temp.mkv"). Anything else, like an earlier
-/// download of the same video in another quality, never matches.
+/// .ytdl files, ffmpeg's merge temp file ("Title [id].temp.mkv"), and a temp file named after the stream
+/// itself ("Title [id].f251-mp3.temp.mp3": an audio conversion, or yt-dlp's fix-up of an .m4a). Anything else,
+/// like an earlier download of the same video in another quality, never matches.
 pub fn leftover_names<'a>(streams: &[String], names: &'a [String]) -> Vec<&'a String> {
-    let stems: Vec<String> = streams.iter().map(|s| format!("{}.temp.", stem(s))).collect();
+    let own_temps = streams.iter().map(|s| format!("{}.temp.", s.rsplit_once('.').map_or(s.as_str(), |(base, _)| base)));
+    let stems: Vec<String> = streams.iter().map(|s| format!("{}.temp.", stem(s))).chain(own_temps).collect();
     names
         .iter()
         .filter(|n| {
@@ -209,8 +267,72 @@ mod tests {
     }
 
     #[test]
+    fn audio_keys_download_only_the_best_audio_stream() {
+        assert_eq!(quality_args("audio-aac").unwrap(), ["-f", "ba[ext=m4a]/ba/b"]);
+        for (key, ext) in [("audio-mp3", "mp3"), ("audio-aac", "m4a"), ("audio-wav", "wav"), ("audio-flac", "flac"), ("audio-wma", "wma")] {
+            if key != "audio-aac" {
+                assert_eq!(quality_args(key).unwrap(), ["-f", "ba/b"], "{key}");
+            }
+            let args = download_args("https://youtu.be/x", key, "C:\\out", Some("ff.exe")).unwrap();
+            assert!(!args.iter().any(|a| a == "-x" || a == "--merge-output-format"), "{key}: no extraction or merge");
+            // the source gets its own ".f<format>-<target>" name, never the finished file's
+            assert_eq!(after(&args, "-o"), format!("%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"));
+            assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
+        }
+        assert_eq!(audio_target("audio-mp3"), Some(("mp3", "MP3")));
+        assert_eq!(audio_target("audio-aac"), Some(("m4a", "AAC")));
+        assert_eq!(audio_target("audio-wav"), Some(("wav", "WAV")));
+        assert_eq!(audio_target("audio-flac"), Some(("flac", "FLAC")));
+        assert_eq!(audio_target("audio-wma"), Some(("wma", "WMA")));
+        assert_eq!(audio_target("mp4_1080"), None);
+    }
+
+    #[test]
+    fn convert_args_pick_each_formats_encoder() {
+        let codec = |ext| {
+            let a = convert_args("C:\\out\\T [x].f251-mp3.webm", "C:\\out\\T [x].f251-mp3.temp.out", ext);
+            assert_eq!(a[..8], ["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-i", "C:\\out\\T [x].f251-mp3.webm", "-vn"]);
+            assert_eq!(a.last().unwrap(), "C:\\out\\T [x].f251-mp3.temp.out");
+            a[8..a.len() - 1].join(" ")
+        };
+        assert_eq!(codec("mp3"), "-c:a libmp3lame -q:a 0");
+        assert_eq!(codec("m4a"), "-c:a aac -b:a 192k");
+        assert_eq!(codec("wav"), "-c:a pcm_s16le -rf64 auto");
+        assert_eq!(codec("flac"), "-c:a flac");
+        assert_eq!(codec("wma"), "-c:a wmav2 -b:a 192k -ac 2 -ar 44100");
+    }
+
+    #[test]
+    fn audio_names_keep_the_title_and_mark_the_temp_file() {
+        assert_eq!(
+            audio_names("Me at the zoo [jNQXAC9IVRw].f251-mp3.webm", "mp3"),
+            ("Me at the zoo [jNQXAC9IVRw].f251-mp3.temp.mp3".into(), "Me at the zoo [jNQXAC9IVRw].mp3".into())
+        );
+        assert_eq!(audio_names("Best.fails [x].f251-wav.webm", "wav").1, "Best.fails [x].wav"); // a dot in the title survives
+        assert_eq!(audio_names("T [x].f140-m4a.m4a", "m4a").1, "T [x].m4a"); // AAC: only a rename
+    }
+
+    #[test]
+    fn leftover_names_cleans_up_an_audio_download_but_keeps_finished_files() {
+        let streams = strings(&["Mr. T [abc].f251-mp3.webm"]);
+        let folder = strings(&[
+            "Mr. T [abc].f251-mp3.webm.part",     // interrupted download
+            "Mr. T [abc].f251-mp3.webm",          // downloaded, conversion canceled
+            "Mr. T [abc].f251-mp3.temp.mp3",      // half-written conversion
+            "Mr. T [abc].mp3",                    // an earlier finished MP3: keep
+            "Mr. T [abc].f251-wav.webm.part",     // a WAV of the same video downloading at the same time: keep
+            "Mr. T [abc].f251-wav.temp.wav",      // and its conversion: keep
+        ]);
+        assert_eq!(leftover_names(&streams, &folder), folder[..3].iter().collect::<Vec<_>>());
+        // yt-dlp's own fix-up of an .m4a writes "<file minus ext>.temp.m4a"
+        let m4a = strings(&["T [x].f140-m4a.m4a"]);
+        let folder = strings(&["T [x].f140-m4a.temp.m4a", "T [x].m4a"]);
+        assert_eq!(leftover_names(&m4a, &folder), folder[..1].iter().collect::<Vec<_>>());
+    }
+
+    #[test]
     fn unknown_quality_is_rejected() {
-        for quality in ["nope", "toString", "custom-mp4-1000", "custom-avi-1080", "custom-mp4-1080 --exec x", "custom-mp4-+1080", "custom-mp4-"] {
+        for quality in ["nope", "toString", "custom-mp4-1000", "custom-avi-1080", "custom-mp4-1080 --exec x", "custom-mp4-+1080", "custom-mp4-", "audio-ogg", "audio-", "audio-mp3 --exec x"] {
             let err = download_args("https://youtu.be/x", quality, ".", None).unwrap_err();
             assert!(err.contains("Unknown quality"), "{quality}");
         }
@@ -294,7 +416,9 @@ mod tests {
         assert_eq!(stem("A [q].mp4"), "A [q]");
         assert_eq!(stem("A."), "A.");
         assert_eq!(stem("noext"), "noext");
-        assert_eq!(stem("x.f.mp4"), "x.f"); // "\.f[^.]+" needs a character after the f
+        assert_eq!(stem("x.f.mp4"), "x.f"); // a format id needs a character after the f
+        assert_eq!(stem("Best.fails [x].webm"), "Best.fails [x]"); // ".fails [x]" has a space: title, not a format id
+        assert_eq!(stem("Best.fails [x].f251.webm"), "Best.fails [x]");
     }
 
     #[test]

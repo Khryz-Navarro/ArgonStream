@@ -63,7 +63,7 @@ for (const tab of tabs) {
 
 const savedQuality = document.querySelector(`input[name=quality][value="${store.get('quality', 'best4k')}"]`);
 (savedQuality || document.querySelector('input[name=quality]')).checked = true;
-document.querySelector('.opts').addEventListener('change', e => {
+$('video-opts').addEventListener('change', e => {
   if (e.target.name === 'quality') store.set('quality', e.target.value);
 });
 
@@ -79,8 +79,32 @@ for (const select of [$('customRes'), $('customExt')]) {
   select.addEventListener('change', () => { store.set(select.id, select.value); pickCustom(); });
 }
 
-// The value sent to main, plus the chip text shown on the download item.
+// Audio only: its own remembered pick. The Video / Audio switch shows one set of rows at a time, and each set
+// keeps its own choice.
+const savedAudio = document.querySelector(`input[name=audio][value="${store.get('audio', 'audio-mp3')}"]`);
+(savedAudio || document.querySelector('input[name=audio]')).checked = true;
+$('audio-opts').addEventListener('change', e => store.set('audio', e.target.value));
+
+function showKind(kind) {
+  $('video-opts').hidden = kind !== 'video';
+  $('audio-opts').hidden = kind !== 'audio';
+  $('q-note').textContent = kind === 'audio' ? 'Audio only, no video' : 'All options include best audio';
+}
+const savedKind = store.get('qualityKind', 'video') === 'audio' ? 'audio' : 'video';
+document.querySelector(`input[name=kind][value=${savedKind}]`).checked = true;
+showKind(savedKind);
+document.querySelector('.kind').addEventListener('change', e => {
+  store.set('qualityKind', e.target.value);
+  showKind(e.target.value);
+});
+
+// The value sent to main, plus the chip text shown on the download item (and, for audio, the format's name).
 function chosenQuality() {
+  if (document.querySelector('input[name=kind]:checked').value === 'audio') {
+    const input = document.querySelector('input[name=audio]:checked');
+    const format = input.closest('.opt').querySelector('.t').textContent;
+    return { quality: input.value, label: `Audio · ${format}`, format };
+  }
   const q = document.querySelector('input[name=quality]:checked').value;
   if (q !== 'custom') return { quality: q, label: QUALITY_LABEL[q] };
   const res = $('customRes');
@@ -194,7 +218,7 @@ function render(job) {
   q('.reveal').hidden = job.state !== 'done' || !job.file;
   q('.retry').hidden = !['error', 'canceled'].includes(job.state);
   q('.delete').hidden = !FINISHED.includes(job.state);
-  const deleteLabel = job.state === 'done' ? 'Delete the video (moves it to the Recycle Bin)' : 'Delete the leftover partial files';
+  const deleteLabel = job.state === 'done' ? 'Delete the downloaded file (moves it to the Recycle Bin)' : 'Delete the leftover partial files';
   q('.delete').title = deleteLabel;
   q('.delete').setAttribute('aria-label', deleteLabel);
 
@@ -211,7 +235,8 @@ function render(job) {
     ].filter(Boolean).join(' · ');
   } else if (job.state === 'processing') {
     pct = 100;
-    msg = job.stream === 'audio' ? 'Merging video and audio…' : 'Processing…';
+    if (job.format) msg = `Converting to ${job.format}…`; // audio only: the backend converts the downloaded stream
+    else msg = job.stream === 'audio' ? 'Merging video and audio…' : 'Processing…';
   } else if (job.state === 'done') msg = 'Done'; // the size is the row's big number
   else if (paused) {
     pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;

@@ -43,15 +43,18 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 - **Quality:** five presets (4K Best MKV; 4K, 1080p and 720p MP4 preferring H.264; Default MP4 via `-t mp4`)
   and a Custom row (max resolution 8K–144p × MP4/MKV/WebM). Every option includes the best audio. The
   exact yt-dlp arguments are in `src/ytdlp.rs` and the README.
+- **Audio only:** a Video / Audio switch in Quality. Audio saves the best audio stream as MP3 (best VBR),
+  AAC (.m4a, YouTube's own AAC kept as it is), WAV, FLAC or WMA, converted by the bundled ffmpeg. Only
+  formats that ffmpeg can encode are offered.
 - **Downloads list:** progress, size, speed and time left; Pause/Resume, Cancel, Retry, Show in folder,
   Delete, Clear finished. Delete removes only files yt-dlp reported for that download: leftovers
-  permanently, a finished video to the Recycle Bin after a confirm.
+  permanently, a finished file to the Recycle Bin after a confirm.
 - **Managed tools:** yt-dlp downloads on first launch and runs `yt-dlp -U` every launch; the status bar
   shows its version and update state. ffmpeg is bundled.
 - **Settings:** Theme (Light, Dark, Desktop = follow Windows) and Text and page size (100/125/150/175%).
   About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
-- **Terminology in the UI:** New download, Downloads, Quality, Custom, Paste, Change, Download, Show in
-  folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size.
+- **Terminology in the UI:** New download, Downloads, Quality, Video, Audio, Custom, Paste, Change, Download,
+  Show in folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size.
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
   cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
