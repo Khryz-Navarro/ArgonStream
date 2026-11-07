@@ -361,6 +361,9 @@ cargo test    # presets, argument building, output parsing, leftover matching
 cargo run     # run the app (debug build, with a console for logs)
 ```
 
+Want to help? [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, where code goes, the safety rules, common
+changes and how pull requests work.
+
 Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). The design
 tools used to make them (Impeccable and other skills, listed in `skills-lock.json`) live in `.claude/`, so
 Claude Code sessions in this folder have them.
