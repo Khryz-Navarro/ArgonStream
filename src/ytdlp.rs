@@ -1,5 +1,5 @@
 // Pure helpers for driving yt-dlp: argument building and output parsing.
-// No Tauri here, so `cargo test` covers it. A port of the Electron app's src/ytdlp.js.
+// No Tauri here, so `cargo test` covers it.
 
 use serde_json::{Value, json};
 
@@ -200,7 +200,7 @@ mod tests {
             assert!(q(k).iter().any(|a| a == "mp4"));
         }
         assert_eq!(q("mp4_default"), ["-t", "mp4"]);
-        // exactly the Electron app's arguments, in the same order
+        // the exact arguments, in order, as the README documents them
         assert_eq!(q("mp4_1080"), [
             "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b", "--merge-output-format", "mp4", "--remux-video", "mp4",
             "-S", "res:1080,vcodec:h264",
@@ -289,7 +289,7 @@ mod tests {
     }
 
     #[test]
-    fn stem_matches_the_electron_regex() {
+    fn stem_strips_the_format_id_and_extension() {
         assert_eq!(stem("Mr. T [abc].f701.mp4"), "Mr. T [abc]");
         assert_eq!(stem("A [q].mp4"), "A [q]");
         assert_eq!(stem("A."), "A.");

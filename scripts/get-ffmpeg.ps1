@@ -1,6 +1,5 @@
 # Downloads the ffmpeg the app bundles into binaries/, where tauri.conf.json's bundle.externalBin
-# expects it. Run once before the first build. It's the same build the Electron version gets from
-# the ffmpeg-static npm package (release b6.1.1).
+# expects it. Run once before the first build. It's the ffmpeg-static project's Windows build (release b6.1.1).
 $ErrorActionPreference = 'Stop'
 $base = 'https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1'
 $dir = Join-Path $PSScriptRoot '..\binaries'

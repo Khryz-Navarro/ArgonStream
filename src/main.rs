@@ -1,4 +1,4 @@
-// The app's backend, the Rust counterpart of the Electron app's src/main.js: installs and updates yt-dlp,
+// The app's backend: installs and updates yt-dlp,
 // runs downloads (pause/cancel with a Windows process-tree kill), deletes leftovers, and applies the
 // Settings window's theme and page size. The page talks to it through ui/api.js.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]

@@ -7,7 +7,7 @@ related_targets: ["ui/styles.css","ui/renderer.js"]
 
 # App window (New download and Downloads tabs)
 
-Scope: the whole app UI in `ui/` (Rust/Tauri build first; the Electron renderer follows). Mode: Operate.
+Scope: the whole app UI in `ui/` Mode: Operate.
 Audience and job: the public on Windows 11 pasting a YouTube link, choosing a quality, and watching downloads
 finish. Constraints: keep the two-tab layout, every control, all copy and behavior; dark by default with
 Light and Desktop themes; usable at 100–175% page size; native-looking window buttons.
@@ -26,7 +26,6 @@ FORM: Film contact sheet and edge codes, candidate 4 of 7. seed:65c3bcbedc111697
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
-## Open decisions
+## Decisions since
 
-- The Electron renderer gets the same change once the other session's work there is merged.
 - Short windows (150% and 175% page size) turn the film frame sideways so Download stays in the first viewport.

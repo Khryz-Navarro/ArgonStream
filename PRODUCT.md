@@ -8,7 +8,7 @@ web
 
 ## Users
 
-- **The public:** people on Windows 10/11 who want to save YouTube videos to their PC. Both repositories are
+- **The public:** people on Windows 10/11 who want to save YouTube videos to their PC. The repository is
   private today; a public release is the intent, with no date set.
 - **People evaluating Khryz's work:** the app is also a portfolio piece, so its code, README and release
   flow are read by employers or clients, not only used.
@@ -25,15 +25,13 @@ touching yt-dlp, ffmpeg or a command line.
 A small, quiet app that feels at home on Windows 11, rather than a web page in a window or a front-end
 that exposes yt-dlp's options. It follows Windows conventions: its own title bar with Windows-style
 window buttons, a theme that can follow the Windows setting, finished videos deleted to the Recycle Bin,
-and "Show in folder" opening File Explorer. The Rust build makes the size claim concrete: its installer is
-22.6 MiB against 137 MiB for the Electron build.
+and "Show in folder" opening File Explorer. Its installer is about 23 MB, most of it the bundled ffmpeg.
 
 ## Operating Context
 
-- A Windows desktop app built twice from one UI: **Electron** (`Khryz-Navarro/youtube-downloader`) and
-  **Rust/Tauri 2** (`Khryz-Navarro/youtube-downloader-rust`, this repo, rendered by WebView2). The UI is
-  HTML/CSS/JS; the Electron repo's `src/renderer/` is the original and this repo's `ui/` is a copy with
-  a few Tauri-only edits.
+- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/youtube-downloader-rust`). The UI is
+  HTML/CSS/JS in `ui/`, rendered by WebView2; the Rust backend in `src/` runs yt-dlp and ffmpeg. It began
+  as an Electron app (`Khryz-Navarro/youtube-downloader`), discontinued on 2026-11-07.
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
   right) and **Downloads** (the full-width list). Several downloads run at once.
 - People use it on large and high-DPI monitors; that is why "Text and page size" exists.
@@ -57,25 +55,22 @@ and "Show in folder" opening File Explorer. The Rust build makes the size claim 
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
   cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
-- **Undecided:** no license has been chosen; no date for making the repositories public.
+- **Undecided:** no license has been chosen; no date for making the repository public.
 
 ## Brand Commitments
 
 - Name: **YT Downloader**. Credit: **"Developed by Khryz"**, centered in the status bar and in About.
 - The approved look is **Contact Sheet** (chosen 2026-11-07, recorded in DESIGN.md), which replaced the v1 look
   from the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE. The redesign kept the two-tab
-  layout and dark by default. The Rust build has it first; the Electron build is to follow, and then both
-  stay identical to each other.
-- Icons are Lucide (ISC). The Rust build's app icon (`icons/icon.svg`) is the title-bar logo tile;
-  the Electron build still uses Electron's default icon.
+  layout and dark by default.
+- Icons are Lucide (ISC). The app icon (`icons/icon.svg`) is the title-bar logo tile.
 - The README keeps the legal note: only download videos you have the right to save.
 
 ## Evidence on Hand
 
-- Screenshots, in the Electron repo: `docs/images/app.png` (New download), `docs/images/downloads.png`
-  (Downloads).
+- No screenshots of the current look are committed yet.
 - README tables of each preset's yt-dlp options and what each picked for a 4K/60fps test video.
-- Installer sizes: Electron 137 MiB, Rust 22.6 MiB (Release v0.1.0 of this repo).
+- Installer size: about 22.7 MiB (`YT-Downloader-Setup-0.1.2.exe` on Releases).
 - There are no users, download counts, reviews, testimonials or press yet. Don't invent any.
 
 ## Product Principles
@@ -85,9 +80,7 @@ and "Show in folder" opening File Explorer. The Rust build makes the size claim 
 2. **Stay small and quiet.** Weigh every addition against size and calm; the footprint is part of the pitch.
 3. **Public-grade, portfolio-grade.** A stranger installs and uses it without help, and the code, README
    and release flow hold up when someone reviews them.
-4. **One product, two builds.** Electron and Rust/Tauri keep the same features and look; a UI change lands
-   in both.
-5. **Never surprise people with their files.** Delete only what this app created; anything finished goes
+4. **Never surprise people with their files.** Delete only what this app created; anything finished goes
    to the Recycle Bin, and only after asking.
 
 ## Accessibility & Inclusion
