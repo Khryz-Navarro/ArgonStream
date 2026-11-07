@@ -65,6 +65,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "argonstream"
+version = "0.1.11"
+dependencies = [
+ "arboard",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "trash",
+ "url",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4781,20 +4795,6 @@ dependencies = [
  "quote",
  "syn 3.0.9",
  "synstructure",
-]
-
-[[package]]
-name = "yt-downloader"
-version = "0.1.10"
-dependencies = [
- "arboard",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "trash",
- "url",
 ]
 
 [[package]]
