@@ -268,7 +268,12 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
 
-To update, install the newer release over the old one. Uninstall from *Settings → Apps*.
+**To update,** run the newer installer; there's no need to uninstall first. It sees the installed version, its
+first page says **Update YT Downloader** (from which version to which), and **Next** installs the new version
+over the old one in the same folder. Your settings, yt-dlp and downloaded videos are kept. Close the app first:
+downloads still running in it stop.
+
+To go back to an older version, uninstall first. Uninstall from *Settings → Apps*.
 
 ## Run from source
 
@@ -284,8 +289,10 @@ On the first start the status bar shows **Downloading yt-dlp…** for a few seco
 The first `cargo run` compiles Tauri and takes a few minutes; later runs start in seconds.
 
 To build the installer (`target\release\bundle\nsis\YT Downloader_<version>_x64-setup.exe`), use the
-Tauri CLI, either `cargo install tauri-cli --version "^2" --locked` once and then `cargo tauri build`,
-or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
+Tauri CLI 2.12.4, either `cargo install tauri-cli --version "=2.12.4" --locked` once and then `cargo tauri build`,
+or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact version: the installer is built from
+`installer/installer.nsi`, which is that version's template with a few changes (updates install in place, see
+[Install](#install)).
 
 ## Using the app
 

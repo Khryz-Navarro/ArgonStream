@@ -113,7 +113,10 @@ cargo run                   # try it for real
 - **Anything touching downloads:** run a real download. Try Pause/Resume, Cancel, Retry and Delete if
   your change could affect them.
 - **UI changes:** look at both themes and at 175%.
-- **The installer:** build it with `cargo tauri build` when you change packaging or `tauri.conf.json`.
+- **The installer:** build it with Tauri CLI 2.12.4 (`npx @tauri-apps/cli@2.12.4 build`) when you change packaging,
+  `tauri.conf.json` or `installer/installer.nsi`. That file is the CLI's own installer template with changes marked
+  `YT Downloader:`; when upgrading the CLI, start from its new template, re-apply them, and update the pinned version in
+  `.github/workflows/release.yml` and the README.
 
 ## Branches, commits and pull requests
 
