@@ -1,6 +1,6 @@
 # YT Downloader
 
-A small Windows app for downloading YouTube videos on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
+A small Windows app for downloading YouTube videos and audio on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
 built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs yt-dlp and ffmpeg, and the
 window is drawn by Windows' built-in WebView2. The installer is about 23 MB, most of it ffmpeg.
 
@@ -13,6 +13,7 @@ installs itself on first launch and keeps itself up to date.
 
 ## Contents
 
+- [What it does](#what-it-does)
 - [Features](#features)
 - [Quality options](#quality-options)
 - [Requirements](#requirements)
@@ -26,22 +27,161 @@ installs itself on first launch and keeps itself up to date.
 - [Known limitations](#known-limitations)
 - [Credits and legal](#credits-and-legal)
 
+## What it does
+
+YT Downloader turns a YouTube link into a video or audio file on your PC, without a command line. Two
+free tools do the heavy lifting: **yt-dlp** finds and downloads the streams, and **ffmpeg** joins or
+converts them. The app installs and updates them, turns your choices into the right options, shows what's
+happening, and cleans up after itself.
+
+### From link to file
+
+1. **It gets its tools ready.** Every time it starts, the app checks that yt-dlp is there (downloading it
+   the first time) and lets it update itself, because YouTube changes often and old versions stop
+   working. The status bar shows the yt-dlp version and whether it's up to date. Downloads wait until this
+   check is done, so yt-dlp is never replaced in the middle of one.
+2. **It looks the link up.** When you paste a link, the app asks yt-dlp about the video without
+   downloading it and shows the thumbnail, title, channel, length and the highest resolution available.
+   Only web (`http`/`https`) links are accepted, one video per link: a link with `&list=` gets just the
+   video it points to.
+3. **It turns your choice into yt-dlp options.** Pick a preset (4K Best, 4K, 1080p, 720p or Default), a
+   Custom resolution and file type, or switch to Audio and pick a format. The app turns that into
+   yt-dlp's format rules (see [Quality options](#quality-options)). If the video doesn't reach the
+   resolution you picked, you get the best one below it.
+4. **It downloads and joins the pieces.** YouTube serves high-quality video and its sound as separate
+   streams. yt-dlp downloads both, then the bundled ffmpeg merges them into one playable file. For audio,
+   ffmpeg converts the sound into the format you chose instead. The **Downloads** tab shows each stage
+   (video, audio, merging or converting) with size, speed and time left. Several downloads can run at
+   once, each in its own yt-dlp process.
+5. **It names and saves the file.** The finished file goes to the folder you chose, named in your
+   [File names](#file-names) style (Classic by default: `Video Title (1080p).mp4`). It never overwrites a
+   file that's already there.
+6. **It lets you manage downloads.**
+   - **Pause** keeps the partial file, and **Resume** continues from it.
+   - **Cancel** stops a download. **Retry** starts it again, picking up any partial file.
+   - **Show in folder** opens File Explorer with the file selected.
+   - **Delete** removes what that download left behind: unfinished pieces are deleted for good, and a
+     finished file goes to the Recycle Bin after you confirm. It only touches files yt-dlp reported
+     writing for that download.
+   - **Clear finished** tidies the list without touching any files.
+
+It also remembers your last quality, your folder and your Settings (theme, text and page size, file names).
+
+### What it doesn't do
+
+- It doesn't sign in to YouTube, so age-restricted and members-only videos fail.
+- It downloads one video per link; whole playlists and channels aren't supported.
+- It doesn't update itself: install new versions from Releases. (yt-dlp does update itself, at every start.)
+- It's made and tested for YouTube on Windows. yt-dlp supports many other sites and the app accepts any
+  web link, but other sites aren't tested.
+
 ## Features
 
-- **Five quality presets:** 4K Best (MKV), 4K, 1080p and 720p MP4 (H.264 preferred), and Default MP4.
-- **Custom quality:** any maximum resolution from 8K down to 144p, as MP4, MKV or WebM. Every option includes the best available audio.
-- **Audio only:** switch Quality from *Video* to *Audio* to save just the sound as MP3, AAC (.m4a), WAV, FLAC or WMA.
-- **Video preview** as soon as you paste a link: thumbnail, title, channel, length and the highest resolution available.
-- **Two tabs:** *New download* (link box, preview, save folder and Download on the left, quality on the right) and *Downloads* (the full-width list). The Downloads tab shows a count that turns orange while something is downloading.
-- **The look, "Contact Sheet":** the app as a darkroom contact sheet. The preview sits in a film frame with its edge code (video ID, resolution, length), and each download's progress is a row of sprocket holes that develop orange, ending green when done or red where it failed. The light theme is the light table.
-- **Download list** with live progress, size, speed and time left. Each item can be **paused and resumed**, canceled, retried, shown in File Explorer, or **deleted** with its files.
-- **Several downloads at once**, each in its own yt-dlp process.
-- **yt-dlp is managed for you:** downloaded on first launch and updated with `yt-dlp -U` every time the app starts. The status bar shows its version and update state, with "Developed by Khryz" in the middle.
-- **ffmpeg is bundled**, so the separate video and audio streams are merged automatically.
-- **Settings** (the cog, top right): **Theme** (Light, Dark, or Desktop, which follows Windows), **Text and page size** (100%, 125%, 150% or 175%) and **File names** (Classic, Basic, Pretty or Nerdy, see [File names](#file-names)). All are remembered.
-- **About:** the version button in the title bar shows the app version and the yt-dlp, ffmpeg and Tauri versions.
-- **Remembers** your last quality choice and download folder.
-- **Keyboard friendly:** <kbd>Enter</kbd> in the link box starts the download; every control is reachable with <kbd>Tab</kbd>.
+The window has two tabs: **New download** (link box, preview, save folder and Download on the left,
+Quality on the right) and **Downloads** (the full-width list).
+
+### Video and audio quality
+
+- **Five video presets:**
+  - **4K Best:** the highest quality up to 2160p, in whatever codec YouTube has (often AV1 or VP9), saved as `.mkv`.
+  - **4K**, **1080p** and **720p:** the best MP4 up to that height, preferring H.264 so it plays everywhere.
+  - **Default:** yt-dlp's own MP4 preset (H.264 + AAC first), for the widest compatibility.
+- **Custom quality:** any maximum resolution (8K, 4K, 1440p, 1080p, 720p, 480p, 360p, 240p or 144p) as
+  MP4, MKV or WebM. Choosing from either dropdown selects Custom.
+- **Best audio included:** every video option adds the best audio stream.
+- **Audio only:** the **Video / Audio** switch in Quality saves just the sound, as:
+  - **MP3** (best VBR, about 245 kbps)
+  - **AAC** (`.m4a`; YouTube's own AAC is kept as it is)
+  - **WAV** (uncompressed)
+  - **FLAC** (lossless)
+  - **WMA**
+- **Remembered choices:** the switch, the last video pick, the last audio pick and the Custom dropdowns
+  are all kept for next time.
+
+The exact yt-dlp options are in [Quality options](#quality-options).
+
+### Adding a download
+
+- **Paste:** the **Paste** button reads the clipboard. Once there's a link, it becomes a clear (×)
+  button. <kbd>Ctrl</kbd>+<kbd>V</kbd> works too, and so does dragging a link from your browser into the
+  link box.
+- **Preview:** a moment after the link changes, the app shows the thumbnail, title, channel and length.
+  Along the film frame is an edge code: video ID, best resolution (with the frame rate when it's above
+  30 fps, e.g. `2160p60`) and length. If yt-dlp can't read a link, the preview says why.
+- **Save folder:** your Downloads folder by default. **Change** picks another, which is remembered.
+- **Start:** **Download** or <kbd>Enter</kbd> starts it. The link box then clears for the next link.
+
+### Watching and managing downloads
+
+- **Downloads tab:** lists everything you've started since the app opened. Its count turns orange while
+  something is downloading.
+- **Each row** shows:
+  - the thumbnail, title and quality (e.g. *1080p · MP4*, *Audio · MP3*);
+  - a progress strip;
+  - one big number: the percent while it runs, the file size once it's done;
+  - what's happening now: *Video · 225 MB of 921 MB · 11 MB/s · 1m left*, then the audio stream, then
+    *Merging video and audio…* or *Converting to MP3…*, or yt-dlp's reason if it failed.
+- **Several at once:** each download runs in its own yt-dlp process.
+- **Pause and Resume:** Pause keeps the partial file and Resume continues from it. Not available while
+  merging.
+- **Cancel and Retry:** Retry starts a canceled or failed download again, picking up any partial file.
+- **Show in folder:** opens File Explorer with the finished file selected.
+- **Delete (🗑):**
+  - for a finished download, it moves the file to the Recycle Bin after a confirm;
+  - for a canceled or failed one, it deletes the leftover partial files.
+  - It only touches files yt-dlp reported writing for that download. An earlier download of the same
+    video is never touched.
+- **Clear finished:** removes done, failed and canceled rows from the list, not the files.
+- **Closing the app** stops its downloads, so yt-dlp is never left running in the background.
+
+### Finished files
+
+- **One playable file:** ffmpeg merges the video and audio streams, or converts the audio, into a single file.
+- **File names:** **Settings → File names** picks the style, shown with an example:
+  - **Classic:** `Video Title (1080p).mp4`
+  - **Basic:** `Video Title.mp4`
+  - **Pretty:** `Video Title - Author (1080p, h264).mp4`
+  - **Nerdy:** `Video_Title_1080p_h264_aac.mp4`
+
+  See [File names](#file-names).
+- **Never overwrites:** if a name is taken, the new file gets ` (2)`, ` (3)` and so on.
+
+### Tools managed for you
+
+- **yt-dlp:** downloaded on first launch and updated with `yt-dlp -U` every time the app starts. A
+  download started during the check shows *Waiting for yt-dlp update…* and begins right after.
+- **Status bar:**
+  - a dot: green when ready, amber while checking or offline, red if yt-dlp couldn't be set up;
+  - the yt-dlp version: *up to date*, *updated just now* or *couldn't check for updates*;
+  - "Developed by Khryz" in the middle;
+  - on the right, the ffmpeg version and when yt-dlp was last checked.
+- **ffmpeg:** bundled with the app, pinned to a build checked by its SHA-256, so there's nothing else to install.
+
+### Window and settings
+
+- **The look, "Contact Sheet":** the app as a darkroom contact sheet. The preview sits in a film frame
+  with its edge code, and each download's progress is a row of sprocket holes. They develop orange, end
+  green when done, or stop red where it failed. The light theme is the light table.
+- **Its own title bar:** Windows-style minimize, maximize and close buttons. The version button opens
+  **About**, which shows the app, yt-dlp, ffmpeg and Tauri versions.
+- **Settings** (the cog, top right), all saved for next time:
+  - **Theme:** Light, Dark, or Desktop (follows Windows, live).
+  - **Text and page size:** 100%, 125%, 150% or 175%. It zooms the whole window, for large or high-DPI
+    screens.
+  - **File names:** Classic, Basic, Pretty or Nerdy.
+- **Keyboard:**
+  - every control is reachable with <kbd>Tab</kbd>;
+  - arrow keys move between the tabs and between options;
+  - <kbd>Enter</kbd> downloads;
+  - <kbd>Esc</kbd> closes Settings and About.
+- **Small:** the installer is about 23 MB, and the window uses the WebView2 built into Windows.
+- **Safe by default:**
+  - only web links reach yt-dlp, and never as an option;
+  - values from the page are checked against fixed lists;
+  - Delete only removes files it was told about by yt-dlp;
+  - browser shortcuts like <kbd>F5</kbd> are turned off, so a stray key can't wipe the download list.
+
+  More in [How it's built](#how-its-built).
 
 ## Quality options
 
