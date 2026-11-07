@@ -38,7 +38,7 @@ installs itself on first launch and keeps itself up to date.
 - **Several downloads at once**, each in its own yt-dlp process.
 - **yt-dlp is managed for you:** downloaded on first launch and updated with `yt-dlp -U` every time the app starts. The status bar shows its version and update state, with "Developed by Khryz" in the middle.
 - **ffmpeg is bundled**, so the separate video and audio streams are merged automatically.
-- **Settings** (the cog, top right): **Theme** (Light, Dark, or Desktop, which follows Windows) and **Text and page size** (100%, 125%, 150% or 175%). Both are remembered.
+- **Settings** (the cog, top right): **Theme** (Light, Dark, or Desktop, which follows Windows), **Text and page size** (100%, 125%, 150% or 175%) and **File names** (Classic, Basic, Pretty or Nerdy, see [File names](#file-names)). All are remembered.
 - **About:** the version button in the title bar shows the app version and the yt-dlp, ffmpeg and Tauri versions.
 - **Remembers** your last quality choice and download folder.
 - **Keyboard friendly:** <kbd>Enter</kbd> in the link box starts the download; every control is reachable with <kbd>Tab</kbd>.
@@ -58,8 +58,10 @@ in `src/ytdlp.rs`.
 | **Default** | yt-dlp's own MP4 preset: H.264 + AAC first | `.mp4` | `-t mp4` |
 | **Custom** · MP4 / MKV / WebM | The same rules up to the resolution you pick | `.mp4` / `.mkv` / `.webm` | `-S res:<N>` (+ `vcodec:h264` for MP4); WebM uses `-f "bv*[ext=webm]+ba[ext=webm]/b[ext=webm]/bv*+ba/b" --merge-output-format webm/mkv` |
 
-Files are named `Title [videoId] 1080p.ext` (yt-dlp template `%(title)s [%(id)s]%(height& {}p|)s.%(ext)s`),
-so different qualities of one video never collide. If a video doesn't have the exact resolution, the
+While downloading, files are named `Title [videoId] 1080p.ext` (yt-dlp template
+`%(title)s [%(id)s]%(height& {}p|)s.%(ext)s`), so different qualities of one video never collide and
+Pause or Retry can pick up where they stopped. When a download finishes, the app renames the file in the
+[File names](#file-names) style chosen in Settings. If a video doesn't have the exact resolution, the
 preset picks the best one below the cap. WebM can't hold H.264, so a video with no WebM streams is
 saved as `.mkv`.
 
@@ -77,10 +79,29 @@ which isn't bundled. Only formats the bundled ffmpeg can encode are offered.
 | **FLAC** | `.flac` | `-c:a flac`: lossless, about half the size of WAV |
 | **WMA** | `.wma` | `-c:a wmav2 -b:a 192k -ac 2 -ar 44100`: Windows Media Audio, stereo |
 
-Audio files are named `Title [videoId].mp3`. While working, the download is called
-`Title [videoId].f251-mp3.webm`: the format ID plus the target. That name can't be mistaken for a
-finished file, and two formats of one video can download at the same time. It's deleted once the
-conversion is done.
+Audio files get the [File names](#file-names) style too (`Video Title.mp3` with Classic). While working,
+the download is called `Title [videoId].f251-mp3.webm`: the format ID plus the target. That name can't
+be mistaken for a finished file, and two formats of one video can download at the same time. It's
+deleted once the conversion is done.
+
+### File names
+
+**Settings → File names** picks how finished files are named:
+
+| Style | Video | Audio |
+|---|---|---|
+| **Classic** (default) | `Video Title (1080p).mp4` | `Video Title.mp3` |
+| **Basic** | `Video Title.mp4` | `Video Title.mp3` |
+| **Pretty** | `Video Title - Author (1080p, h264).mp4` | `Video Title - Author.mp3` |
+| **Nerdy** | `Video_Title_1080p_h264_aac.mp4` | `Video_Title.mp3` |
+
+- *Author* is the channel name. Codecs use their short names: `h264`, `h265`, `vp9`, `av1`, `aac`, `opus`.
+  Audio files leave out the resolution and codecs, since the extension already says what they are.
+- yt-dlp makes the title and channel safe for a file name (`%(title)S`), so characters like `/ : * ? "`
+  are dropped.
+- The app never replaces a file: if the name is taken, it adds ` (2)`, ` (3)` and so on. If the rename
+  fails, the file keeps its working name.
+- A download uses the style that was set when it started (or was resumed or retried).
 
 ## Requirements
 
@@ -147,7 +168,7 @@ quality is never touched.
 |---|---|
 | Your downloads | The folder shown in the app (default: your Downloads folder) |
 | yt-dlp program | `%APPDATA%\com.khryz.ytdownloader\bin\yt-dlp.exe` |
-| Settings (theme, text and page size) | `%APPDATA%\com.khryz.ytdownloader\settings.json` |
+| Settings (theme, text and page size, file names) | `%APPDATA%\com.khryz.ytdownloader\settings.json` |
 | Remembered quality and folder | WebView2 storage in `%LOCALAPPDATA%\com.khryz.ytdownloader` |
 | ffmpeg | `ffmpeg.exe` next to the app's exe (`binaries\` in the source tree) |
 

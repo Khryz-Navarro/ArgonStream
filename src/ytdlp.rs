@@ -110,6 +110,9 @@ pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str
         "--progress-template", "download:DL|%(info.vcodec)s|%(progress)j",
         "--print", "video:META|%(.{title,thumbnail})j",
         "--print", "after_move:FILE|%(filepath)s",
+        // The parts of the Settings → File names name. `S` makes yt-dlp sanitize a part as a file name (no
+        // / \ : * ? " < > | and no control characters), so the tabs between them can't come from a title.
+        "--print", "after_move:NAME|%(title)S\t%(channel,uploader|)S\t%(height|)s\t%(vcodec|)s\t%(acodec|)s",
         "-P", folder, "-o", &output_template(quality),
     ]));
     if let Some(ffmpeg) = ffmpeg {
@@ -123,6 +126,11 @@ pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str
 pub fn parse_line(line: &str) -> Option<Value> {
     if let Some(file) = line.strip_prefix("FILE|") {
         return Some(json!({ "file": file }));
+    }
+    if let Some(name) = line.strip_prefix("NAME|") {
+        let mut parts = name.split('\t');
+        let mut next = || parts.next().unwrap_or_default();
+        return Some(json!({ "name": { "title": next(), "author": next(), "height": next(), "vcodec": next(), "acodec": next() } }));
     }
     if let Some(meta) = line.strip_prefix("META|") {
         let m = serde_json::from_str::<Value>(meta).ok().filter(Value::is_object)?;
@@ -196,6 +204,54 @@ pub fn leftover_names<'a>(streams: &[String], names: &'a [String]) -> Vec<&'a St
                 || stems.iter().any(|temp| n.starts_with(temp))
         })
         .collect()
+}
+
+// yt-dlp's codec ids -> the short names people know: "avc1.640028" -> "h264". Unknown ids keep their first part
+// when it's a plain word ("opus", "vp9"); "none" (no such stream) and anything odd give nothing.
+fn codec_name(id: &str) -> Option<&str> {
+    match id.split('.').next()? {
+        "avc1" | "avc3" => Some("h264"),
+        "hev1" | "hvc1" => Some("h265"),
+        "vp09" => Some("vp9"),
+        "av01" => Some("av1"),
+        "mp4a" => Some("aac"),
+        "none" | "" => None,
+        other => other.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-').then_some(other),
+    }
+}
+
+/// The finished file's name in a Settings → File names style, from a NAME| line's parts (`parse_line`):
+/// classic "Title (1080p).mp4", basic "Title.mp4", pretty "Title - Author (1080p, h264).mp4",
+/// nerdy "Title_1080p_h264_aac.mp4". Codecs are named only for videos; an audio file's extension already
+/// says it. None (no title) keeps yt-dlp's working name.
+pub fn styled_name(style: &str, parts: &Value, ext: &str) -> Option<String> {
+    let part = |key: &str| parts[key].as_str().map(str::trim).filter(|s| !s.is_empty());
+    let title = part("title")?;
+    let height = part("height").map(|h| format!("{h}p"));
+    let vcodec = part("vcodec").and_then(codec_name);
+    let acodec = vcodec.and(part("acodec").and_then(codec_name));
+    let stem = match style {
+        "basic" => title.to_string(),
+        "pretty" => {
+            let author = part("author").map(|a| format!(" - {a}")).unwrap_or_default();
+            let details: Vec<&str> = height.as_deref().into_iter().chain(vcodec).collect();
+            let details = if details.is_empty() { String::new() } else { format!(" ({})", details.join(", ")) };
+            format!("{title}{author}{details}")
+        }
+        "nerdy" => title.split_whitespace().chain(height.as_deref()).chain(vcodec).chain(acodec).collect::<Vec<_>>().join("_"),
+        _ => height.map_or_else(|| title.to_string(), |h| format!("{title} ({h})")), // classic
+    };
+    let name = format!("{stem}.{ext}");
+    (!name.contains(['/', '\\'])).then_some(name) // yt-dlp sanitized the parts; never leave the folder anyway
+}
+
+/// The n-th choice for a name that's taken: "Title.mp4", "Title (2).mp4", "Title (3).mp4"…
+pub fn numbered_name(name: &str, n: u32) -> String {
+    match (n, name.rsplit_once('.')) {
+        (0 | 1, _) => name.to_string(),
+        (_, Some((stem, ext))) => format!("{stem} ({n}).{ext}"),
+        (_, None) => format!("{name} ({n})"),
+    }
 }
 
 /// "ERROR: [youtube] abc123: Video unavailable" -> "Video unavailable"
@@ -419,6 +475,50 @@ mod tests {
         assert_eq!(stem("x.f.mp4"), "x.f"); // a format id needs a character after the f
         assert_eq!(stem("Best.fails [x].webm"), "Best.fails [x]"); // ".fails [x]" has a space: title, not a format id
         assert_eq!(stem("Best.fails [x].f251.webm"), "Best.fails [x]");
+    }
+
+    #[test]
+    fn styled_names_follow_the_file_names_setting() {
+        let line = "NAME|Video Title\tAuthor\t1080\tavc1.640028\tmp4a.40.2";
+        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None).unwrap();
+        assert!(args.iter().any(|a| a.starts_with("after_move:NAME|%(title)S\t")), "yt-dlp prints the parts");
+        let video = &parse_line(line).unwrap()["name"];
+        assert_eq!(styled_name("classic", video, "mp4").as_deref(), Some("Video Title (1080p).mp4"));
+        assert_eq!(styled_name("basic", video, "mp4").as_deref(), Some("Video Title.mp4"));
+        assert_eq!(styled_name("pretty", video, "mp4").as_deref(), Some("Video Title - Author (1080p, h264).mp4"));
+        assert_eq!(styled_name("nerdy", video, "mp4").as_deref(), Some("Video_Title_1080p_h264_aac.mp4"));
+        assert_eq!(styled_name("unknown", video, "mp4"), styled_name("classic", video, "mp4"));
+
+        // 4K Best: AV1 + Opus, and no channel name
+        let av1 = &parse_line("NAME|T\t\t2160\tav01.0.12M.10\topus").unwrap()["name"];
+        assert_eq!(styled_name("pretty", av1, "mkv").as_deref(), Some("T (2160p, av1).mkv"));
+        assert_eq!(styled_name("nerdy", av1, "mkv").as_deref(), Some("T_2160p_av1_opus.mkv"));
+        let vp9 = &parse_line("NAME|T\tA\t1440\tvp09.00.50.08\topus").unwrap()["name"];
+        assert_eq!(styled_name("nerdy", vp9, "webm").as_deref(), Some("T_1440p_vp9_opus.webm"));
+
+        // audio: no resolution or video codec, so no codecs at all (the extension names it)
+        let audio = &parse_line("NAME| Song  Name \tBand\t\tnone\topus").unwrap()["name"];
+        assert_eq!(styled_name("classic", audio, "mp3").as_deref(), Some("Song  Name.mp3"));
+        assert_eq!(styled_name("basic", audio, "mp3").as_deref(), Some("Song  Name.mp3"));
+        assert_eq!(styled_name("pretty", audio, "mp3").as_deref(), Some("Song  Name - Band.mp3"));
+        assert_eq!(styled_name("nerdy", audio, "m4a").as_deref(), Some("Song_Name.m4a"));
+
+        // nothing usable keeps yt-dlp's working name
+        assert_eq!(styled_name("classic", &parse_line("NAME|  ").unwrap()["name"], "mp4"), None);
+        assert_eq!(styled_name("classic", &Value::Null, "mp4"), None);
+        assert_eq!(styled_name("basic", &json!({ "title": "a/b" }), "mp4"), None);
+        assert_eq!(styled_name("basic", &json!({ "title": "..\\x" }), "mp4"), None);
+        // an odd codec id never reaches the name
+        let odd = json!({ "title": "T", "height": "720", "vcodec": "x y/z", "acodec": "ec-3" });
+        assert_eq!(styled_name("nerdy", &odd, "mp4").as_deref(), Some("T_720p.mp4"));
+    }
+
+    #[test]
+    fn numbered_name_counts_up_before_the_extension() {
+        assert_eq!(numbered_name("Video Title.mp4", 1), "Video Title.mp4");
+        assert_eq!(numbered_name("Video Title.mp4", 2), "Video Title (2).mp4");
+        assert_eq!(numbered_name("Mr. T (1080p).mkv", 3), "Mr. T (1080p) (3).mkv");
+        assert_eq!(numbered_name("noext", 2), "noext (2)");
     }
 
     #[test]

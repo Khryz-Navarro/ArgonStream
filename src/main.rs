@@ -1,6 +1,6 @@
 // The app's backend: installs and updates yt-dlp,
 // runs downloads (pause/cancel with a Windows process-tree kill), deletes leftovers, and applies the
-// Settings window's theme and page size. The page talks to it through ui/api.js.
+// Settings window's theme, page size and file names. The page talks to it through ui/api.js.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod ytdlp;
@@ -21,7 +21,11 @@ use tauri_plugin_dialog::DialogExt;
 static READY: OnceLock<Result<(), String>> = OnceLock::new();
 
 // Settings window values. They come from the page, so only these are accepted.
-const SETTINGS: [(&str, &[&str]); 2] = [("theme", &["system", "light", "dark"]), ("scale", &["1", "1.25", "1.5", "1.75"])];
+const SETTINGS: [(&str, &[&str]); 3] = [
+    ("theme", &["system", "light", "dark"]),
+    ("scale", &["1", "1.25", "1.5", "1.75"]),
+    ("filename", &["classic", "basic", "pretty", "nerdy"]), // ytdlp::styled_name
+];
 
 struct Job {
     pid: u32,
@@ -190,6 +194,7 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     };
     let state = app.state::<AppState>();
     let ffmpeg = ffmpeg_path();
+    let style = state.settings.lock().unwrap()["filename"].as_str().unwrap_or("classic").to_string();
     let spawned = ytdlp::assert_url(url)
         .and_then(|url| ytdlp::download_args(&url, quality, folder, ffmpeg.as_deref().and_then(Path::to_str)))
         .and_then(|args| {
@@ -216,12 +221,16 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
         });
     }
     drop(tx);
-    let (mut file, mut error) = (None::<PathBuf>, None);
+    let (mut file, mut error, mut name) = (None::<PathBuf>, None, Value::Null);
     for line in rx {
         if line.starts_with("ERROR:") {
             error = ytdlp::error_text(&line);
         }
         let Some(ev) = ytdlp::parse_line(&line) else { continue };
+        if let Some(parts) = ev.get("name") {
+            name = parts.clone(); // for the finished file's name
+            continue;
+        }
         let mut downloads = state.downloads.lock().unwrap();
         let record = downloads.entry(id.into()).or_default();
         if let Some(name) = ev["filename"].as_str() {
@@ -243,7 +252,8 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     // Audio downloads: yt-dlp fetched the stream as-is; convert it while still registered as this job
     let converted = match (ytdlp::audio_target(quality), &file) {
         (Some(target), Some(source)) if ok && stop.lock().unwrap().is_none() => {
-            Some(convert_audio(app, id, &stop, source, target, ffmpeg.as_deref()))
+            let styled = ytdlp::styled_name(&style, &name, target.0);
+            Some(convert_audio(app, id, &stop, source, target, styled, ffmpeg.as_deref()))
         }
         _ => None,
     };
@@ -257,36 +267,52 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     }
     match converted {
         Some(Err(error)) => return send(json!({ "state": "error", "error": error })),
-        Some(Ok(path)) => {
-            if let Some(record) = state.downloads.lock().unwrap().get_mut(id) {
-                record.file = Some(path.clone());
-            }
-            file = Some(path);
+        Some(Ok(path)) => file = Some(path),
+        // a video: yt-dlp's working name is unique per video and quality; the finished file gets the
+        // Settings → File names name, or keeps the working one if that can't be done
+        None => {
+            file = file.map(|f| {
+                let styled = f.extension().and_then(|ext| ytdlp::styled_name(&style, &name, &ext.to_string_lossy()));
+                styled.and_then(|n| place(&f, &n).ok()).unwrap_or(f)
+            })
         }
-        None => {}
+    }
+    if let Some(record) = state.downloads.lock().unwrap().get_mut(id) {
+        record.file = file.clone(); // what Delete sends to the Recycle Bin
     }
     let size = file.as_ref().and_then(|f| std::fs::metadata(f).ok()).map(|m| m.len());
     send(json!({ "state": "done", "file": file, "size": size }));
 }
 
-// Converts a downloaded audio stream with the bundled ffmpeg into "<stem>.temp.<ext>", renames it into place and
-// deletes the download. The job's pid becomes ffmpeg's, so Cancel stops the conversion too.
+// Moves a finished file to `name` in its folder, never over another file: a taken name gets " (2)", " (3)"….
+fn place(file: &Path, name: &str) -> std::io::Result<PathBuf> {
+    static LOCK: Mutex<()> = Mutex::new(()); // two downloads finishing at once mustn't pick the same free name
+    let _lock = LOCK.lock().unwrap();
+    let free = (1..).map(|n| file.with_file_name(ytdlp::numbered_name(name, n))).find(|p| p == file || !p.exists());
+    let target = free.expect("an endless range always finds a free name");
+    std::fs::rename(file, &target)?;
+    Ok(target)
+}
+
+// Converts a downloaded audio stream with the bundled ffmpeg into "<stem>.temp.<ext>", moves it to its finished
+// name (`styled`, the Settings → File names one, else "Title [id].<ext>") and deletes the download. The job's pid
+// becomes ffmpeg's, so Cancel stops the conversion too.
 fn convert_audio(
     app: &AppHandle,
     id: &str,
     stop: &Arc<Mutex<Option<&'static str>>>,
     source: &Path,
     (ext, name): (&str, &str),
+    styled: Option<String>,
     ffmpeg: Option<&Path>,
 ) -> Result<PathBuf, String> {
     let fail = |why: String| format!("Couldn't convert to {name}: {why}");
     let file_name = source.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let (temp, done) = ytdlp::audio_names(&file_name, ext);
-    let (temp, done) = (source.with_file_name(temp), source.with_file_name(done));
+    let (temp, done) = (source.with_file_name(temp), styled.unwrap_or(done));
     if source.extension().is_some_and(|e| e.eq_ignore_ascii_case(ext)) {
         // already in that format (YouTube's AAC): only give it the finished name
-        std::fs::rename(source, &done).map_err(|e| fail(e.to_string()))?;
-        return Ok(done);
+        return place(source, &done).map_err(|e| fail(e.to_string()));
     }
     let ffmpeg = ffmpeg.ok_or_else(|| fail("ffmpeg is missing".into()))?;
     let _ = app.emit("progress", json!({ "id": id, "state": "processing", "stream": "audio" }));
@@ -302,7 +328,7 @@ fn convert_audio(
         let stderr = String::from_utf8_lossy(&out.stderr);
         return Err(fail(stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("ffmpeg failed").to_string()));
     }
-    std::fs::rename(&temp, &done).map_err(|e| fail(e.to_string()))?; // replaces an earlier file of the same name
+    let done = place(&temp, &done).map_err(|e| fail(e.to_string()))?;
     let _ = std::fs::remove_file(source);
     Ok(done)
 }
@@ -362,7 +388,7 @@ async fn delete_files(app: AppHandle, id: String) -> Result<Value, String> {
     Ok(json!({ "removed": removed }))
 }
 
-/* ---------- settings (Settings window): theme and interface size, saved in settings.json ---------- */
+/* ---------- settings (Settings window): theme, interface size and file names, saved in settings.json ---------- */
 
 fn settings_path(app: &AppHandle) -> PathBuf {
     data_dir(app).join("settings.json")
@@ -370,7 +396,7 @@ fn settings_path(app: &AppHandle) -> PathBuf {
 
 fn load_settings(app: &AppHandle) -> Value {
     let saved: Value = std::fs::read(settings_path(app)).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
-    let mut settings = json!({ "theme": "system", "scale": "1" }); // first run or unreadable file: defaults
+    let mut settings = json!({ "theme": "system", "scale": "1", "filename": "classic" }); // first run or unreadable file: defaults
     for (key, allowed) in SETTINGS {
         if let Some(value) = saved[key].as_str().filter(|v| allowed.contains(v)) {
             settings[key] = value.into();

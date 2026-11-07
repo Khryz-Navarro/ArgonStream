@@ -355,12 +355,26 @@ function showStatus(s) {
   if (previewState?.loading) showPreview(previewState);
 }
 
-/* ---------- Settings window: theme and text/page size (main applies and saves them) ---------- */
+/* ---------- Settings window: theme, text/page size and file names (main applies and saves them) ---------- */
 
+const NAME_EXAMPLES = { // what ytdlp::styled_name makes of a 1080p H.264 + AAC video
+  classic: 'Video Title (1080p).mp4',
+  basic: 'Video Title.mp4',
+  pretty: 'Video Title - Author (1080p, h264).mp4',
+  nerdy: 'Video_Title_1080p_h264_aac.mp4',
+};
+const showNameExample = () => {
+  const style = $('settings').querySelector('input[name=filename]:checked')?.value;
+  $('filename-example').textContent = style ? `e.g. ${NAME_EXAMPLES[style]}` : '';
+};
 window.api.settings().then(s => {
   for (const input of $('settings').querySelectorAll('input[type=radio]')) input.checked = s[input.name] === input.value;
+  showNameExample();
 });
-$('settings').addEventListener('change', e => window.api.setSetting(e.target.name, e.target.value));
+$('settings').addEventListener('change', e => {
+  window.api.setSetting(e.target.name, e.target.value);
+  showNameExample();
+});
 $('settings-btn').onclick = () => $('settings').showModal();
 $('settings-close').onclick = () => $('settings').close();
 $('settings').addEventListener('click', e => { // a click on the dimmed backdrop closes it
