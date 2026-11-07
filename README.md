@@ -8,7 +8,7 @@ Paste a link, pick a quality preset (or your own resolution and file type), and 
 installs itself on first launch and keeps itself up to date.
 
 > **Status:** early versions (0.x) for Windows 10/11. Download the installer from
-> [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases), or run from source.
+> [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases), or run from source.
 > The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md). ArgonStream was called **YT Downloader** up to
 > v0.1.10; its installer replaces an installed YT Downloader and keeps its settings.
 
@@ -299,7 +299,7 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 
 ## Install
 
-1. Open [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases) and download
+1. Open [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases) and download
    `ArgonStream-Setup-<version>.exe` from the newest release.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
@@ -317,8 +317,8 @@ To go back to an older version, uninstall first. Uninstall from *Settings → Ap
 ## Run from source
 
 ```powershell
-git clone https://github.com/Khryz-Navarro/youtube-downloader-rust.git
-cd youtube-downloader-rust
+git clone https://github.com/Khryz-Navarro/ArgonStream.git
+cd ArgonStream
 .\scripts\get-ffmpeg.ps1     # once: downloads the bundled ffmpeg into binaries\
 cargo run
 ```
@@ -372,7 +372,7 @@ To force a clean reinstall of yt-dlp, close the app and delete `%APPDATA%\com.kh
 ## How it's built
 
 ```
-youtube-downloader-rust/
+ArgonStream/
 ├─ src/
 │  ├─ main.rs          Backend: window, yt-dlp install/update, downloads, pause/cancel, Delete, settings
 │  └─ ytdlp.rs         Quality presets, yt-dlp arguments, output parsing, leftover matching (unit-tested)

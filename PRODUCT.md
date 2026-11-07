@@ -29,7 +29,7 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 
 ## Operating Context
 
-- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/youtube-downloader-rust`). The UI is
+- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/ArgonStream`). The UI is
   HTML/CSS/JS in `ui/`, rendered by WebView2; the Rust backend in `src/` runs yt-dlp and ffmpeg. It began
   as an Electron app (`Khryz-Navarro/youtube-downloader`), discontinued on 2026-11-07.
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
