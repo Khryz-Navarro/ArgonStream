@@ -50,7 +50,7 @@ happening, and cleans up after itself.
    resolution you picked, you get the best one below it.
 4. **It downloads and joins the pieces.** YouTube serves high-quality video and its sound as separate
    streams. yt-dlp downloads both, then the bundled ffmpeg merges them into one playable file. For audio,
-   ffmpeg converts the sound into the format you chose instead. The **Downloads** tab shows each stage
+   ffmpeg converts the sound into the format you chose instead. The **Downloads History** tab shows each stage
    (video, audio, merging or converting) with size, speed and time left. Several downloads can run at
    once, each in its own yt-dlp process.
 5. **It names and saves the file.** The finished file goes to the folder you chose, named in your
@@ -79,7 +79,7 @@ speed limit).
 ## Features
 
 The window has two tabs: **New download** (link box, preview, save folder and Download on the left,
-Quality on the right) and **Downloads** (the full-width list).
+Quality on the right) and **Downloads History** (the full-width list).
 
 ### Video and audio quality
 
@@ -114,7 +114,7 @@ The exact yt-dlp options are in [Quality options](#quality-options).
 
 ### Watching and managing downloads
 
-- **Downloads tab:** lists everything you've started since the app opened. Its count turns orange while
+- **Downloads History tab:** lists everything you've started since the app opened. Its count turns orange while
   something is downloading.
 - **Each row** shows:
   - the thumbnail, title and quality (e.g. *1080p · MP4*, *Audio · MP3*);
@@ -293,7 +293,7 @@ or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
 2. **Pick a quality,** or use the **Custom** row's dropdowns. For sound only, switch Quality to **Audio** and pick MP3, AAC, WAV, FLAC or WMA.
 3. **Choose where to save** with **Change** (default: your Downloads folder).
 4. **Click Download** (or press <kbd>Enter</kbd>). The link box clears for the next link.
-5. **Open the Downloads tab** to watch progress.
+5. **Open the Downloads History tab** to watch progress.
 
 | State | What it means |
 |---|---|
