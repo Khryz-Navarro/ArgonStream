@@ -382,17 +382,46 @@ $('speed').max = SPEEDS.length - 1;
 $('speed').addEventListener('input', showSpeed);
 $('speed').addEventListener('change', () => window.api.setSetting('speed', SPEEDS[$('speed').value]));
 
+// Cookies: "From a file" shows the cookies.txt the backend picked and saved (the page only shows its name)
+let cookieFile = null;
+let cookiesChanged = false; // so closing Settings looks the link up again with the new cookies
+function showCookies() {
+  $('cookie-file').hidden = $('settings').querySelector('input[name=cookies]:checked')?.value !== 'file';
+  $('cookie-file-name').textContent = cookieFile ? cookieFile.split(/[\\/]/).pop() : 'No file chosen';
+  $('cookie-file-name').title = cookieFile || '';
+}
+async function pickCookieFile() {
+  const picked = await window.api.pickCookiesFile();
+  if (!picked) return;
+  cookieFile = picked;
+  cookiesChanged = true;
+  showCookies();
+}
+$('cookie-file-pick').onclick = pickCookieFile;
+
 window.api.settings().then(s => {
   for (const input of $('settings').querySelectorAll('input[type=radio]')) input.checked = s[input.name] === input.value;
   showNameExample();
   const step = SPEEDS.indexOf(s.speed);
   $('speed').value = step < 0 ? SPEEDS.length - 1 : step; // unknown: no cap, like the backend
   showSpeed();
+  cookieFile = s.cookiesFile || null;
+  showCookies();
 });
 $('settings').addEventListener('change', e => {
   if (e.target.type !== 'radio') return; // the slider saves itself, as a SPEEDS value
   window.api.setSetting(e.target.name, e.target.value);
   showNameExample();
+  if (e.target.name !== 'cookies') return;
+  cookiesChanged = true;
+  showCookies();
+  if (e.target.value === 'file' && !cookieFile) pickCookieFile(); // nothing to use yet: ask for the file right away
+});
+$('settings').addEventListener('close', () => {
+  if (!cookiesChanged) return;
+  cookiesChanged = false;
+  infoFor = ''; // a preview that failed for want of cookies gets another try
+  onUrl();
 });
 $('settings-btn').onclick = () => $('settings').showModal();
 $('settings-close').onclick = () => $('settings').close();

@@ -21,11 +21,12 @@ use tauri_plugin_dialog::DialogExt;
 static READY: OnceLock<Result<(), String>> = OnceLock::new();
 
 // Settings window values. They come from the page, so only these are accepted.
-const SETTINGS: [(&str, &[&str]); 4] = [
+const SETTINGS: [(&str, &[&str]); 5] = [
     ("theme", &["system", "light", "dark"]),
     ("scale", &["1", "1.25", "1.5", "1.75"]),
     ("filename", &["classic", "basic", "pretty", "nerdy"]), // ytdlp::styled_name
     ("speed", &ytdlp::SPEED_LIMITS),
+    ("cookies", &["off", "firefox", "file"]), // ytdlp::cookie_args; the file itself is picked by pick_cookies_file
 ];
 
 struct Job {
@@ -167,15 +168,31 @@ async fn pick_folder(window: WebviewWindow, current: Option<PathBuf>) -> Option<
     dialog.blocking_pick_folder()?.into_path().ok()
 }
 
+// Settings → Cookies as yt-dlp options. A chosen cookies.txt that's gone is an error, not a quiet "no cookies".
+fn cookies(settings: &Value) -> Result<Vec<String>, String> {
+    let (mode, file) = (settings["cookies"].as_str().unwrap_or("off"), settings["cookiesFile"].as_str());
+    if let Some(file) = file.filter(|f| mode == "file" && !f.is_empty() && !Path::new(f).is_file()) {
+        return Err(format!("The cookies file chosen in Settings is missing: {file}"));
+    }
+    ytdlp::cookie_args(mode, file)
+}
+
+// yt-dlp's age, bot-check and members-only errors end with what fixes them (ytdlp::explain).
+fn explain(error: String, settings: &Value) -> String {
+    ytdlp::explain(&error, settings["cookies"].as_str().is_some_and(|mode| mode != "off"))
+}
+
 #[tauri::command]
 async fn info(app: AppHandle, url: String) -> Value {
     let result = tauri::async_runtime::spawn_blocking(move || {
-        let args = ytdlp::info_args(&ytdlp::assert_url(&url)?);
+        let settings = app.state::<AppState>().settings.lock().unwrap().clone();
+        let args = ytdlp::info_args(&ytdlp::assert_url(&url)?, &cookies(&settings)?);
         wait_ready()?;
         let out = command(bin_path(&app)).args(args).output().map_err(|e| e.to_string())?;
         if !out.status.success() {
             let stderr = String::from_utf8_lossy(&out.stderr);
-            return Err(ytdlp::error_text(&stderr).unwrap_or_else(|| format!("yt-dlp exited with code {:?}", out.status.code())));
+            let error = ytdlp::error_text(&stderr).unwrap_or_else(|| format!("yt-dlp exited with code {:?}", out.status.code()));
+            return Err(explain(error, &settings));
         }
         serde_json::from_slice::<Value>(&out.stdout).map_err(|e| e.to_string())
     })
@@ -200,7 +217,10 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     let style = settings["filename"].as_str().unwrap_or("classic");
     let limit = settings["speed"].as_str().filter(|s| *s != "unlimited");
     let spawned = ytdlp::assert_url(url)
-        .and_then(|url| ytdlp::download_args(&url, quality, folder, ffmpeg.as_deref().and_then(Path::to_str), limit))
+        .and_then(|url| {
+            let ffmpeg = ffmpeg.as_deref().and_then(Path::to_str);
+            ytdlp::download_args(&url, quality, folder, ffmpeg, limit, &cookies(&settings)?)
+        })
         .and_then(|args| {
             wait_ready()?;
             let cmd = command(bin_path(app)).args(args).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
@@ -267,7 +287,7 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     }
     if !ok {
         let fallback = || exit.map_or_else(|e| e.to_string(), |s| format!("yt-dlp exited with code {:?}", s.code()));
-        return send(json!({ "state": "error", "error": error.unwrap_or_else(fallback) }));
+        return send(json!({ "state": "error", "error": explain(error.unwrap_or_else(fallback), &settings) }));
     }
     match converted {
         Some(Err(error)) => return send(json!({ "state": "error", "error": error })),
@@ -392,20 +412,29 @@ async fn delete_files(app: AppHandle, id: String) -> Result<Value, String> {
     Ok(json!({ "removed": removed }))
 }
 
-/* ---------- settings (Settings window): theme, interface size and file names, saved in settings.json ---------- */
+/* ---------- settings (Settings window): theme, interface size, file names, speed limit and cookies, in settings.json ---------- */
 
 fn settings_path(app: &AppHandle) -> PathBuf {
     data_dir(app).join("settings.json")
 }
 
+fn save_settings(app: &AppHandle, settings: &Value) {
+    let _ = std::fs::create_dir_all(data_dir(app));
+    let _ = std::fs::write(settings_path(app), settings.to_string()); // losing a preference isn't worth an error
+}
+
 fn load_settings(app: &AppHandle) -> Value {
     let saved: Value = std::fs::read(settings_path(app)).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
     // first run or unreadable file: defaults
-    let mut settings = json!({ "theme": "system", "scale": "1", "filename": "classic", "speed": "unlimited" });
+    let mut settings = json!({ "theme": "system", "scale": "1", "filename": "classic", "speed": "unlimited", "cookies": "off" });
     for (key, allowed) in SETTINGS {
         if let Some(value) = saved[key].as_str().filter(|v| allowed.contains(v)) {
             settings[key] = value.into();
         }
+    }
+    // the cookies.txt path: only ever written by pick_cookies_file, from the system's file dialog
+    if let Some(file) = saved["cookiesFile"].as_str() {
+        settings["cookiesFile"] = file.into();
     }
     settings
 }
@@ -440,9 +469,21 @@ fn set_setting(app: AppHandle, window: WebviewWindow, key: String, value: String
     let state = app.state::<AppState>();
     let mut settings = state.settings.lock().unwrap();
     settings[&key] = value.into();
-    let _ = std::fs::create_dir_all(data_dir(&app));
-    let _ = std::fs::write(settings_path(&app), settings.to_string()); // losing a preference isn't worth an error
+    save_settings(&app, &settings);
     apply_settings(&window, &settings);
+}
+
+// Settings → Cookies → From a file. The backend asks the system's file dialog and saves the path itself, so yt-dlp
+// only ever gets a file the user picked, never a path sent by the page. The app keeps the path, not the cookies.
+#[tauri::command]
+async fn pick_cookies_file(app: AppHandle, window: WebviewWindow) -> Option<PathBuf> {
+    let dialog = window.dialog().file().set_parent(&window).set_title("Choose a cookies.txt file");
+    let file = dialog.add_filter("Cookies (Netscape cookies.txt)", &["txt"]).blocking_pick_file()?.into_path().ok()?;
+    let state = app.state::<AppState>();
+    let mut settings = state.settings.lock().unwrap();
+    settings["cookiesFile"] = file.to_string_lossy().into();
+    save_settings(&app, &settings);
+    Some(file)
 }
 
 fn main() {
@@ -455,8 +496,8 @@ fn main() {
             settings: Default::default(),
         })
         .invoke_handler(tauri::generate_handler![
-            status, about, settings, set_setting, default_folder, paste, pick_folder, show_file, info, download, cancel,
-            pause, delete_files
+            status, about, settings, set_setting, pick_cookies_file, default_folder, paste, pick_folder, show_file, info,
+            download, cancel, pause, delete_files
         ])
         .setup(|app| {
             let handle = app.handle().clone();
