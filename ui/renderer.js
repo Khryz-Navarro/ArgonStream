@@ -22,6 +22,7 @@ function fmtBytes(b) {
   return `${b.toFixed(i ? 1 : 0)} ${units[i]}`;
 }
 function fmtEta(s) {
+  s = Math.round(s); // yt-dlp can report fractions of a second ("18.282148854364177")
   if (s < 60) return `${s}s`;
   if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
   return `${Math.floor(s / 3600)}h ${Math.floor(s / 60) % 60}m`;
