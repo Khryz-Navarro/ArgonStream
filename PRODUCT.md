@@ -9,7 +9,7 @@ web
 ## Users
 
 - **The public:** people on Windows 10/11 who want to save YouTube videos to their PC. The repository is
-  private today; a public release is the intent, with no date set.
+  public, under the MIT License.
 - **People evaluating Khryz's work:** the app is also a portfolio piece, so its code, README and release
   flow are read by employers or clients, not only used.
 
@@ -61,7 +61,8 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
   cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
-- **Undecided:** no license has been chosen; no date for making the repository public.
+- **License:** MIT (`LICENSE`, chosen 2026-11-07) for the app's own code; yt-dlp (Unlicense) and the
+  bundled ffmpeg (GPL) keep their own licenses.
 
 ## Brand Commitments
 

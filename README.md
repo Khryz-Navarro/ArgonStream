@@ -447,4 +447,5 @@ before running it; otherwise both would ship the same version.
 Only download videos you have the right to save. Downloading may be against YouTube's Terms of
 Service and copyright law where you live; you are responsible for how you use this tool.
 
-No license has been chosen for this project yet.
+YT Downloader's own code is released under the [MIT License](LICENSE). yt-dlp and ffmpeg are separate
+programs under their own licenses (above); the app runs them but doesn't change them.
