@@ -95,7 +95,7 @@ Update [README.md](README.md) in the same pull request whenever behavior changes
   most people would care about.
 - **Use the colors and sizes defined in `ui/styles.css`.** Check both themes, and check
   **Text and page size** at 175%.
-- **Use the UI's existing words** (New download, Downloads, Quality, Show in folder, Retry, Resume…);
+- **Use the UI's existing words** (New download, Downloads History, Quality, Show in folder, Retry, Resume…);
   PRODUCT.md lists them. Write plain, short labels.
 - **Keyboard:** every control must be reachable with <kbd>Tab</kbd> and have a clear name for screen
   readers.
@@ -113,7 +113,10 @@ cargo run                   # try it for real
 - **Anything touching downloads:** run a real download. Try Pause/Resume, Cancel, Retry and Delete if
   your change could affect them.
 - **UI changes:** look at both themes and at 175%.
-- **The installer:** build it with `cargo tauri build` when you change packaging or `tauri.conf.json`.
+- **The installer:** build it with Tauri CLI 2.12.4 (`npx @tauri-apps/cli@2.12.4 build`) when you change packaging,
+  `tauri.conf.json` or `installer/installer.nsi`. That file is the CLI's own installer template with changes marked
+  `YT Downloader:`; when upgrading the CLI, start from its new template, re-apply them, and update the pinned version in
+  `.github/workflows/release.yml` and the README.
 
 ## Branches, commits and pull requests
 
@@ -143,7 +146,7 @@ cargo run                   # try it for real
 
 - the app version (the version button in the title bar) and the yt-dlp version (status bar);
 - the link, if the video is public, and the quality you picked;
-- what happened: the red error text in the Downloads tab, or what you expected instead.
+- what happened: the red error text in the Downloads History tab, or what you expected instead.
 
 Check [Troubleshooting](README.md#troubleshooting) and [Known limitations](README.md#known-limitations)
 first: age-restricted and members-only videos, for example, can't be downloaded yet.

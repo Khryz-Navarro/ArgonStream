@@ -315,7 +315,7 @@ A warm brown-black palette with one orange, three developer-chemistry status col
 - **Label** (Bahnschrift 600, 12px, 0.14em, uppercase): QUALITY, THEME, TEXT AND PAGE SIZE.
 - **Chip** (Bahnschrift 600, 12px, 0.08em, uppercase): MKV, MP4, "1080P · MP4".
 - **Edge code** (Bahnschrift 400, 12px, 14px, 0.06em, tabular): the preview's "ID · resolution · length" line, kept in its original case because video IDs are case-sensitive; the version button, About values and the status bar's right side use the same face at 0.04–0.05em.
-- **Count** (Bahnschrift 600, 11px, 16px, 0.04em, tabular): the Downloads tab count.
+- **Count** (Bahnschrift 600, 11px, 16px, 0.04em, tabular): the Downloads History tab count.
 
 ### Named Rules
 **The Two Voices Rule.** Words are Segoe UI Variable; anything printed on film or counted is Bahnschrift semi-condensed with tabular figures. Uppercase belongs only to the Bahnschrift voice, and never to an ID.
@@ -327,10 +327,10 @@ A warm brown-black palette with one orange, three developer-chemistry status col
 A fixed desktop frame at 1040×760: a 40px title bar field on top, a 32px status bar field at the bottom, and the active tab between them.
 
 - **New download** is a two-column grid of equal halves, padded 24px top and bottom and 32px at the sides, with 16px between rows and 64px between columns. The left column (link box, preview frame, save folder, Download) sits on the darkroom ground; the right (Quality) on the light-table field. The field edge falls exactly at 50%, which is the only divider. The page order stays link → quality → folder → Download so Tab follows the steps.
-- **Downloads** is one full-width list padded 32px at the sides, 8px between rows, the Clear finished link above it at the right. Each row is thumbnail, info, then a fixed 176px action column, so every row's strip and big number end on the same vertical line.
+- **Downloads History** is one full-width list padded 32px at the sides, 8px between rows, the Clear finished link above it at the right. Each row is thumbnail, info, then a fixed 176px action column, so every row's strip and big number end on the same vertical line.
 - **Fixed heights:** 48px for Download and quality rows; 44px for the link box and save-folder row; 34px Settings segments; 32px buttons and icon buttons; 30px selects; 28px title-bar buttons.
 - **Rhythm:** 4px between segments, 8px and 12px inside rows, 14px insets that echo the sprocket pitch, 16px between stacked blocks, 22px inside the Settings dialog, 24px and 32px page padding.
-- **Text and page size** (100/125/150/175%) zooms the whole page. When the page is shorter than 520px (150% and 175%), the preview frame turns sideways: a 112px thumbnail beside the title, the edge code on its own full-width line below, allowed to wrap rather than lose the ID, so the folder row and Download stay in the first viewport. When the page is narrower than 720px (175%), the logo tile alone carries the brand and Resume, Retry and Show in folder become 32px icon buttons in a 72px action column.
+- **Text and page size** (100/125/150/175%) zooms the whole page. When the page is shorter than 520px (150% and 175%), the preview frame turns sideways: a 112px thumbnail beside the title, the edge code on its own full-width line below, allowed to wrap rather than lose the ID, so the folder row and Download stay in the first viewport. When the page is narrower than 720px (175%), the logo tile alone carries the brand and Resume, Retry and Show in folder become 32px icon buttons in a 72px action column. Narrower than 580px (175% in a window near its minimum), the Downloads History tab reads "Downloads" and the title bar's gaps tighten to 12px, so the window buttons stay on screen.
 - The status bar is three columns with equal sides, so "Developed by Khryz" stays exactly centered.
 
 ## Elevation & Depth
@@ -368,7 +368,7 @@ Exact and tactile: square-cut controls, quiet hover tints, and motion only where
 
 ### Chips
 - **Style:** no fill and no border: Rebate Tan Chip type, uppercase, never wraps; right-aligned in quality rows, beside the title in download rows.
-- **Count:** the Downloads tab count is a 3px-corner Tray tile in Proof Gray Count type; while something downloads it turns orange with On-Mask figures.
+- **Count:** the Downloads History tab count is a 3px-corner Tray tile in Proof Gray Count type; while something downloads it turns orange with On-Mask figures.
 
 ### Cards / Containers
 - **Download row:** Contact Paper, 4px corners, 12px padding (14px on the left), 16px between thumbnail, info and actions.

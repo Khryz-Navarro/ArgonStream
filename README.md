@@ -50,7 +50,7 @@ happening, and cleans up after itself.
    resolution you picked, you get the best one below it.
 4. **It downloads and joins the pieces.** YouTube serves high-quality video and its sound as separate
    streams. yt-dlp downloads both, then the bundled ffmpeg merges them into one playable file. For audio,
-   ffmpeg converts the sound into the format you chose instead. The **Downloads** tab shows each stage
+   ffmpeg converts the sound into the format you chose instead. The **Downloads History** tab shows each stage
    (video, audio, merging or converting) with size, speed and time left. Several downloads can run at
    once, each in its own yt-dlp process.
 5. **It names and saves the file.** The finished file goes to the folder you chose, named in your
@@ -79,7 +79,7 @@ speed limit).
 ## Features
 
 The window has two tabs: **New download** (link box, preview, save folder and Download on the left,
-Quality on the right) and **Downloads** (the full-width list).
+Quality on the right) and **Downloads History** (the full-width list).
 
 ### Video and audio quality
 
@@ -114,7 +114,7 @@ The exact yt-dlp options are in [Quality options](#quality-options).
 
 ### Watching and managing downloads
 
-- **Downloads tab:** lists everything you've started since the app opened. Its count turns orange while
+- **Downloads History tab:** lists everything you've started since the app opened. Its count turns orange while
   something is downloading.
 - **Each row** shows:
   - the thumbnail, title and quality (e.g. *1080p · MP4*, *Audio · MP3*);
@@ -268,7 +268,12 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
 
-To update, install the newer release over the old one. Uninstall from *Settings → Apps*.
+**To update,** run the newer installer; there's no need to uninstall first. It sees the installed version, its
+first page says **Update YT Downloader** (from which version to which), and **Next** installs the new version
+over the old one in the same folder. Your settings, yt-dlp and downloaded videos are kept. Close the app first:
+downloads still running in it stop.
+
+To go back to an older version, uninstall first. Uninstall from *Settings → Apps*.
 
 ## Run from source
 
@@ -284,8 +289,10 @@ On the first start the status bar shows **Downloading yt-dlp…** for a few seco
 The first `cargo run` compiles Tauri and takes a few minutes; later runs start in seconds.
 
 To build the installer (`target\release\bundle\nsis\YT Downloader_<version>_x64-setup.exe`), use the
-Tauri CLI, either `cargo install tauri-cli --version "^2" --locked` once and then `cargo tauri build`,
-or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
+Tauri CLI 2.12.4, either `cargo install tauri-cli --version "=2.12.4" --locked` once and then `cargo tauri build`,
+or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact version: the installer is built from
+`installer/installer.nsi`, which is that version's template with a few changes (updates install in place, see
+[Install](#install)).
 
 ## Using the app
 
@@ -293,7 +300,7 @@ or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
 2. **Pick a quality,** or use the **Custom** row's dropdowns. For sound only, switch Quality to **Audio** and pick MP3, AAC, WAV, FLAC or WMA.
 3. **Choose where to save** with **Change** (default: your Downloads folder).
 4. **Click Download** (or press <kbd>Enter</kbd>). The link box clears for the next link.
-5. **Open the Downloads tab** to watch progress.
+5. **Open the Downloads History tab** to watch progress.
 
 | State | What it means |
 |---|---|

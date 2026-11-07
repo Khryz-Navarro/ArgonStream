@@ -33,7 +33,7 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
   HTML/CSS/JS in `ui/`, rendered by WebView2; the Rust backend in `src/` runs yt-dlp and ffmpeg. It began
   as an Electron app (`Khryz-Navarro/youtube-downloader`), discontinued on 2026-11-07.
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
-  right) and **Downloads** (the full-width list). Several downloads run at once.
+  right) and **Downloads History** (the full-width list). Several downloads run at once.
 - People use it on large and high-DPI monitors; that is why "Text and page size" exists.
 - Installed from GitHub Releases (`YT-Downloader-Setup-<version>.exe`); each merged pull request publishes a
   new version.
@@ -55,7 +55,7 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
   File names (Classic, Basic, Pretty, Nerdy; the finished file is renamed, never over another file) and
   Speed limit (a slider: 500 KB/s to 50 MB/s per download, or Unlimited; yt-dlp's `--limit-rate`).
   About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
-- **Terminology in the UI:** New download, Downloads, Quality, Video, Audio, Custom, Paste, Change, Download,
+- **Terminology in the UI:** New download, Downloads History, Quality, Video, Audio, Custom, Paste, Change, Download,
   Show in folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size, File names,
   Speed limit.
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No

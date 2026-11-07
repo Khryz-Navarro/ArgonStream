@@ -5,7 +5,7 @@ primary_target: "ui/index.html"
 related_targets: ["ui/styles.css","ui/renderer.js"]
 ---
 
-# App window (New download and Downloads tabs)
+# App window (New download and Downloads History tabs)
 
 Scope: the whole app UI in `ui/` Mode: Operate.
 Audience and job: the public on Windows 11 pasting a YouTube link, choosing a quality, and watching downloads

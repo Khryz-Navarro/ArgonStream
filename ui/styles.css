@@ -64,6 +64,9 @@ img { display: block; }
 .tabs { display: flex; gap: 20px; align-self: stretch; }
 .tab { padding: 2px 0 0; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 7px; white-space: nowrap;
        border-bottom: 2px solid transparent; }
+/* narrower still (175% in a window near its 900px minimum): "Downloads History" becomes "Downloads" and the title bar
+   tightens, so the window buttons stay on screen */
+@media (max-width: 580px) { .titlebar, .tabs { gap: 12px; } .tab-more { display: none; } }
 .tab:hover { color: var(--text); }
 .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
 .tab:focus-visible { outline-offset: -2px; }

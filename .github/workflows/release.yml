@@ -36,7 +36,7 @@ jobs:
       - if: steps.version.outputs.new == 'true'
         run: cargo test
       - if: steps.version.outputs.new == 'true'
-        run: npx --yes @tauri-apps/cli@2 build
+        run: npx --yes @tauri-apps/cli@2.12.4 build # pinned: installer/installer.nsi is this version's template
 
       - name: Publish the GitHub Release
         if: steps.version.outputs.new == 'true'
