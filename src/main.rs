@@ -228,24 +228,83 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
             record.streams.insert(name.into());
         }
         if let Some(path) = ev["file"].as_str() {
-            record.file = Some(path.into());
-            file = record.file.clone();
+            file = Some(path.into());
+            // audio: the download is only the source; it counts as finished (Recycle Bin on Delete) once converted
+            if ytdlp::audio_target(quality).is_none() {
+                record.file = file.clone();
+            }
         } else {
             drop(downloads);
             send(ev);
         }
     }
     let exit = child.wait();
+    let ok = exit.as_ref().is_ok_and(|s| s.success());
+    // Audio downloads: yt-dlp fetched the stream as-is; convert it while still registered as this job
+    let converted = match (ytdlp::audio_target(quality), &file) {
+        (Some(target), Some(source)) if ok && stop.lock().unwrap().is_none() => {
+            Some(convert_audio(app, id, &stop, source, target, ffmpeg.as_deref()))
+        }
+        _ => None,
+    };
     state.jobs.lock().unwrap().remove(id);
     if let Some(reason) = *stop.lock().unwrap() {
         return send(json!({ "state": reason }));
     }
-    if !exit.as_ref().is_ok_and(|s| s.success()) {
+    if !ok {
         let fallback = || exit.map_or_else(|e| e.to_string(), |s| format!("yt-dlp exited with code {:?}", s.code()));
         return send(json!({ "state": "error", "error": error.unwrap_or_else(fallback) }));
     }
+    match converted {
+        Some(Err(error)) => return send(json!({ "state": "error", "error": error })),
+        Some(Ok(path)) => {
+            if let Some(record) = state.downloads.lock().unwrap().get_mut(id) {
+                record.file = Some(path.clone());
+            }
+            file = Some(path);
+        }
+        None => {}
+    }
     let size = file.as_ref().and_then(|f| std::fs::metadata(f).ok()).map(|m| m.len());
     send(json!({ "state": "done", "file": file, "size": size }));
+}
+
+// Converts a downloaded audio stream with the bundled ffmpeg into "<stem>.temp.<ext>", renames it into place and
+// deletes the download. The job's pid becomes ffmpeg's, so Cancel stops the conversion too.
+fn convert_audio(
+    app: &AppHandle,
+    id: &str,
+    stop: &Arc<Mutex<Option<&'static str>>>,
+    source: &Path,
+    (ext, name): (&str, &str),
+    ffmpeg: Option<&Path>,
+) -> Result<PathBuf, String> {
+    let fail = |why: String| format!("Couldn't convert to {name}: {why}");
+    let file_name = source.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let (temp, done) = ytdlp::audio_names(&file_name, ext);
+    let (temp, done) = (source.with_file_name(temp), source.with_file_name(done));
+    if source.extension().is_some_and(|e| e.eq_ignore_ascii_case(ext)) {
+        // already in that format (YouTube's AAC): only give it the finished name
+        std::fs::rename(source, &done).map_err(|e| fail(e.to_string()))?;
+        return Ok(done);
+    }
+    let ffmpeg = ffmpeg.ok_or_else(|| fail("ffmpeg is missing".into()))?;
+    let _ = app.emit("progress", json!({ "id": id, "state": "processing", "stream": "audio" }));
+    let args = ytdlp::convert_args(&source.to_string_lossy(), &temp.to_string_lossy(), ext);
+    let mut child = command(ffmpeg).args(args).stdout(Stdio::null()).stderr(Stdio::piped()).spawn().map_err(|e| fail(e.to_string()))?;
+    app.state::<AppState>().jobs.lock().unwrap().insert(id.into(), Job { pid: child.id(), stop: stop.clone() });
+    if stop.lock().unwrap().is_some() {
+        let _ = child.kill(); // canceled while ffmpeg was starting
+    }
+    let out = child.wait_with_output().map_err(|e| fail(e.to_string()))?;
+    if !out.status.success() || stop.lock().unwrap().is_some() {
+        let _ = std::fs::remove_file(&temp);
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        return Err(fail(stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("ffmpeg failed").to_string()));
+    }
+    std::fs::rename(&temp, &done).map_err(|e| fail(e.to_string()))?; // replaces an earlier file of the same name
+    let _ = std::fs::remove_file(source);
+    Ok(done)
 }
 
 #[tauri::command]

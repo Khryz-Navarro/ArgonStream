@@ -30,6 +30,7 @@ installs itself on first launch and keeps itself up to date.
 
 - **Five quality presets:** 4K Best (MKV), 4K, 1080p and 720p MP4 (H.264 preferred), and Default MP4.
 - **Custom quality:** any maximum resolution from 8K down to 144p, as MP4, MKV or WebM. Every option includes the best available audio.
+- **Audio only:** switch Quality from *Video* to *Audio* to save just the sound as MP3, AAC (.m4a), WAV, FLAC or WMA.
 - **Video preview** as soon as you paste a link: thumbnail, title, channel, length and the highest resolution available.
 - **Two tabs:** *New download* (link box, preview, save folder and Download on the left, quality on the right) and *Downloads* (the full-width list). The Downloads tab shows a count that turns orange while something is downloading.
 - **The look, "Contact Sheet":** the app as a darkroom contact sheet. The preview sits in a film frame with its edge code (video ID, resolution, length), and each download's progress is a row of sprocket holes that develop orange, ending green when done or red where it failed. The light theme is the light table.
@@ -61,6 +62,25 @@ Files are named `Title [videoId] 1080p.ext` (yt-dlp template `%(title)s [%(id)s]
 so different qualities of one video never collide. If a video doesn't have the exact resolution, the
 preset picks the best one below the cap. WebM can't hold H.264, so a video with no WebM streams is
 saved as `.mkv`.
+
+### Audio only
+
+Switch Quality to **Audio** to save only the sound. yt-dlp downloads the best audio stream as it is,
+then the app converts it with the bundled ffmpeg. yt-dlp's own `-x` can't make WMA and wants ffprobe,
+which isn't bundled. Only formats the bundled ffmpeg can encode are offered.
+
+| Format | File | How it's made |
+|---|---|---|
+| **MP3** | `.mp3` | `-c:a libmp3lame -q:a 0`: best VBR, about 245 kbps |
+| **AAC** | `.m4a` | YouTube's own AAC (`-f ba[ext=m4a]`), kept as it is; other sites' audio is encoded at `-c:a aac -b:a 192k` |
+| **WAV** | `.wav` | `-c:a pcm_s16le`: uncompressed 16-bit |
+| **FLAC** | `.flac` | `-c:a flac`: lossless, about half the size of WAV |
+| **WMA** | `.wma` | `-c:a wmav2 -b:a 192k -ac 2 -ar 44100`: Windows Media Audio, stereo |
+
+Audio files are named `Title [videoId].mp3`. While working, the download is called
+`Title [videoId].f251-mp3.webm`: the format ID plus the target. That name can't be mistaken for a
+finished file, and two formats of one video can download at the same time. It's deleted once the
+conversion is done.
 
 ## Requirements
 
@@ -100,7 +120,7 @@ or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
 ## Using the app
 
 1. **Paste a link** with **Paste** (or <kbd>Ctrl</kbd>+<kbd>V</kbd> in the link box). The preview shows the thumbnail, title, channel and highest resolution.
-2. **Pick a quality,** or use the **Custom** row's dropdowns.
+2. **Pick a quality,** or use the **Custom** row's dropdowns. For sound only, switch Quality to **Audio** and pick MP3, AAC, WAV, FLAC or WMA.
 3. **Choose where to save** with **Change** (default: your Downloads folder).
 4. **Click Download** (or press <kbd>Enter</kbd>). The link box clears for the next link.
 5. **Open the Downloads tab** to watch progress.
@@ -110,7 +130,8 @@ or, with Node.js installed, `npx @tauri-apps/cli@2 build`.
 | Starting… | yt-dlp is launching. If yt-dlp is still updating, it waits. |
 | Video · 225 MB of 921 MB · 11 MB/s · 1m left | Downloading the video stream, then the audio stream. |
 | Merging video and audio… | ffmpeg is combining the two streams. |
-| ✓ Done · 727 KB | Finished. **Show in folder** opens File Explorer with the file selected. The 🗑 button (after a confirmation) moves the video to the Recycle Bin. |
+| Converting to MP3… | Audio only: ffmpeg is turning the downloaded stream into the format you picked. Cancel stops it. |
+| ✓ Done | Finished; the file size shows as the row's big number. **Show in folder** opens File Explorer with the file selected. The 🗑 button (after a confirmation) moves the file to the Recycle Bin. |
 | Paused · 48.9 MB of 921.4 MB | **Pause** (‖) stopped yt-dlp and kept the partial file; **Resume** continues from there. Not available while merging. |
 | Canceled | **Retry** resumes from where it stopped; 🗑 deletes the leftover partial files instead. |
 | Error message in red | yt-dlp's reason, e.g. "This video is unavailable". **Retry** tries again. |
