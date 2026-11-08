@@ -1,5 +1,5 @@
 // The app's backend: installs and updates yt-dlp,
-// runs downloads (pause/cancel with a Windows process-tree kill), deletes leftovers, and applies the
+// runs downloads (pause/cancel kill yt-dlp's whole process tree), deletes leftovers, and applies the
 // Settings window's theme, page size and file names. The page talks to it through ui/api.js.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -51,6 +51,8 @@ fn command(bin: impl AsRef<OsStr>) -> Command {
     let mut cmd = Command::new(bin);
     #[cfg(windows)]
     std::os::windows::process::CommandExt::creation_flags(&mut cmd, 0x0800_0000); // CREATE_NO_WINDOW
+    #[cfg(unix)]
+    std::os::unix::process::CommandExt::process_group(&mut cmd, 0); // its own group, which kill() stops as a whole
     cmd
 }
 
@@ -126,11 +128,12 @@ fn wait_ready() -> Result<(), String> {
 fn kill(job: &Job, reason: &'static str) {
     *job.stop.lock().unwrap() = Some(reason);
     let pid = job.pid.to_string();
-    // yt-dlp.exe is a PyInstaller bundle that starts its own child (and ffmpeg), so kill the whole tree.
+    // yt-dlp is a PyInstaller bundle that starts its own child (and ffmpeg), so kill the whole tree. On Unix
+    // that's the process group command() started it in; waiting for `kill` leaves no zombie behind.
     let _ = if cfg!(windows) {
-        command("taskkill").args(["/pid", &pid, "/T", "/F"]).spawn()
+        command("taskkill").args(["/pid", &pid, "/T", "/F"]).spawn().map(drop)
     } else {
-        command("kill").arg(&pid).spawn()
+        command("kill").args(["-s", "KILL", "--", &format!("-{pid}")]).status().map(drop)
     };
 }
 
@@ -540,4 +543,27 @@ fn main() {
             }
         }
     });
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    // Pause and Cancel must also stop what yt-dlp started (its PyInstaller child, ffmpeg), not just yt-dlp.
+    #[test]
+    fn kill_stops_the_whole_process_group() {
+        let mut child = command("sh").args(["-c", "sleep 30 & echo $!; wait"]).stdout(Stdio::piped()).spawn().unwrap();
+        let mut grandchild = String::new();
+        BufReader::new(child.stdout.take().unwrap()).read_line(&mut grandchild).unwrap();
+        let job = Job { pid: child.id(), stop: Default::default() };
+        kill(&job, "paused");
+        assert_eq!(*job.stop.lock().unwrap(), Some("paused"));
+        assert!(!child.wait().unwrap().success());
+        // the orphaned sleep is reaped by init a moment after it dies
+        let gone = (0..50).any(|_| {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            !command("kill").args(["-0", grandchild.trim()]).stderr(Stdio::null()).status().unwrap().success()
+        });
+        assert!(gone, "sleep (pid {}) outlived the kill", grandchild.trim());
+    }
 }
