@@ -1,6 +1,6 @@
 [package]
 name = "argonstream"
-version = "0.1.15"
+version = "0.1.16"
 description = "Desktop YouTube downloader built on yt-dlp"
 authors = ["Khryz"]
 license = "MIT"
