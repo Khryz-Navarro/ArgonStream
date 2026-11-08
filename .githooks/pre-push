@@ -1,9 +1,12 @@
 #!/bin/sh
-# Changes reach main only through pull requests, and every pushed branch must carry a version newer
-# than main's, so each merged PR becomes a new release. scripts/release.ps1 bumps, pushes and opens the PR.
-# Emergency bypass: git push --no-verify
+# Changes reach main only through pull requests, and every pushed branch that changes the app must carry
+# a version newer than main's, so each merged app change becomes a new release. A branch that only changes
+# files outside the app (docs, repo tooling) keeps main's version, and merging it publishes nothing.
+# scripts/release.ps1 bumps when needed, pushes and opens the PR. Emergency bypass: git push --no-verify
 
 zero=0000000000000000000000000000000000000000
+# Files that don't ship in the app. Keep in sync with $notApp in scripts/release.ps1.
+not_app='^([^/]*\.md|LICENSE|\.gitignore|\.gitattributes|skills-lock\.json|scripts/release\.ps1|\.githooks/.*|\.github/.*|\.claude/.*|\.impeccable/.*)$'
 # Cargo.toml's [package] version: its first line that starts with `version =`
 version() { git show "$1:Cargo.toml" 2>/dev/null | tr -d '\r' | sed -n 's/^version = "\(.*\)"$/\1/p' | head -n 1; }
 main_version=$(version refs/remotes/origin/main)
@@ -17,6 +20,9 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
   [ -z "$main_version" ] && continue                          # main has no version yet: nothing to compare with
+  # a failed diff counts as an app change
+  app_files=$({ git diff --name-only "refs/remotes/origin/main...$local_sha" || echo '?'; } | grep -vE "$not_app")
+  [ -z "$app_files" ] && continue                             # nothing in the app changed: no new version
   new=$(version "$local_sha")
   newest=$(printf '%s\n%s\n' "$main_version" "$new" | sort -V | tail -n 1)
   if [ "$new" = "$main_version" ] || [ "$newest" != "$new" ]; then
