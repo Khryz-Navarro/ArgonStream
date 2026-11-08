@@ -433,7 +433,8 @@ Changes reach `main` only through a **pull request**, and every pull request tha
 new version. One that changes only docs or repo tooling (Markdown files, `LICENSE`, `.github/`, `.githooks/`,
 `.claude/`, `release.ps1`) keeps the version, and merging it publishes nothing.
 
-1. Work on a branch: `git switch -c my-change`, then commit your changes.
+1. Work on a branch named `feat/…` for a feature or `bug/…` for a bug fix (`git switch -c feat/my-change`),
+   then commit your changes.
 2. Run, from the repository folder:
 
    ```powershell

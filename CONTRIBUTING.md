@@ -120,7 +120,9 @@ cargo run                   # try it for real
 
 ## Branches, commits and pull requests
 
-1. **Branch from `main`:** `git switch -c short-name`. The pre-push hook blocks pushes to `main`.
+1. **Branch from `main`,** named for the kind of change: `git switch -c feat/short-name` for a feature,
+   `git switch -c bug/short-name` for a bug fix (like `feat/speed-limit` or `bug/eta-decimals`). The pre-push
+   hook blocks pushes to `main`.
 2. **Commit** with a short, imperative summary, like the existing history ("Add audio-only downloads:
    MP3, AAC, WAV, FLAC, WMA", "Fix gaps found in an audit of the Rust app"). In the body, say what
    changed and why.
