@@ -11,6 +11,7 @@ window.api = {
   defaultFolder: () => invoke('default_folder'),
   paste: () => invoke('paste'),
   pickFolder: current => invoke('pick_folder', { current }),
+  pickCookiesFile: () => invoke('pick_cookies_file'),
   showFile: file => invoke('show_file', { file }),
   info: url => invoke('info', { url }),
   download: ({ id, url, quality, folder }) => invoke('download', { id, url, quality, folder }),

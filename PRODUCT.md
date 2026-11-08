@@ -29,7 +29,7 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 
 ## Operating Context
 
-- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/youtube-downloader-rust`). The UI is
+- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/ArgonStream`). The UI is
   HTML/CSS/JS in `ui/`, rendered by WebView2; the Rust backend in `src/` runs yt-dlp and ffmpeg. It began
   as an Electron app (`Khryz-Navarro/youtube-downloader`), discontinued on 2026-11-07.
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
@@ -53,13 +53,15 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
   shows its version and update state. ffmpeg is bundled.
 - **Settings:** Theme (Light, Dark, Desktop = follow Windows), Text and page size (100/125/150/175%),
   File names (Classic, Basic, Pretty, Nerdy; the finished file is renamed, never over another file) and
-  Speed limit (a slider: 500 KB/s to 50 MB/s per download, or Unlimited; yt-dlp's `--limit-rate`).
+  Speed limit (a slider: 500 KB/s to 50 MB/s per download, or Unlimited; yt-dlp's `--limit-rate`) and
+  Cookies (Off, From Firefox, From a file: a signed-in YouTube session for age-restricted and members-only
+  videos; Chrome and Edge lock their cookies on Windows, so their users export a cookies.txt).
   About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
 - **Terminology in the UI:** New download, Downloads History, Quality, Video, Audio, Custom, Paste, Change, Download,
   Show in folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size, File names,
-  Speed limit.
+  Speed limit, Cookies, From Firefox, From a file.
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
-  cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
+  login of its own: age-restricted and members-only videos need Settings → Cookies. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
 - **License:** MIT (`LICENSE`, chosen 2026-11-07) for the app's own code; yt-dlp (Unlicense) and the
   bundled ffmpeg (GPL) keep their own licenses.

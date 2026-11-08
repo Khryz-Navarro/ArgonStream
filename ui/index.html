@@ -92,6 +92,20 @@
     <input class="range" type="range" id="speed" min="0" max="7" step="1" value="7" aria-labelledby="speed-label" aria-describedby="speed-note">
     <div class="sub" id="speed-note">The most each download may use. Takes effect on downloads you start or resume.</div>
   </div>
+  <div class="setting">
+    <div class="k" id="cookies-label">Cookies</div>
+    <div class="seg" role="radiogroup" aria-labelledby="cookies-label" aria-describedby="cookies-note">
+      <label><input type="radio" name="cookies" value="off">Off</label>
+      <label><input type="radio" name="cookies" value="firefox">From Firefox</label>
+      <label><input type="radio" name="cookies" value="file">From a file</label>
+    </div>
+    <div id="cookie-file" class="save" hidden>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13H8"/><path d="M16 17H8"/><path d="M16 13h-2"/></svg>
+      <span id="cookie-file-name" class="path">No file chosen</span>
+      <button id="cookie-file-pick" class="btn" type="button" aria-label="Choose a cookies.txt file">Choose</button>
+    </div>
+    <div class="sub" id="cookies-note">For age-restricted and members-only videos, yt-dlp uses your signed-in YouTube session. Chrome and Edge lock their cookies on Windows, so export a cookies.txt from them instead. YouTube may restrict accounts used this way: a spare account is safer.</div>
+  </div>
 </dialog>
 
 <div class="body">
