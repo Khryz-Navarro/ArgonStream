@@ -1,6 +1,6 @@
 # Contributing to ArgonStream
 
-Thanks for helping. ArgonStream is a small Windows app built with Rust and Tauri 2. It drives
+Thanks for helping. ArgonStream is a small Windows and Linux app built with Rust and Tauri 2. It drives
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) and a bundled ffmpeg so people can save a YouTube video or its
 audio without a command line. [README.md](README.md) explains what the app does. This file covers how to
 change it.
@@ -41,6 +41,22 @@ cargo run                                # the app, with a console for logs
 
 If PowerShell refuses to run a script, see [Troubleshooting](README.md#troubleshooting).
 
+On Linux you need [Rust](https://rustup.rs/) (stable) and the packages Tauri builds against. On Debian and
+Ubuntu (Tauri's [prerequisites](https://v2.tauri.app/start/prerequisites/#linux) cover other distributions):
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev \
+  libayatana-appindicator3-dev librsvg2-dev
+git clone https://github.com/Khryz-Navarro/ArgonStream.git
+cd ArgonStream
+./scripts/get-ffmpeg.sh                  # once: the bundled ffmpeg, checked by its SHA-256
+git config core.hooksPath .githooks      # once: turns on the pre-push check
+cargo run
+```
+
+On Windows, WSL with Ubuntu works for this too: its WSLg shows the app's window on your desktop. Clone into
+the Linux home folder (`~`) rather than `/mnt/c`, where builds are much slower.
+
 ## Where things go
 
 | Path | What belongs there |
@@ -51,6 +67,7 @@ If PowerShell refuses to run a script, see [Troubleshooting](README.md#troublesh
 | `ui/api.js` | **The only Tauri-specific file in the page:** `window.api`, the window buttons, and the guards that turn off WebView2's browser behaviour. |
 | `capabilities/default.json` | **What the page may call.** Only touch it when a change needs a new Tauri permission (a plugin or window API). |
 | `tauri.conf.json` | **App name, installer and the content security policy.** |
+| `tauri.linux.conf.json` | **Linux only,** merged over `tauri.conf.json` by Tauri: the `.deb` and AppImage targets, the app menu category, and ffmpeg's name there (`argonstream-ffmpeg`, since the `.deb` puts it in `/usr/bin`). |
 
 **Adding a backend call takes three edits:**
 
@@ -71,9 +88,11 @@ These hold everywhere in the code. A pull request that breaks one won't be merge
   as an option.
 - **Files:** only touch paths the backend learned from yt-dlp for that download, never a path sent by
   the page. Never overwrite a file the app didn't create (see `place()` in `main.rs`). A finished file is
-  deleted only to the Recycle Bin, after the user confirms.
-- **Never leave yt-dlp or ffmpeg running in the background.** Stopping kills the whole process tree, and
-  closing the app stops every download.
+  deleted only to the Recycle Bin (the Trash on Linux), after the user confirms.
+- **Never leave yt-dlp or ffmpeg running in the background.** Stopping kills the whole process tree
+  (`taskkill /T /F` on Windows; on Linux, the process group that `command()` in `main.rs` starts each
+  program in), and closing the app stops every download. Start programs with `command()`, never
+  `Command::new`.
 
 ## Common changes
 
@@ -91,7 +110,7 @@ Update [README.md](README.md) in the same pull request whenever behavior changes
 
 - **Read first:** [PRODUCT.md](PRODUCT.md) (who it's for, what it does, its limits) and
   [DESIGN.md](DESIGN.md) (the "Contact Sheet" look: tokens, components, rules) before changing the UI.
-- **It's a quiet Windows app,** not a front-end for every yt-dlp option. A new option needs a reason
+- **It's a quiet desktop app,** not a front-end for every yt-dlp option. A new option needs a reason
   most people would care about.
 - **Use the colors and sizes defined in `ui/styles.css`.** Check both themes, and check
   **Text and page size** at 175%.
@@ -113,6 +132,9 @@ cargo run                   # try it for real
 - **Anything touching downloads:** run a real download. Try Pause/Resume, Cancel, Retry and Delete if
   your change could affect them.
 - **UI changes:** look at both themes and at 175%.
+- **Linux:** `cargo test` there also checks that stopping a download ends the whole process group. If your
+  change touches downloads, the window, files or packaging (`tauri.linux.conf.json`, `get-ffmpeg.sh`), also
+  try it on Linux (WSL is fine): `npx @tauri-apps/cli@2.12.4 build` builds the `.deb` and AppImage there.
 - **The installer:** build it with Tauri CLI 2.12.4 (`npx @tauri-apps/cli@2.12.4 build`) when you change packaging,
   `tauri.conf.json` or `installer/installer.nsi`. That file is the CLI's own installer template with changes marked
   `ArgonStream:`; when upgrading the CLI, start from its new template, re-apply them, and update the pinned version in

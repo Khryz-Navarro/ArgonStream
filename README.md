@@ -1,13 +1,14 @@
 # ArgonStream
 
-A small Windows app for downloading YouTube videos and audio on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
+A small Windows and Linux app for downloading YouTube videos and audio on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
 built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs yt-dlp and ffmpeg, and the
-window is drawn by Windows' built-in WebView2. The installer is about 23 MB, most of it ffmpeg.
+window is drawn by the system's web view (WebView2 on Windows, WebKitGTK on Linux). The Windows installer
+is about 23 MB, most of it ffmpeg.
 
 Paste a link, pick a quality preset (or your own resolution and file type), and download. yt-dlp
 installs itself on first launch and keeps itself up to date.
 
-> **Status:** early versions (0.x) for Windows 10/11. Download the installer from
+> **Status:** early versions (0.x) for Windows 10/11 and 64-bit Linux. Download the installer, `.deb` or AppImage from
 > [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases), or run from source.
 > The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md). ArgonStream was called **YT Downloader** up to
 > v0.1.10; its installer replaces an installed YT Downloader and keeps its settings.
@@ -61,9 +62,9 @@ happening, and cleans up after itself.
 6. **It lets you manage downloads.**
    - **Pause** keeps the partial file, and **Resume** continues from it.
    - **Cancel** stops a download. **Retry** starts it again, picking up any partial file.
-   - **Show in folder** opens File Explorer with the file selected.
+   - **Show in folder** opens File Explorer (your file manager on Linux) with the file selected.
    - **Delete** removes what that download left behind: unfinished pieces are deleted for good, and a
-     finished file goes to the Recycle Bin after you confirm. It only touches files yt-dlp reported
+     finished file goes to the Recycle Bin (the Trash on Linux) after you confirm. It only touches files yt-dlp reported
      writing for that download.
    - **Clear finished** tidies the list without touching any files.
 
@@ -76,7 +77,7 @@ speed limit, cookies).
   browser's signed-in session instead (see [Cookies](#cookies)).
 - It downloads one video per link; whole playlists and channels aren't supported.
 - It doesn't update itself: install new versions from Releases. (yt-dlp does update itself, at every start.)
-- It's made and tested for YouTube on Windows. yt-dlp supports many other sites and the app accepts any
+- It's made and tested for YouTube. yt-dlp supports many other sites and the app accepts any
   web link, but other sites aren't tested.
 
 ## Features
@@ -131,9 +132,9 @@ The exact yt-dlp options are in [Quality options](#quality-options).
 - **Pause and Resume:** Pause keeps the partial file and Resume continues from it. Not available while
   merging.
 - **Cancel and Retry:** Retry starts a canceled or failed download again, picking up any partial file.
-- **Show in folder:** opens File Explorer with the finished file selected.
+- **Show in folder:** opens File Explorer (your file manager on Linux) with the finished file selected.
 - **Delete (🗑):**
-  - for a finished download, it moves the file to the Recycle Bin after a confirm;
+  - for a finished download, it moves the file to the Recycle Bin (the Trash on Linux) after a confirm;
   - for a canceled or failed one, it deletes the leftover partial files.
   - It only touches files yt-dlp reported writing for that download. An earlier download of the same
     video is never touched.
@@ -171,7 +172,7 @@ The exact yt-dlp options are in [Quality options](#quality-options).
 - **Its own title bar:** Windows-style minimize, maximize and close buttons. The version button opens
   **About**, which shows the app, yt-dlp, ffmpeg and Tauri versions.
 - **Settings** (the cog, top right), all saved for next time:
-  - **Theme:** Light, Dark, or Desktop (follows Windows, live).
+  - **Theme:** Light, Dark, or Desktop (follows the system's light or dark setting, live on Windows).
   - **Text and page size:** 100%, 125%, 150% or 175%. It zooms the whole window, for large or high-DPI
     screens.
   - **File names:** Classic, Basic, Pretty or Nerdy.
@@ -188,7 +189,8 @@ The exact yt-dlp options are in [Quality options](#quality-options).
   - arrow keys move between the tabs and between options;
   - <kbd>Enter</kbd> downloads;
   - <kbd>Esc</kbd> closes Settings and About.
-- **Small:** the installer is about 23 MB, and the window uses the WebView2 built into Windows.
+- **Small:** the Windows installer is about 23 MB, and the window uses the system's web view: the WebView2
+  built into Windows, or WebKitGTK on Linux.
 - **Safe by default:**
   - only web links reach yt-dlp, and never as an option;
   - values from the page are checked against fixed lists;
@@ -290,14 +292,20 @@ Good to know:
 
 ## Requirements
 
-- **Windows 10 or 11** with the WebView2 runtime (built into Windows 11 and current Windows 10).
+- **Windows 10 or 11** with the WebView2 runtime (built into Windows 11 and current Windows 10), or
+- **64-bit Linux** (x86-64) as new as Ubuntu 24.04, Debian 13 or Fedora 40 (glibc 2.39 or newer), with `curl`.
+  The `.deb` installs what it needs (WebKitGTK 4.1, GTK 3, curl); the AppImage carries WebKitGTK itself.
 - **Internet access** on first launch, to download yt-dlp.
-- To build: **[Rust](https://rustup.rs/)** (stable, MSVC toolchain) and the **Visual Studio C++ build tools**
-  ("Desktop development with C++" workload, which includes the Windows SDK).
+- To build on Windows: **[Rust](https://rustup.rs/)** (stable, MSVC toolchain) and the **Visual Studio C++ build
+  tools** ("Desktop development with C++" workload, which includes the Windows SDK).
+- To build on Linux: **[Rust](https://rustup.rs/)** (stable) and the packages Tauri needs (see
+  [Run from source](#run-from-source)).
 
 You don't need to install yt-dlp, ffmpeg or Python yourself.
 
 ## Install
+
+### Windows
 
 1. Open [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases) and download
    `ArgonStream-Setup-<version>.exe` from the newest release.
@@ -314,12 +322,38 @@ ArgonStream**, and the old app, its shortcuts and its uninstall entry are remove
 
 To go back to an older version, uninstall first. Uninstall from *Settings → Apps*.
 
+### Linux
+
+From the newest release on [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases), take either:
+
+- **`ArgonStream-<version>-amd64.deb`** for Debian, Ubuntu, Linux Mint and the like. Install it with
+  `sudo apt install ./ArgonStream-<version>-amd64.deb`, then start **ArgonStream** from the app menu (under
+  Video) or with `argonstream`. To update, install the newer `.deb` the same way. To uninstall:
+  `sudo apt remove argon-stream`.
+- **`ArgonStream-<version>-x86_64.AppImage`** for any other distribution. Make it executable and run it:
+  `chmod +x ArgonStream-<version>-x86_64.AppImage`, then `./ArgonStream-<version>-x86_64.AppImage`. To
+  update, replace it with the newer AppImage.
+
+Either way your settings and yt-dlp are kept across updates, in `~/.local/share/com.khryz.ytdownloader`.
+
 ## Run from source
 
 ```powershell
 git clone https://github.com/Khryz-Navarro/ArgonStream.git
 cd ArgonStream
 .\scripts\get-ffmpeg.ps1     # once: downloads the bundled ffmpeg into binaries\
+cargo run
+```
+
+On Linux, install the packages Tauri builds against first (this is Debian and Ubuntu; Tauri's
+[prerequisites](https://v2.tauri.app/start/prerequisites/#linux) list them for other distributions):
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev \
+  libayatana-appindicator3-dev librsvg2-dev
+git clone https://github.com/Khryz-Navarro/ArgonStream.git
+cd ArgonStream
+./scripts/get-ffmpeg.sh       # once: downloads the bundled ffmpeg into binaries/
 cargo run
 ```
 
@@ -331,7 +365,8 @@ To build the installer (`target\release\bundle\nsis\ArgonStream_<version>_x64-se
 Tauri CLI 2.12.4, either `cargo install tauri-cli --version "=2.12.4" --locked` once and then `cargo tauri build`,
 or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact version: the installer is built from
 `installer/installer.nsi`, which is that version's template with a few changes (updates install in place, see
-[Install](#install)).
+[Install](#install)). On Linux the same command builds the `.deb` and the AppImage instead, into
+`target/release/bundle/deb/` and `target/release/bundle/appimage/` (`tauri.linux.conf.json` picks them).
 
 ## Using the app
 
@@ -347,27 +382,27 @@ or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact v
 | Video · 225 MB of 921 MB · 11 MB/s · 1m left | Downloading the video stream, then the audio stream. |
 | Merging video and audio… | ffmpeg is combining the two streams. |
 | Converting to MP3… | Audio only: ffmpeg is turning the downloaded stream into the format you picked. Cancel stops it. |
-| ✓ Done | Finished; the file size shows as the row's big number. **Show in folder** opens File Explorer with the file selected. The 🗑 button (after a confirmation) moves the file to the Recycle Bin. |
+| ✓ Done | Finished; the file size shows as the row's big number. **Show in folder** opens File Explorer (your file manager on Linux) with the file selected. The 🗑 button (after a confirmation) moves the file to the Recycle Bin (the Trash on Linux). |
 | Paused · 48.9 MB of 921.4 MB | **Pause** (‖) stopped yt-dlp and kept the partial file; **Resume** continues from there. Not available while merging. |
 | Canceled | **Retry** resumes from where it stopped; 🗑 deletes the leftover partial files instead. |
 | Error message in red | yt-dlp's reason, e.g. "This video is unavailable". **Retry** tries again. |
 
 The 🗑 button only touches files yt-dlp reported writing for *that* download: its `.part` pieces,
 fragments, separate video/audio streams and ffmpeg's `.temp` merge file. Leftovers are deleted
-permanently; a finished video goes to the Recycle Bin. An earlier download of the same video in another
+permanently; a finished video goes to the Recycle Bin (the Trash on Linux). An earlier download of the same video in another
 quality is never touched.
 
 ## Where things are stored
 
-| What | Where |
-|---|---|
-| Your downloads | The folder shown in the app (default: your Downloads folder) |
-| yt-dlp program | `%APPDATA%\com.khryz.ytdownloader\bin\yt-dlp.exe` |
-| Settings (theme, text and page size, file names, speed limit, cookies and the cookies.txt location) | `%APPDATA%\com.khryz.ytdownloader\settings.json` |
-| Remembered quality and folder | WebView2 storage in `%LOCALAPPDATA%\com.khryz.ytdownloader` |
-| ffmpeg | `ffmpeg.exe` next to the app's exe (`binaries\` in the source tree) |
+| What | Windows | Linux |
+|---|---|---|
+| Your downloads | The folder shown in the app (default: your Downloads folder) | The same |
+| yt-dlp program | `%APPDATA%\com.khryz.ytdownloader\bin\yt-dlp.exe` | `~/.local/share/com.khryz.ytdownloader/bin/yt-dlp` |
+| Settings (theme, text and page size, file names, speed limit, cookies and the cookies.txt location) | `%APPDATA%\com.khryz.ytdownloader\settings.json` | `~/.local/share/com.khryz.ytdownloader/settings.json` |
+| Remembered quality and folder | WebView2 storage in `%LOCALAPPDATA%\com.khryz.ytdownloader` | WebKitGTK storage in `~/.local/share/com.khryz.ytdownloader` |
+| ffmpeg | `ffmpeg.exe` next to the app's exe (`binaries\` in the source tree) | `argonstream-ffmpeg` next to the app (`/usr/bin` for the `.deb`) |
 
-To force a clean reinstall of yt-dlp, close the app and delete `%APPDATA%\com.khryz.ytdownloader\bin`.
+To force a clean reinstall of yt-dlp, close the app and delete that `bin` folder.
 
 ## How it's built
 
@@ -384,12 +419,14 @@ ArgonStream/
 ├─ capabilities/       What the page may call (Tauri permissions)
 ├─ icons/              App icon (icon.svg is the source)
 ├─ scripts/
-│  ├─ get-ffmpeg.ps1   Downloads the bundled ffmpeg
+│  ├─ get-ffmpeg.ps1   Downloads the bundled ffmpeg (Windows)
+│  ├─ get-ffmpeg.sh    Downloads the bundled ffmpeg (Linux)
 │  └─ release.ps1      Bump the version, push the branch, open the pull request
 ├─ .githooks/pre-push  Blocks direct pushes to main and branch pushes without a newer version
 ├─ .github/workflows/
-│  └─ release.yml      After a merge to main: builds the installer and publishes the GitHub Release
+│  └─ release.yml      After a merge to main: builds the installer and Linux packages, publishes the Release
 ├─ tauri.conf.json     App name, content security policy, installer settings
+├─ tauri.linux.conf.json  Linux only: the .deb and AppImage, and ffmpeg's name there
 ├─ PRODUCT.md          Who the app is for, what it does, its constraints and principles
 ├─ DESIGN.md           The visual system: tokens, components and rules ("Contact Sheet")
 └─ Cargo.toml          Dependencies and the app version
@@ -397,10 +434,10 @@ ArgonStream/
 
 - **Page and backend.** `renderer.js` only talks to the backend through `window.api`; `api.js`
   implements it with Tauri `invoke` calls and events, one `#[tauri::command]` in `src/main.rs` per call.
-- **Downloads** run `yt-dlp.exe` with a machine-readable progress template; each output line becomes a
-  `progress` event for the page. **Pause** and **Cancel** end the whole process tree with
-  `taskkill /T /F` (yt-dlp starts its own child and ffmpeg); a paused download keeps its `.part` file,
-  so Resume continues it.
+- **Downloads** run yt-dlp with a machine-readable progress template; each output line becomes a
+  `progress` event for the page. **Pause** and **Cancel** end the whole process tree (yt-dlp starts its
+  own child and ffmpeg): `taskkill /T /F` on Windows; on Linux every command starts in its own process
+  group, which gets `SIGKILL`. A paused download keeps its `.part` file, so Resume continues it.
 - **Security:** links must be `http(s)` and are passed after `--`, so they can't be read as yt-dlp
   options. Quality and settings values from the page are checked against fixed lists. Delete only
   removes files yt-dlp reported for that download, never a path sent by the page. The cookies.txt path
@@ -444,9 +481,11 @@ Changes reach `main` only through a **pull request**, and every pull request car
    on `main` or with uncommitted changes, and turns on the pre-push hook.
 3. Review and **merge the pull request** on GitHub.
 4. **GitHub publishes the release by itself.** The merge starts the
-   [Release workflow](.github/workflows/release.yml): if `v0.1.1` has no release yet, it runs the tests,
-   builds the installer, and creates the GitHub Release *ArgonStream v0.1.1* (and its `v0.1.1` tag)
-   with `ArgonStream-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
+   [Release workflow](.github/workflows/release.yml): if `v0.1.1` has no release yet, it runs the tests and
+   builds the Windows installer and the Linux packages side by side, then creates the GitHub Release
+   *ArgonStream v0.1.1* (and its `v0.1.1` tag) with `ArgonStream-Setup-0.1.1.exe`,
+   `ArgonStream-0.1.1-amd64.deb` and `ArgonStream-0.1.1-x86_64.AppImage` attached. If either build fails,
+   nothing is published. Follow it on the repo's **Actions** tab.
 
 The **pre-push hook** (`.githooks/pre-push`) blocks pushes straight to `main`, and blocks a branch push
 whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh clone you can also run
@@ -470,7 +509,11 @@ before running it; otherwise both would ship the same version.
 | `cargo run` fails with *resource path `binaries\ffmpeg-x86_64-pc-windows-msvc.exe` doesn't exist* | Run `.\scripts\get-ffmpeg.ps1` once. |
 | `cargo` fails with *link.exe not found* | Install the "Desktop development with C++" workload in the Visual Studio Installer. |
 | PowerShell says *running scripts is disabled* for a script in `scripts\` | Run it as `powershell -ExecutionPolicy Bypass -File .\scripts\<name>.ps1`. |
-| `get-ffmpeg.ps1` says *checksum mismatch* | The download isn't the expected ffmpeg build; the script deleted it. Try again later, and don't build with a different file. |
+| `get-ffmpeg.ps1` or `get-ffmpeg.sh` says *checksum mismatch* | The download isn't the expected ffmpeg build; the script deleted it. Try again later, and don't build with a different file. |
+| Linux: `cargo run` fails with *resource path `binaries/argonstream-ffmpeg-x86_64-unknown-linux-gnu` doesn't exist* | Run `./scripts/get-ffmpeg.sh` once. |
+| Linux: `cargo` fails because `webkit2gtk-4.1` (or `gtk+-3.0`, `libsoup-3.0`) isn't found | Install the packages listed in [Run from source](#run-from-source). |
+| Linux: status bar says *Couldn't set up yt-dlp: couldn't run curl* | Install curl (`sudo apt install curl`); the `.deb` does this for you, the AppImage can't. |
+| Linux: the AppImage doesn't start and mentions FUSE | Install your distribution's FUSE package (`fuse3` or `fuse`), or run it with `--appimage-extract-and-run`. |
 | Status bar: *Couldn't set up yt-dlp* | First launch needs internet to download yt-dlp. Connect and restart the app. |
 | Status bar: *couldn't check for updates* | You're offline or GitHub is unreachable. The app keeps using the installed version. |
 | A download fails with "Sign in to confirm your age" or a members-only error | Turn on **Settings → Cookies** (see [Cookies](#cookies)). If it's already on, the cookies may be signed out or expired: export them again. |
@@ -482,7 +525,9 @@ before running it; otherwise both would ship the same version.
 - The app doesn't update itself. (yt-dlp does, at every start.)
 - Playlists are ignored: a link with `&list=` downloads only that one video.
 - Cookies come only from Firefox or a `cookies.txt` file: Chrome and Edge lock theirs on Windows.
-- Tested only on Windows 11.
+- Tested on Windows 11, and on Linux only on Ubuntu 26.04 under WSL. The title bar keeps its Windows-style
+  buttons on Linux too.
+- Linux builds are x86-64 only.
 
 ## Credits and legal
 
