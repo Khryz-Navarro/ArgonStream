@@ -86,12 +86,52 @@ pub fn assert_url(url: &str) -> Result<String, String> {
     Ok(u.into())
 }
 
-pub fn info_args(url: &str) -> Vec<String> {
-    strings(&[
+/// `cookies` are `cookie_args`: an age-restricted video can't even be looked up without them.
+pub fn info_args(url: &str, cookies: &[String]) -> Vec<String> {
+    let mut args = strings(&[
         "--no-playlist", "--no-warnings", "--encoding", "utf-8",
         "-O", "%(.{id,title,channel,uploader,duration_string,thumbnail,height,fps})j",
-        "--", url, // `--` so a link can never be read as an option
-    ])
+    ]);
+    args.extend_from_slice(cookies);
+    args.extend(strings(&["--", url])); // `--` so a link can never be read as an option
+    args
+}
+
+/// Settings → Cookies as yt-dlp options, so it uses a signed-in YouTube session (age-restricted and members-only
+/// videos). `mode` is "off", "firefox" or "file"; `file` is the cookies.txt chosen in Settings. Only Firefox is offered
+/// as a browser: on Windows, Chrome and Edge lock their cookies to themselves (app-bound encryption since Chrome 127),
+/// so yt-dlp can't read them; their users export a cookies.txt instead.
+pub fn cookie_args(mode: &str, file: Option<&str>) -> Result<Vec<String>, String> {
+    match mode {
+        "firefox" => Ok(strings(&["--cookies-from-browser", "firefox"])),
+        "file" => match file.filter(|f| !f.is_empty()) {
+            Some(file) => Ok(strings(&["--cookies", file])),
+            None => Err("Choose a cookies file in Settings, or turn Cookies off".into()),
+        },
+        _ => Ok(vec![]),
+    }
+}
+
+// yt-dlp errors that a signed-in session fixes: "Sign in to confirm your age", "Sign in to confirm you're not a
+// bot", members-only videos.
+fn needs_cookies(error: &str) -> bool {
+    let error = error.to_lowercase();
+    error.contains("sign in to confirm") || error.contains("members-only") || error.contains("age-restricted")
+}
+
+/// An error as the app shows it. For the ones a signed-in session fixes, yt-dlp's command-line advice ("Use
+/// --cookies-from-browser or --cookies…", then links) gives way to where Settings → Cookies is; `cookies_on` says
+/// whether it's already on. Other errors come back unchanged.
+pub fn explain(error: &str, cookies_on: bool) -> String {
+    if !needs_cookies(error) {
+        return error.to_string();
+    }
+    let error = error.split(" Use --cookies").next().unwrap_or(error).trim_end();
+    if cookies_on {
+        format!("{error} The cookies may be signed out or expired: sign in again, then update them in Settings.")
+    } else {
+        format!("{error} Turn on Cookies in Settings to use your signed-in YouTube session.")
+    }
 }
 
 // Videos: the resolution keeps different qualities of one video from sharing a name, which made yt-dlp skip a
@@ -107,8 +147,15 @@ fn output_template(quality: &str) -> String {
     }
 }
 
-/// `limit` is a SPEED_LIMITS cap for this download, or None for no cap.
-pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str>, limit: Option<&str>) -> Result<Vec<String>, String> {
+/// `limit` is a SPEED_LIMITS cap for this download, or None for no cap; `cookies` are `cookie_args`.
+pub fn download_args(
+    url: &str,
+    quality: &str,
+    folder: &str,
+    ffmpeg: Option<&str>,
+    limit: Option<&str>,
+    cookies: &[String],
+) -> Result<Vec<String>, String> {
     let mut args = quality_args(quality)?;
     args.extend(strings(&[
         "--no-playlist", "--encoding", "utf-8", "--newline", "--progress",
@@ -126,6 +173,7 @@ pub fn download_args(url: &str, quality: &str, folder: &str, ffmpeg: Option<&str
     if let Some(limit) = limit {
         args.extend(strings(&["--limit-rate", limit]));
     }
+    args.extend_from_slice(cookies);
     args.extend(strings(&["--", url]));
     Ok(args)
 }
@@ -299,14 +347,14 @@ mod tests {
     #[test]
     fn every_quality_builds_args_that_end_with_dashdash_url() {
         for quality in QUALITIES {
-            let args = download_args("https://youtu.be/x", quality, "C:\\out", Some("ff.exe"), None).unwrap();
+            let args = download_args("https://youtu.be/x", quality, "C:\\out", Some("ff.exe"), None, &[]).unwrap();
             assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
             assert!(args.iter().any(|a| a == "--no-playlist"));
             assert_eq!(after(&args, "-P"), "C:\\out");
             assert_eq!(after(&args, "-o"), OUTPUT_TEMPLATE);
             assert_eq!(after(&args, "--ffmpeg-location"), "ff.exe");
         }
-        let args = download_args("https://youtu.be/x", "mp4_720", ".", None, None).unwrap();
+        let args = download_args("https://youtu.be/x", "mp4_720", ".", None, None, &[]).unwrap();
         assert!(!args.iter().any(|a| a == "--ffmpeg-location"));
         assert!(!args.iter().any(|a| a == "--limit-rate"), "no cap unless one is set");
     }
@@ -314,7 +362,7 @@ mod tests {
     #[test]
     fn speed_limits_become_ytdlps_limit_rate() {
         for quality in ["mp4_1080", "audio-mp3"] {
-            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M")).unwrap();
+            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &[]).unwrap();
             assert_eq!(after(&args, "--limit-rate"), "5M");
             assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]); // the link stays last, after `--`
         }
@@ -326,6 +374,51 @@ mod tests {
             n.parse::<u64>().unwrap() * if unit == "K" { 1 << 10 } else { assert_eq!(unit, "M"); 1 << 20 }
         };
         assert!(caps.windows(2).all(|w| bytes(w[0]) < bytes(w[1])), "{caps:?}");
+    }
+
+    #[test]
+    fn cookies_reach_ytdlp_for_lookups_and_downloads() {
+        assert_eq!(cookie_args("off", Some("C:\\c.txt")).unwrap(), Vec::<String>::new());
+        assert_eq!(cookie_args("firefox", None).unwrap(), ["--cookies-from-browser", "firefox"]);
+        assert_eq!(cookie_args("file", Some("C:\\my cookies.txt")).unwrap(), ["--cookies", "C:\\my cookies.txt"]);
+        for missing in [None, Some("")] {
+            assert!(cookie_args("file", missing).unwrap_err().contains("Choose a cookies file"));
+        }
+        // both the preview lookup and the download get them, always before `--` so the link stays last
+        let cookies = cookie_args("file", Some("C:\\c.txt")).unwrap();
+        let info = info_args("https://youtu.be/x", &cookies);
+        assert_eq!(after(&info, "--cookies"), "C:\\c.txt");
+        assert_eq!(info[info.len() - 2..], ["--", "https://youtu.be/x"]);
+        for quality in ["mp4_1080", "audio-mp3"] {
+            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &cookies).unwrap();
+            assert_eq!(after(&args, "--cookies"), "C:\\c.txt");
+            assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
+        }
+        assert!(!download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[]).unwrap().iter().any(|a| a.starts_with("--cookies")));
+    }
+
+    #[test]
+    fn needs_cookies_spots_errors_a_signed_in_session_fixes() {
+        for error in [
+            "Sign in to confirm your age. This video may be inappropriate for some users.",
+            "Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication.",
+            "Join this channel to get access to members-only content like this video, and other exclusive perks.",
+            "This video is age-restricted and only available on YouTube.",
+        ] {
+            assert!(needs_cookies(error), "{error}");
+        }
+        for error in ["Video unavailable. This video is private", "Unable to download webpage", "HTTP Error 404: Not Found"] {
+            assert!(!needs_cookies(error), "{error}");
+            assert_eq!(explain(error, false), error); // unchanged
+        }
+        // yt-dlp 2026.10.26's real message for an age-restricted video, after error_text
+        let age = error_text("ERROR: [youtube] HtVdAasjOgU: Sign in to confirm your age. This video may be inappropriate for some users. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies.").unwrap();
+        assert_eq!(
+            explain(&age, false),
+            "Sign in to confirm your age. This video may be inappropriate for some users. Turn on Cookies in Settings to use your signed-in YouTube session."
+        );
+        assert!(explain(&age, true).ends_with("The cookies may be signed out or expired: sign in again, then update them in Settings."));
+        assert!(!explain(&age, true).contains("--cookies"));
     }
 
     #[test]
@@ -355,7 +448,7 @@ mod tests {
             if key != "audio-aac" {
                 assert_eq!(quality_args(key).unwrap(), ["-f", "ba/b"], "{key}");
             }
-            let args = download_args("https://youtu.be/x", key, "C:\\out", Some("ff.exe"), None).unwrap();
+            let args = download_args("https://youtu.be/x", key, "C:\\out", Some("ff.exe"), None, &[]).unwrap();
             assert!(!args.iter().any(|a| a == "-x" || a == "--merge-output-format"), "{key}: no extraction or merge");
             // the source gets its own ".f<format>-<target>" name, never the finished file's
             assert_eq!(after(&args, "-o"), format!("%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"));
@@ -415,7 +508,7 @@ mod tests {
     #[test]
     fn unknown_quality_is_rejected() {
         for quality in ["nope", "toString", "custom-mp4-1000", "custom-avi-1080", "custom-mp4-1080 --exec x", "custom-mp4-+1080", "custom-mp4-", "audio-ogg", "audio-", "audio-mp3 --exec x"] {
-            let err = download_args("https://youtu.be/x", quality, ".", None, None).unwrap_err();
+            let err = download_args("https://youtu.be/x", quality, ".", None, None, &[]).unwrap_err();
             assert!(err.contains("Unknown quality"), "{quality}");
         }
     }
@@ -442,7 +535,7 @@ mod tests {
         assert!(assert_url("--exec calc").is_err());
         assert!(assert_url("file:///C:/Windows/win.ini").unwrap_err().contains("http"));
         assert!(assert_url("").is_err());
-        assert!(info_args("https://youtu.be/x").ends_with(&["--".to_string(), "https://youtu.be/x".to_string()]));
+        assert!(info_args("https://youtu.be/x", &[]).ends_with(&["--".to_string(), "https://youtu.be/x".to_string()]));
     }
 
     #[test]
@@ -506,7 +599,7 @@ mod tests {
     #[test]
     fn styled_names_follow_the_file_names_setting() {
         let line = "NAME|Video Title\tAuthor\t1080\tavc1.640028\tmp4a.40.2";
-        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None, None).unwrap();
+        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[]).unwrap();
         assert!(args.iter().any(|a| a.starts_with("after_move:NAME|%(title)S\t")), "yt-dlp prints the parts");
         let video = &parse_line(line).unwrap()["name"];
         assert_eq!(styled_name("classic", video, "mp4").as_deref(), Some("Video Title (1080p).mp4"));

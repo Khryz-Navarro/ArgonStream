@@ -15,7 +15,7 @@ web
 
 ## Product Purpose
 
-YT Downloader turns a YouTube link into a video file on disk. Paste a link, see what it is, pick a
+ArgonStream turns a YouTube link into a video file on disk. Paste a link, see what it is, pick a
 quality, download; yt-dlp does the downloading and ffmpeg merges the video and audio streams. Success is
 the video landing in the chosen folder, in the expected quality, as one playable file, without the user
 touching yt-dlp, ffmpeg or a command line.
@@ -29,13 +29,13 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 
 ## Operating Context
 
-- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/youtube-downloader-rust`). The UI is
+- A Windows desktop app built with Rust and Tauri 2 (`Khryz-Navarro/ArgonStream`). The UI is
   HTML/CSS/JS in `ui/`, rendered by WebView2; the Rust backend in `src/` runs yt-dlp and ffmpeg. It began
   as an Electron app (`Khryz-Navarro/youtube-downloader`), discontinued on 2026-11-07.
 - Two tabs: **New download** (link box, preview, save folder and Download on the left; Quality on the
   right) and **Downloads History** (the full-width list). Several downloads run at once.
 - People use it on large and high-DPI monitors; that is why "Text and page size" exists.
-- Installed from GitHub Releases (`YT-Downloader-Setup-<version>.exe`); each merged pull request publishes a
+- Installed from GitHub Releases (`ArgonStream-Setup-<version>.exe`); each merged pull request publishes a
   new version.
 
 ## Capabilities and Constraints
@@ -53,20 +53,23 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
   shows its version and update state. ffmpeg is bundled.
 - **Settings:** Theme (Light, Dark, Desktop = follow Windows), Text and page size (100/125/150/175%),
   File names (Classic, Basic, Pretty, Nerdy; the finished file is renamed, never over another file) and
-  Speed limit (a slider: 500 KB/s to 50 MB/s per download, or Unlimited; yt-dlp's `--limit-rate`).
+  Speed limit (a slider: 500 KB/s to 50 MB/s per download, or Unlimited; yt-dlp's `--limit-rate`) and
+  Cookies (Off, From Firefox, From a file: a signed-in YouTube session for age-restricted and members-only
+  videos; Chrome and Edge lock their cookies on Windows, so their users export a cookies.txt).
   About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
 - **Terminology in the UI:** New download, Downloads History, Quality, Video, Audio, Custom, Paste, Change, Download,
   Show in folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size, File names,
-  Speed limit.
+  Speed limit, Cookies, From Firefox, From a file.
 - **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
-  cookies or login, so age-restricted and members-only videos fail. Only http(s) links reach yt-dlp. The
+  login of its own: age-restricted and members-only videos need Settings → Cookies. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
 - **License:** MIT (`LICENSE`, chosen 2026-11-07) for the app's own code; yt-dlp (Unlicense) and the
   bundled ffmpeg (GPL) keep their own licenses.
 
 ## Brand Commitments
 
-- Name: **YT Downloader**. Credit: **"Developed by Khryz"**, centered in the status bar and in About.
+- Name: **ArgonStream** (called YT Downloader up to v0.1.10, renamed 2026-11-08; the app ID
+  `com.khryz.ytdownloader` is kept, so settings carry over). Credit: **"Developed by Khryz"**, centered in the status bar and in About.
 - The approved look is **Contact Sheet** (chosen 2026-11-07, recorded in DESIGN.md), which replaced the v1 look
   from the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE. The redesign kept the two-tab
   layout and dark by default.

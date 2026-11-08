@@ -1,4 +1,4 @@
-# YT Downloader
+# ArgonStream
 
 A small Windows app for downloading YouTube videos and audio on top of **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**,
 built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs yt-dlp and ffmpeg, and the
@@ -8,14 +8,16 @@ Paste a link, pick a quality preset (or your own resolution and file type), and 
 installs itself on first launch and keeps itself up to date.
 
 > **Status:** early versions (0.x) for Windows 10/11. Download the installer from
-> [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases), or run from source.
-> The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md).
+> [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases), or run from source.
+> The look, "Contact Sheet", is recorded in [DESIGN.md](DESIGN.md). ArgonStream was called **YT Downloader** up to
+> v0.1.10; its installer replaces an installed YT Downloader and keeps its settings.
 
 ## Contents
 
 - [What it does](#what-it-does)
 - [Features](#features)
 - [Quality options](#quality-options)
+- [Cookies](#cookies)
 - [Requirements](#requirements)
 - [Install](#install)
 - [Run from source](#run-from-source)
@@ -29,7 +31,7 @@ installs itself on first launch and keeps itself up to date.
 
 ## What it does
 
-YT Downloader turns a YouTube link into a video or audio file on your PC, without a command line. Two
+ArgonStream turns a YouTube link into a video or audio file on your PC, without a command line. Two
 free tools do the heavy lifting: **yt-dlp** finds and downloads the streams, and **ffmpeg** joins or
 converts them. The app installs and updates them, turns your choices into the right options, shows what's
 happening, and cleans up after itself.
@@ -66,11 +68,12 @@ happening, and cleans up after itself.
    - **Clear finished** tidies the list without touching any files.
 
 It also remembers your last quality, your folder and your Settings (theme, text and page size, file names,
-speed limit).
+speed limit, cookies).
 
 ### What it doesn't do
 
-- It doesn't sign in to YouTube, so age-restricted and members-only videos fail.
+- It doesn't sign in to YouTube itself. For age-restricted and members-only videos it can use your
+  browser's signed-in session instead (see [Cookies](#cookies)).
 - It downloads one video per link; whole playlists and channels aren't supported.
 - It doesn't update itself: install new versions from Releases. (yt-dlp does update itself, at every start.)
 - It's made and tested for YouTube on Windows. yt-dlp supports many other sites and the app accepts any
@@ -178,6 +181,8 @@ The exact yt-dlp options are in [Quality options](#quality-options).
       10 MB/s together.
     - It uses the same units as the download rows.
     - It takes effect on downloads you start or resume after changing it.
+  - **Cookies:** Off, From Firefox, or From a file (a `cookies.txt`), for age-restricted and members-only
+    videos. See [Cookies](#cookies).
 - **Keyboard:**
   - every control is reachable with <kbd>Tab</kbd>;
   - arrow keys move between the tabs and between options;
@@ -252,6 +257,37 @@ deleted once the conversion is done.
   fails, the file keeps its working name.
 - A download uses the style that was set when it started (or was resumed or retried).
 
+## Cookies
+
+Age-restricted and members-only videos, and YouTube's occasional "confirm you're not a bot" check, need a
+signed-in YouTube session. **Settings → Cookies** lets yt-dlp use yours:
+
+| Choice | What yt-dlp uses | Notes |
+|---|---|---|
+| **Off** (default) | Nothing | Those videos fail, with a note pointing to this setting. |
+| **From Firefox** | Your signed-in Firefox's cookies (`--cookies-from-browser firefox`) | Sign in to YouTube in Firefox once. Firefox can stay open. |
+| **From a file** | A `cookies.txt` you exported (`--cookies <file>`) | For Chrome, Edge and other browsers. Picking it asks for the file. |
+
+Chrome and Edge can't be read directly: on Windows they lock their cookies to themselves (app-bound
+encryption, since Chrome 127), so yt-dlp can't decrypt them. Export a `cookies.txt` from them instead:
+
+1. Add a browser extension that exports cookies in the Netscape `cookies.txt` format. yt-dlp's
+   [FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp) names ones it trusts.
+2. Open a private window and sign in to YouTube. In that same tab, go to `youtube.com/robots.txt`, so no
+   YouTube page stays open.
+3. Export the cookies for youtube.com, then close the private window. YouTube rotates the cookies of open
+   YouTube tabs, which would make the export stop working.
+4. In ArgonStream: **Settings → Cookies → From a file**, then choose the file.
+
+Good to know:
+
+- **Cookies are like a password** for your YouTube account. ArgonStream saves only where the file is (in
+  `settings.json`), never the cookies; yt-dlp reads them from the file, and writes refreshed ones back to it.
+- **YouTube may restrict accounts** used this way. A spare account is safer.
+- **The preview and the download** both use the cookies. Closing Settings after changing them looks the
+  current link up again.
+- **Still asked to sign in?** The cookies may be signed out or expired: sign in again and export them again.
+
 ## Requirements
 
 - **Windows 10 or 11** with the WebView2 runtime (built into Windows 11 and current Windows 10).
@@ -263,23 +299,26 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 
 ## Install
 
-1. Open [Releases](https://github.com/Khryz-Navarro/youtube-downloader-rust/releases) and download
-   `YT-Downloader-Setup-<version>.exe` from the newest release.
+1. Open [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases) and download
+   `ArgonStream-Setup-<version>.exe` from the newest release.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
 
 **To update,** run the newer installer; there's no need to uninstall first. It sees the installed version, its
-first page says **Update YT Downloader** (from which version to which), and **Next** installs the new version
+first page says **Update ArgonStream** (from which version to which), and **Next** installs the new version
 over the old one in the same folder. Your settings, yt-dlp and downloaded videos are kept. Close the app first:
 downloads still running in it stop.
+
+An installed **YT Downloader** (the app's old name) is replaced the same way: the first page says **Update to
+ArgonStream**, and the old app, its shortcuts and its uninstall entry are removed.
 
 To go back to an older version, uninstall first. Uninstall from *Settings → Apps*.
 
 ## Run from source
 
 ```powershell
-git clone https://github.com/Khryz-Navarro/youtube-downloader-rust.git
-cd youtube-downloader-rust
+git clone https://github.com/Khryz-Navarro/ArgonStream.git
+cd ArgonStream
 .\scripts\get-ffmpeg.ps1     # once: downloads the bundled ffmpeg into binaries\
 cargo run
 ```
@@ -288,7 +327,7 @@ On the first start the status bar shows **Downloading yt-dlp…** for a few seco
 **yt-dlp &lt;version&gt; · up to date**. The Download button unlocks once yt-dlp is ready.
 The first `cargo run` compiles Tauri and takes a few minutes; later runs start in seconds.
 
-To build the installer (`target\release\bundle\nsis\YT Downloader_<version>_x64-setup.exe`), use the
+To build the installer (`target\release\bundle\nsis\ArgonStream_<version>_x64-setup.exe`), use the
 Tauri CLI 2.12.4, either `cargo install tauri-cli --version "=2.12.4" --locked` once and then `cargo tauri build`,
 or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact version: the installer is built from
 `installer/installer.nsi`, which is that version's template with a few changes (updates install in place, see
@@ -324,7 +363,7 @@ quality is never touched.
 |---|---|
 | Your downloads | The folder shown in the app (default: your Downloads folder) |
 | yt-dlp program | `%APPDATA%\com.khryz.ytdownloader\bin\yt-dlp.exe` |
-| Settings (theme, text and page size, file names, speed limit) | `%APPDATA%\com.khryz.ytdownloader\settings.json` |
+| Settings (theme, text and page size, file names, speed limit, cookies and the cookies.txt location) | `%APPDATA%\com.khryz.ytdownloader\settings.json` |
 | Remembered quality and folder | WebView2 storage in `%LOCALAPPDATA%\com.khryz.ytdownloader` |
 | ffmpeg | `ffmpeg.exe` next to the app's exe (`binaries\` in the source tree) |
 
@@ -333,7 +372,7 @@ To force a clean reinstall of yt-dlp, close the app and delete `%APPDATA%\com.kh
 ## How it's built
 
 ```
-youtube-downloader-rust/
+ArgonStream/
 ├─ src/
 │  ├─ main.rs          Backend: window, yt-dlp install/update, downloads, pause/cancel, Delete, settings
 │  └─ ytdlp.rs         Quality presets, yt-dlp arguments, output parsing, leftover matching (unit-tested)
@@ -364,7 +403,8 @@ youtube-downloader-rust/
   so Resume continues it.
 - **Security:** links must be `http(s)` and are passed after `--`, so they can't be read as yt-dlp
   options. Quality and settings values from the page are checked against fixed lists. Delete only
-  removes files yt-dlp reported for that download, never a path sent by the page. The page has a
+  removes files yt-dlp reported for that download, never a path sent by the page. The cookies.txt path
+  comes from the system's file dialog, opened and saved by the backend. The page has a
   strict content security policy and can only call the app's own commands and the window buttons.
 - **Window:** frameless; the page draws the title bar, including the minimize, maximize and close
   buttons. `api.js` turns off WebView2's browser shortcuts (F5 reload, print, find) and refuses drops
@@ -384,7 +424,7 @@ Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DES
 tools used to make them (Impeccable and other skills, listed in `skills-lock.json`) live in `.claude/`, so
 Claude Code sessions in this folder have them.
 
-YT Downloader started as an Electron app (`Khryz-Navarro/youtube-downloader`). That version is
+ArgonStream started as YT Downloader, an Electron app (`Khryz-Navarro/youtube-downloader`). That version is
 discontinued; all development happens here.
 
 ### Releasing: pull request → merge → automatic release
@@ -405,8 +445,8 @@ Changes reach `main` only through a **pull request**, and every pull request car
 3. Review and **merge the pull request** on GitHub.
 4. **GitHub publishes the release by itself.** The merge starts the
    [Release workflow](.github/workflows/release.yml): if `v0.1.1` has no release yet, it runs the tests,
-   builds the installer, and creates the GitHub Release *YT Downloader v0.1.1* (and its `v0.1.1` tag)
-   with `YT-Downloader-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
+   builds the installer, and creates the GitHub Release *ArgonStream v0.1.1* (and its `v0.1.1` tag)
+   with `ArgonStream-Setup-0.1.1.exe` attached. Follow it on the repo's **Actions** tab.
 
 The **pre-push hook** (`.githooks/pre-push`) blocks pushes straight to `main`, and blocks a branch push
 whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh clone you can also run
@@ -433,7 +473,7 @@ before running it; otherwise both would ship the same version.
 | `get-ffmpeg.ps1` says *checksum mismatch* | The download isn't the expected ffmpeg build; the script deleted it. Try again later, and don't build with a different file. |
 | Status bar: *Couldn't set up yt-dlp* | First launch needs internet to download yt-dlp. Connect and restart the app. |
 | Status bar: *couldn't check for updates* | You're offline or GitHub is unreachable. The app keeps using the installed version. |
-| A download fails with "Sign in to confirm your age" or a members-only error | These videos need your YouTube cookies, which this version doesn't support yet. |
+| A download fails with "Sign in to confirm your age" or a members-only error | Turn on **Settings → Cookies** (see [Cookies](#cookies)). If it's already on, the cookies may be signed out or expired: export them again. |
 | A 4K MP4 or MKV won't play | It's AV1 or VP9. Use VLC, install the Microsoft Store video extensions, or download 1080p/Default instead. |
 
 ## Known limitations
@@ -441,7 +481,7 @@ before running it; otherwise both would ship the same version.
 - The installer isn't code-signed, so Windows SmartScreen warns the first time it runs.
 - The app doesn't update itself. (yt-dlp does, at every start.)
 - Playlists are ignored: a link with `&list=` downloads only that one video.
-- No cookie or login support (age-restricted and members-only videos fail).
+- Cookies come only from Firefox or a `cookies.txt` file: Chrome and Edge lock theirs on Windows.
 - Tested only on Windows 11.
 
 ## Credits and legal
@@ -454,5 +494,5 @@ before running it; otherwise both would ship the same version.
 Only download videos you have the right to save. Downloading may be against YouTube's Terms of
 Service and copyright law where you live; you are responsible for how you use this tool.
 
-YT Downloader's own code is released under the [MIT License](LICENSE). yt-dlp and ffmpeg are separate
+ArgonStream's own code is released under the [MIT License](LICENSE). yt-dlp and ffmpeg are separate
 programs under their own licenses (above); the app runs them but doesn't change them.

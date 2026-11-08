@@ -1,5 +1,5 @@
 ---
-name: YT Downloader
+name: ArgonStream
 description: A Windows 11 app that turns a YouTube link into a video file, drawn as a darkroom contact sheet.
 colors:
   bg: "#13110F"
@@ -235,13 +235,13 @@ components:
     height: "32px"
 ---
 
-# Design System: YT Downloader
+# Design System: ArgonStream
 
 ## Overview
 
 **Creative North Star: "Contact Sheet"**
 
-YT Downloader is a darkroom contact sheet. The window is warm darkroom black; the video you paste is printed as a single frame on a strip of film, sprocket holes along its top rebate and its edge code (video ID · best resolution · length) printed underneath. On Downloads every download is its own strip coming out of the developer: a row of sprocket holes that develops orange as bytes arrive, ends fixer green when the file lands, and stops in safelight red where a download failed. The light theme is the light table: the same sheet laid on a lit, warm off-white surface, with the film itself staying dark.
+ArgonStream is a darkroom contact sheet. The window is warm darkroom black; the video you paste is printed as a single frame on a strip of film, sprocket holes along its top rebate and its edge code (video ID · best resolution · length) printed underneath. On Downloads every download is its own strip coming out of the developer: a row of sprocket holes that develops orange as bytes arrive, ends fixer green when the file lands, and stops in safelight red where a download failed. The light theme is the light table: the same sheet laid on a lit, warm off-white surface, with the film itself staying dark.
 
 The feel is quiet, exact and tactile. Regions are separated by tinted fields, not lines: the title bar and status bar sit on a darker field, and the Quality column sits on its own light-table tint beside the darkroom ground. One negative-mask orange carries every meaning that has to stand out: what is chosen, what is moving, what has focus, how many downloads are active. Words are set in Windows' own Segoe UI Variable; everything printed on film or counted (edge codes, chips, labels, counts, versions and each row's big number) is set in Bahnschrift semi-condensed, the edge-print voice. Corners are tight (1 to 4px), rules are one pixel, and each theme has three ink values.
 
@@ -383,7 +383,7 @@ Exact and tactile: square-cut controls, quiet hover tints, and motion only where
 - **Segmented control (Settings):** equal 34px segments, 4px gap, Tray at rest with Proof Gray labels; hover Tray Hover; selected takes the Mask Wash, an orange one-pixel outline and Print White.
 
 ### Navigation
-- **Title bar:** a 40px Safelight Shadow field. Left: the 20px orange logo tile (4px corners, On-Mask download arrow) and "YT Downloader" at 600. Then the tabs, then Settings and the version button (28px, Proof Gray, Tray on hover), then Windows 11 caption buttons drawn by the page: 46px wide, full height, Tray on hover, Close turning Windows' own red with white on hover.
+- **Title bar:** a 40px Safelight Shadow field. Left: the 20px orange logo tile (4px corners, On-Mask download arrow) and "ArgonStream" at 600. Then the tabs, then Settings and the version button (28px, Proof Gray, Tray on hover), then Windows 11 caption buttons drawn by the page: 46px wide, full height, Tray on hover, Close turning Windows' own red with white on hover.
 - **Tabs:** text tabs across the title bar's full height, 20px apart, Proof Gray at 500; hover Print White; selected Print White with a 2px orange underline. Arrow keys move between them.
 
 ### Quality option
