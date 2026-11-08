@@ -142,13 +142,17 @@ cargo run                   # try it for real
 
 ## Branches, commits and pull requests
 
-1. **Branch from `main`:** `git switch -c short-name`. The pre-push hook blocks pushes to `main`.
+1. **Branch from `main`,** named for the kind of change: `git switch -c feat/short-name` for a feature,
+   `git switch -c bug/short-name` for a bug fix (like `feat/speed-limit` or `bug/eta-decimals`). The pre-push
+   hook blocks pushes to `main`.
 2. **Commit** with a short, imperative summary, like the existing history ("Add audio-only downloads:
    MP3, AAC, WAV, FLAC, WMA", "Fix gaps found in an audit of the Rust app"). In the body, say what
    changed and why.
-3. **Open the pull request with `.\scripts\release.ps1`.** Every pull request carries a new version. The
-   script:
-   - bumps the patch version (`minor` or `major` as an argument for bigger changes);
+3. **Open the pull request with `.\scripts\release.ps1`.** Every pull request that changes the app carries
+   a new version. One that changes only docs or repo tooling (Markdown files, `LICENSE`, `.github/`,
+   `.githooks/`, `.claude/`, `release.ps1`) keeps the version. The script:
+   - bumps the patch version (`minor` or `major` as an argument for bigger changes), unless no app files
+     changed;
    - commits `Release vX.Y.Z`;
    - pushes the branch and opens the pull request.
 
@@ -160,7 +164,8 @@ cargo run                   # try it for real
    - what you checked (tests, real downloads, screenshots);
    - what you didn't check.
 5. **Merging publishes a release.** The Release workflow builds the installer and publishes the GitHub
-   Release for the new version. Merge only when the change is ready to ship.
+   Release for the new version. Merge only when the change is ready to ship. A pull request that kept the
+   version publishes nothing.
 
 ## Reporting a problem
 

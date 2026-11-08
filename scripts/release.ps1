@@ -1,7 +1,8 @@
 # .\scripts\release.ps1 [patch|minor|major]
 # On a feature branch with everything committed: bump the version in Cargo.toml (once per branch,
 # relative to main), push the branch, and open a pull request into main. Merging the PR makes GitHub
-# publish the release (.github/workflows/release.yml builds the installer).
+# publish the release (.github/workflows/release.yml builds the installer). A branch that changes no app
+# files (docs, repo tooling) isn't bumped, and merging it publishes nothing.
 param([ValidateSet('patch', 'minor', 'major')] [string]$Level = 'patch')
 
 function Fail([string]$msg) { Write-Host "release: $msg" -ForegroundColor Red; exit 1 }
@@ -18,15 +19,22 @@ function VersionOf([string]$toml) { if ($toml -match '(?m)^version = "(\d+\.\d+\
 
 git config core.hooksPath .githooks # turns on the pre-push check
 $branch = git branch --show-current
-if (-not $branch -or $branch -eq 'main') { Fail 'changes reach main through a pull request. Create a branch first: git switch -c my-change' }
+if (-not $branch -or $branch -eq 'main') { Fail 'changes reach main through a pull request. Create a branch first: git switch -c feat/my-change (or bug/my-fix)' }
 if (git status --porcelain) { Fail 'commit your changes first.' }
 
 Run git fetch origin main
 $main = VersionOf ((git show origin/main:Cargo.toml 2>$null) -join "`n") # none on a brand-new repo
 $current = VersionOf ([IO.File]::ReadAllText("$PWD\Cargo.toml"))
 if (-not $current) { Fail 'no version found in Cargo.toml.' }
+# Files that don't ship in the app. Keep in sync with not_app in .githooks/pre-push.
+$notApp = '^([^/]*\.md|LICENSE|\.gitignore|\.gitattributes|skills-lock\.json|scripts/release\.ps1|\.githooks/.*|\.github/.*|\.claude/.*|\.impeccable/.*)$'
+$appFiles = git diff --name-only origin/main...HEAD | Where-Object { $_ -cnotmatch $notApp }
+if ($LASTEXITCODE) { Fail "couldn't compare the branch with main." }
+$releases = $appFiles -or -not $main
 
-if (-not $main -or $current -gt $main) {
+if (-not $releases) {
+  Write-Host "release: no app files changed, so the version stays at v$current."
+} elseif (-not $main -or $current -gt $main) {
   Write-Host "release: branch is already at v$current (main is $(if ($main) { "v$main" } else { 'unversioned' })), not bumping again."
 } else {
   $base = $main # not the branch's own version: a branch cut before main moved on would bump to main's
@@ -49,4 +57,5 @@ Run git push -u origin HEAD
 $pr = gh pr view --json url --jq .url 2>$null # nothing yet for a new branch
 if ($LASTEXITCODE -eq 0 -and $pr) { Write-Host "release: pull request already open: $pr" }
 else { Run gh pr create --base main --head $branch --fill }
-Write-Host "release: merge the pull request to publish v$current (the Release workflow builds the installer)."
+if ($releases) { Write-Host "release: merge the pull request to publish v$current (the Release workflow builds the installer)." }
+else { Write-Host "release: merging the pull request publishes no release (no app files changed)." }

@@ -422,7 +422,7 @@ ArgonStream/
 │  ├─ get-ffmpeg.ps1   Downloads the bundled ffmpeg (Windows)
 │  ├─ get-ffmpeg.sh    Downloads the bundled ffmpeg (Linux)
 │  └─ release.ps1      Bump the version, push the branch, open the pull request
-├─ .githooks/pre-push  Blocks direct pushes to main and branch pushes without a newer version
+├─ .githooks/pre-push  Blocks direct pushes to main, and app changes without a newer version
 ├─ .github/workflows/
 │  └─ release.yml      After a merge to main: builds the installer and Linux packages, publishes the Release
 ├─ tauri.conf.json     App name, content security policy, installer settings
@@ -466,9 +466,12 @@ discontinued; all development happens here.
 
 ### Releasing: pull request → merge → automatic release
 
-Changes reach `main` only through a **pull request**, and every pull request carries a new version.
+Changes reach `main` only through a **pull request**, and every pull request that changes the app carries a
+new version. One that changes only docs or repo tooling (Markdown files, `LICENSE`, `.github/`, `.githooks/`,
+`.claude/`, `release.ps1`) keeps the version, and merging it publishes nothing.
 
-1. Work on a branch: `git switch -c my-change`, then commit your changes.
+1. Work on a branch named `feat/…` for a feature or `bug/…` for a bug fix (`git switch -c feat/my-change`),
+   then commit your changes.
 2. Run, from the repository folder:
 
    ```powershell
@@ -476,7 +479,8 @@ Changes reach `main` only through a **pull request**, and every pull request car
    ```
 
    It bumps the patch version in `Cargo.toml` and `Cargo.lock` (0.1.0 → 0.1.1) and commits
-   `Release v0.1.1` (only once per branch: running it again just pushes), pushes the branch, and opens
+   `Release v0.1.1` (only once per branch: running it again just pushes; skipped when no app files
+   changed), pushes the branch, and opens
    a pull request into `main` with the [GitHub CLI](https://cli.github.com/) (`gh`). It refuses to run
    on `main` or with uncommitted changes, and turns on the pre-push hook.
 3. Review and **merge the pull request** on GitHub.
@@ -488,7 +492,8 @@ Changes reach `main` only through a **pull request**, and every pull request car
    nothing is published. Follow it on the repo's **Actions** tab.
 
 The **pre-push hook** (`.githooks/pre-push`) blocks pushes straight to `main`, and blocks a branch push
-whose version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh clone you can also run
+that changes app files when its version isn't newer than `main`'s. `release.ps1` turns it on; in a fresh
+clone you can also run
 `git config core.hooksPath .githooks` once.
 
 | To… | Run |
