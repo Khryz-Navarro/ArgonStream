@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- the title bar logo: accent tile with the download arrow -->
-  <rect width="1024" height="1024" rx="205" fill="#F08A3C"/>
-  <g transform="translate(205 205) scale(25.6)" fill="none" stroke="#13110F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 4v12"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+  <!-- the app icon: accent tile with the Apex A (its crossbar an arrowhead pointing down); mirror-symmetric -->
+  <rect width="256" height="256" rx="51.2" fill="#F08A3C"/>
+  <path transform="translate(35.84 31.84) scale(.72)" fill="#13110F" fill-rule="evenodd" d="M128 22L232 230H200L168.67 167.33L128 208L87.33 167.33L56 230H24ZM128 86L168.67 167.33H87.33Z"/>
 </svg>

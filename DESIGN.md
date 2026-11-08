@@ -261,7 +261,7 @@ Two looks are rejected: the ad-site downloader (big green DOWNLOAD buttons, badg
 A warm brown-black palette with one orange, three developer-chemistry status colors, and a film black that stays dark in both themes; every token is defined twice, dark on `:root` and light under `prefers-color-scheme: light`, as `name` / `name-light` pairs.
 
 ### Primary
-- **Negative-Mask Orange** (`accent` / `accent-light`, a burnt sienna on the light table): the selected quality row's border, the radio dot, the developing sprocket holes, the selected tab's underline, focus outlines, the link box caret, the active Downloads count, the logo tile and the QUALITY label. Its wash, **Mask Wash** (`accent-weak` / `accent-weak-light`), fills the selected and hovered quality row, the selected Settings segment and the link box's focus ring. **On-Mask** (`on-accent` / `on-accent-light`) is the ink on orange fills: the logo arrow and the active count.
+- **Negative-Mask Orange** (`accent` / `accent-light`, a burnt sienna on the light table): the selected quality row's border, the radio dot, the developing sprocket holes, the selected tab's underline, focus outlines, the link box caret, the active Downloads count, the logo tile and the QUALITY label. Its wash, **Mask Wash** (`accent-weak` / `accent-weak-light`), fills the selected and hovered quality row, the selected Settings segment and the link box's focus ring. **On-Mask** (`on-accent` / `on-accent-light`) is the ink on orange fills: the logo's A and the active count.
 
 ### Neutral
 - **Darkroom Black** (`bg` / `bg-light`, the light table's warm off-white): the window ground, including the left half of New download and the whole Downloads list.
@@ -383,7 +383,7 @@ Exact and tactile: square-cut controls, quiet hover tints, and motion only where
 - **Segmented control (Settings):** equal 34px segments, 4px gap, Tray at rest with Proof Gray labels; hover Tray Hover; selected takes the Mask Wash, an orange one-pixel outline and Print White.
 
 ### Navigation
-- **Title bar:** a 40px Safelight Shadow field. Left: the 20px orange logo tile (4px corners, On-Mask download arrow) and "ArgonStream" at 600. Then the tabs, then Settings and the version button (28px, Proof Gray, Tray on hover), then Windows 11 caption buttons drawn by the page: 46px wide, full height, Tray on hover, Close turning Windows' own red with white on hover.
+- **Title bar:** a 40px Safelight Shadow field. Left: the 20px orange logo tile (4px corners, the On-Mask Apex A: an A whose crossbar is an arrowhead pointing down, mirror-symmetric, drawn in its small-size cut with a deeper arrowhead and a flat apex) and "ArgonStream" at 600. Then the tabs, then Settings and the version button (28px, Proof Gray, Tray on hover), then Windows 11 caption buttons drawn by the page: 46px wide, full height, Tray on hover, Close turning Windows' own red with white on hover.
 - **Tabs:** text tabs across the title bar's full height, 20px apart, Proof Gray at 500; hover Print White; selected Print White with a 2px orange underline. Arrow keys move between them.
 
 ### Quality option
