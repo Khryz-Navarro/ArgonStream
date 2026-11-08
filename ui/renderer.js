@@ -5,6 +5,7 @@ const QUALITY_LABEL = {
 };
 const ACTIVE = ['starting', 'downloading', 'processing'];
 const FINISHED = ['done', 'error', 'canceled'];
+const BIN = navigator.userAgent.includes('Windows') ? 'Recycle Bin' : 'Trash'; // where Delete sends a finished file
 
 // localStorage can be unavailable; settings are a convenience, so fall back silently.
 const store = {
@@ -219,7 +220,7 @@ function render(job) {
   q('.reveal').hidden = job.state !== 'done' || !job.file;
   q('.retry').hidden = !['error', 'canceled'].includes(job.state);
   q('.delete').hidden = !FINISHED.includes(job.state);
-  const deleteLabel = job.state === 'done' ? 'Delete the downloaded file (moves it to the Recycle Bin)' : 'Delete the leftover partial files';
+  const deleteLabel = job.state === 'done' ? `Delete the downloaded file (moves it to the ${BIN})` : 'Delete the leftover partial files';
   q('.delete').title = deleteLabel;
   q('.delete').setAttribute('aria-label', deleteLabel);
 
@@ -275,7 +276,7 @@ function makeItem(job) {
   el.querySelector('.pause').onclick = () => window.api.pause(job.id);
   el.querySelector('.delete').onclick = async () => {
     // await: under Tauri, confirm() is the dialog plugin's native message box and returns a Promise
-    if (job.state === 'done' && !(await confirm(`Move "${job.title}" to the Recycle Bin?`))) return;
+    if (job.state === 'done' && !(await confirm(`Move "${job.title}" to the ${BIN}?`))) return;
     await window.api.deleteFiles(job.id);
     job.el.remove();
     jobs.delete(job.id);
