@@ -1,23 +1,31 @@
 # Runs when main changes (a pull request was merged). If Cargo.toml's version has no GitHub Release
-# yet, it builds the Windows installer and publishes the release (which also creates the v<version> tag).
+# yet, it builds the Windows installer and the Linux packages, then publishes one release with all of
+# them (which also creates the v<version> tag). Nothing is published unless every build succeeds.
 name: Release
 
 on:
   push:
     branches: [main]
 
+# one run at a time: two quick merges mustn't both try to publish
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
-  contents: write # create the Release/tag and upload the installer
+  contents: write # create the Release/tag and upload the packages
 
 jobs:
-  release:
-    runs-on: windows-latest # comes with Rust (MSVC), Node.js and the Windows SDK
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      new: ${{ steps.version.outputs.new }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Is this version already released?
         id: version
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -30,21 +38,65 @@ jobs:
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
 
+  windows:
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    runs-on: windows-latest # comes with Rust (MSVC), Node.js and the Windows SDK
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
       # before `cargo test`: compiling the app at all (tauri-build) requires the bundled ffmpeg to exist
-      - if: steps.version.outputs.new == 'true'
-        run: ./scripts/get-ffmpeg.ps1
-      - if: steps.version.outputs.new == 'true'
-        run: cargo test
-      - if: steps.version.outputs.new == 'true'
-        run: npx --yes @tauri-apps/cli@2.12.4 build # pinned: installer/installer.nsi is this version's template
+      - run: ./scripts/get-ffmpeg.ps1
+      - run: cargo test
+      - run: npx --yes @tauri-apps/cli@2.12.4 build # pinned: installer/installer.nsi is this version's template
+      # Tauri names it "ArgonStream_<version>_x64-setup.exe"; publish it under a name with the dash
+      - shell: bash
+        run: |
+          mkdir dist
+          cp "target/release/bundle/nsis/ArgonStream_${VERSION}_x64-setup.exe" "dist/ArgonStream-Setup-${VERSION}.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/
+          if-no-files-found: error
 
+  linux:
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    # sets the floor: the packages need this glibc (2.39) or newer, as in Ubuntu 24.04, Debian 13 and Fedora 40
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Tauri's build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - run: ./scripts/get-ffmpeg.sh
+      - run: cargo test
+      - run: npx --yes @tauri-apps/cli@2.12.4 build
+      - run: |
+          mkdir dist
+          cp "target/release/bundle/deb/ArgonStream_${VERSION}_amd64.deb" "dist/ArgonStream-${VERSION}-amd64.deb"
+          cp "target/release/bundle/appimage/ArgonStream_${VERSION}_amd64.AppImage" "dist/ArgonStream-${VERSION}-x86_64.AppImage"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: [version, windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish the GitHub Release
-        if: steps.version.outputs.new == 'true'
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          # Tauri names it "ArgonStream_<version>_x64-setup.exe"; publish it under a name with the dash
-          cp "target/release/bundle/nsis/ArgonStream_${VERSION}_x64-setup.exe" "ArgonStream-Setup-${VERSION}.exe"
-          gh release create "v$VERSION" "ArgonStream-Setup-${VERSION}.exe" --target "$GITHUB_SHA" --title "ArgonStream v$VERSION" --generate-notes
+          VERSION: ${{ needs.version.outputs.version }}
+        run: gh release create "v$VERSION" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ArgonStream v$VERSION" --generate-notes
