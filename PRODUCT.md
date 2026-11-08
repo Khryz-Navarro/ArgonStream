@@ -73,7 +73,10 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 - The approved look is **Contact Sheet** (chosen 2026-11-07, recorded in DESIGN.md), which replaced the v1 look
   from the Figma file https://www.figma.com/design/aj74kwrRhnwNIhxQSibcxE. The redesign kept the two-tab
   layout and dark by default.
-- Icons are Lucide (ISC). The app icon (`icons/icon.svg`) is the title-bar logo tile.
+- Icons are Lucide (ISC). The logo is the **Apex A**: an A whose crossbar is an arrowhead pointing down,
+  mirror-symmetric, darkroom black on the orange tile (`icons/icon.svg`, chosen 2026-11-09). The title-bar
+  and About tiles, `32x32.png` and the `.ico`'s 16-32 px images use its small-size cut (deeper arrowhead,
+  flat apex) so the arrowhead still shows.
 - The README keeps the legal note: only download videos you have the right to save.
 
 ## Evidence on Hand
