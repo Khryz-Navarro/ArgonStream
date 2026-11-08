@@ -18,7 +18,7 @@ function VersionOf([string]$toml) { if ($toml -match '(?m)^version = "(\d+\.\d+\
 
 git config core.hooksPath .githooks # turns on the pre-push check
 $branch = git branch --show-current
-if (-not $branch -or $branch -eq 'main') { Fail 'changes reach main through a pull request. Create a branch first: git switch -c my-change' }
+if (-not $branch -or $branch -eq 'main') { Fail 'changes reach main through a pull request. Create a branch first: git switch -c feat/my-change (or bug/my-fix)' }
 if (git status --porcelain) { Fail 'commit your changes first.' }
 
 Run git fetch origin main
