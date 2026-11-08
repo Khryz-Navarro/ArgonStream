@@ -1,0 +1,7 @@
+{
+  "bundle": {
+    "targets": ["deb", "appimage"],
+    "externalBin": ["binaries/argonstream-ffmpeg"],
+    "linux": { "deb": { "depends": ["curl"] } }
+  }
+}

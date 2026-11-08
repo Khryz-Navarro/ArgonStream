@@ -65,8 +65,10 @@ fn bin_path(app: &AppHandle) -> PathBuf {
 }
 
 // Tauri puts bundle.externalBin next to the app's exe, both in the installed app and in `cargo run` builds.
+// On Linux it has its own name (tauri.linux.conf.json): the .deb installs it into /usr/bin, beside any system ffmpeg.
 fn ffmpeg_path() -> Option<PathBuf> {
-    let path = std::env::current_exe().ok()?.with_file_name(if cfg!(windows) { "ffmpeg.exe" } else { "ffmpeg" });
+    let name = if cfg!(windows) { "ffmpeg.exe" } else if cfg!(target_os = "linux") { "argonstream-ffmpeg" } else { "ffmpeg" };
+    let path = std::env::current_exe().ok()?.with_file_name(name);
     path.exists().then_some(path)
 }
 
