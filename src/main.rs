@@ -151,7 +151,10 @@ fn about(app: AppHandle) -> Value {
 
 #[tauri::command]
 fn default_folder(app: AppHandle) -> Option<PathBuf> {
-    app.path().download_dir().ok()
+    // Linux without XDG user dirs (WSL, minimal desktops) has no Downloads folder on record: use ~/Downloads,
+    // which yt-dlp creates if it's missing
+    let path = app.path();
+    path.download_dir().or_else(|_| path.home_dir().map(|home| home.join("Downloads"))).ok()
 }
 
 #[tauri::command]
