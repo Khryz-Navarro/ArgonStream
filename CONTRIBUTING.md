@@ -171,7 +171,9 @@ cargo run                   # try it for real
 
 ## Reporting a problem
 
-[Open an issue](https://github.com/Khryz-Navarro/ArgonStream/issues) with:
+**Security problems:** don't open an issue. Report them privately, as [SECURITY.md](SECURITY.md) explains.
+
+For anything else, [open an issue](https://github.com/Khryz-Navarro/ArgonStream/issues) with:
 
 - the app version (the version button in the title bar) and the yt-dlp version (status bar);
 - the link, if the video is public, and the quality you picked;
