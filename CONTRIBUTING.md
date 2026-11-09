@@ -23,6 +23,8 @@ change it.
   nobody builds something that won't be merged.
 - **License:** the project is under the [MIT License](LICENSE). By contributing, you agree that your
   contribution is released under it too.
+- **Code of conduct:** everyone taking part in issues and pull requests follows the
+  [Code of Conduct](CODE_OF_CONDUCT.md).
 - **Electron version:** ArgonStream started as YT Downloader, an Electron app (`Khryz-Navarro/youtube-downloader`).
   That version is discontinued; all work happens here.
 
