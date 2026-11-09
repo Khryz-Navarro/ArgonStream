@@ -467,7 +467,8 @@ cargo run     # run the app (debug build, with a console for logs)
 ```
 
 Want to help? [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, where code goes, the safety rules, common
-changes and how pull requests work.
+changes and how pull requests work. Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+Found a security problem? Report it privately, as [SECURITY.md](SECURITY.md) explains.
 
 Before designing anything new, read [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md). The design
 tools used to make them (Impeccable and other skills, listed in `skills-lock.json`) live in `.claude/`, so

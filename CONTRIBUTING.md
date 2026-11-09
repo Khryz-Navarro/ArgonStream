@@ -23,6 +23,8 @@ change it.
   nobody builds something that won't be merged.
 - **License:** the project is under the [MIT License](LICENSE). By contributing, you agree that your
   contribution is released under it too.
+- **Code of conduct:** everyone taking part in issues and pull requests follows the
+  [Code of Conduct](CODE_OF_CONDUCT.md).
 - **Electron version:** ArgonStream started as YT Downloader, an Electron app (`Khryz-Navarro/youtube-downloader`).
   That version is discontinued; all work happens here.
 
@@ -169,7 +171,9 @@ cargo run                   # try it for real
 
 ## Reporting a problem
 
-[Open an issue](https://github.com/Khryz-Navarro/ArgonStream/issues) with:
+**Security problems:** don't open an issue. Report them privately, as [SECURITY.md](SECURITY.md) explains.
+
+For anything else, [open an issue](https://github.com/Khryz-Navarro/ArgonStream/issues) with:
 
 - the app version (the version button in the title bar) and the yt-dlp version (status bar);
 - the link, if the video is public, and the quality you picked;
