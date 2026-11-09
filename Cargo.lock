@@ -66,10 +66,11 @@ dependencies = [
 
 [[package]]
 name = "argonstream"
-version = "0.1.16"
+version = "0.1.18"
 dependencies = [
  "arboard",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

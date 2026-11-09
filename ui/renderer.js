@@ -357,6 +357,45 @@ function showStatus(s) {
   if (previewState?.loading) showPreview(previewState);
 }
 
+/* ---------- update banner: a newer ArgonStream release on GitHub ---------- */
+
+// progress: null, { state: 'downloading' | 'verifying' | 'starting', percent } while Update runs, or { error }
+let appVersion = '', update = null, updateLater = false, progress = null;
+const UPDATE_STEP = { downloading: 'Downloading', verifying: 'Checking', starting: 'Starting the installer for' };
+function showUpdate(offer) {
+  if (offer) update = offer;
+  $('update').hidden = !update || updateLater;
+  if (!update) return;
+  const bold = text => Object.assign(document.createElement('b'), { textContent: text });
+  const busy = progress && !progress.error;
+  if (progress?.error) $('update-text').replaceChildren(bold("Couldn't update."), ` ${progress.error}`);
+  else if (busy) {
+    const pct = progress.state === 'downloading' ? ` ${progress.percent}%` : '';
+    $('update-text').replaceChildren(bold(`${UPDATE_STEP[progress.state]} ArgonStream v${update.version}…`), pct);
+  } else $('update-text').replaceChildren(bold(`ArgonStream v${update.version} is out.`), appVersion && ` You have v${appVersion}.`);
+  $('update-text').title = $('update-text').textContent; // full text on hover when it's cut off
+  // with no installer to run (Linux, or GitHub gave no checksum) Update opens the release; after a failure, say so
+  $('update-btn').textContent = progress?.error ? 'Open release' : 'Update';
+  $('update-btn').disabled = $('update-later').disabled = busy;
+}
+$('update-btn').onclick = async () => {
+  if (!update.installer || progress?.error) return window.api.openRelease();
+  const running = [...jobs.values()].filter(j => ACTIVE.includes(j.state)).length;
+  const s = running === 1 ? '' : 's';
+  if (running && !(await confirm(`Updating closes ArgonStream and stops ${running} download${s}. To finish one afterwards, `
+    + 'download the same link into the same folder again: it continues where it stopped.'))) return;
+  progress = { state: 'downloading', percent: 0 };
+  showUpdate();
+  try {
+    await window.api.updateNow(); // on success the app quits as the installer starts
+  } catch (error) {
+    progress = { error: String(error) };
+    showUpdate();
+  }
+};
+$('update-later').onclick = () => { updateLater = true; showUpdate(); }; // until the next launch
+window.api.onUpdateProgress(p => { if (!progress?.error) { progress = p; showUpdate(); } });
+
 /* ---------- Settings window: theme, text/page size and file names (main applies and saves them) ---------- */
 
 const NAME_EXAMPLES = { // what ytdlp::styled_name makes of a 1080p H.264 + AAC video
@@ -437,8 +476,12 @@ window.api.about().then(({ version, tauri }) => {
   $('about-btn').setAttribute('aria-label', `About ArgonStream v${version}`); // keeps the visible text in the name
   $('about-version').textContent = `Version ${version}`;
   $('about-tauri').textContent = tauri;
+  appVersion = version;
+  showUpdate();
 });
 
 window.api.onStatus(showStatus);
 window.api.status().then(showStatus);
+window.api.onUpdate(showUpdate);
+window.api.updateInfo().then(showUpdate);
 refreshList();
