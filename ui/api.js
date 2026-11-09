@@ -6,6 +6,8 @@ const { listen } = window.__TAURI__.event;
 window.api = {
   status: () => invoke('status'),
   about: () => invoke('about'),
+  updateInfo: () => invoke('update_info'),
+  openRelease: () => invoke('open_release'),
   settings: () => invoke('settings'),
   setSetting: (key, value) => invoke('set_setting', { key, value }),
   defaultFolder: () => invoke('default_folder'),
@@ -19,6 +21,7 @@ window.api = {
   pause: id => invoke('pause', { id }),
   deleteFiles: id => invoke('delete_files', { id }),
   onStatus: fn => listen('status', e => fn(e.payload)),
+  onUpdate: fn => listen('update', e => fn(e.payload)),
   onProgress: fn => listen('progress', e => fn(e.payload)),
 };
 

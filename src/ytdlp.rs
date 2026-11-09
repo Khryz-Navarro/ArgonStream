@@ -336,6 +336,36 @@ pub fn ffmpeg_version(output: &str) -> Option<String> {
     })
 }
 
+/// The latest ArgonStream release, which the app asks GitHub for at each start.
+pub const RELEASES_API: &str = "https://api.github.com/repos/Khryz-Navarro/ArgonStream/releases/latest";
+const RELEASES: &str = "https://github.com/Khryz-Navarro/ArgonStream/releases/";
+
+/// "0.1.16" -> [0, 1, 16]; anything but three plain numbers is None.
+fn version_parts(v: &str) -> Option<[u64; 3]> {
+    let parts: Vec<u64> =
+        v.split('.').map(|p| p.parse().ok().filter(|_| p.bytes().all(|b| b.is_ascii_digit()))).collect::<Option<_>>()?;
+    parts.try_into().ok()
+}
+
+/// GitHub's answer for the latest release, if it's newer than `current` ("0.1.16"): its version, its page, and
+/// the Windows installer with its SHA-256. The installer is null when its asset is missing or anything about it
+/// looks wrong, so Update falls back to the page. Every URL must be this repo's own release URL for that version.
+pub fn newer_release(current: &str, release: &Value) -> Option<Value> {
+    let version = release["tag_name"].as_str()?.strip_prefix('v')?;
+    if version_parts(version)? <= version_parts(current)? {
+        return None;
+    }
+    let page = release["html_url"].as_str().filter(|p| *p == format!("{RELEASES}tag/v{version}"))?;
+    let name = format!("ArgonStream-Setup-{version}.exe");
+    let installer = release["assets"].as_array().into_iter().flatten().find(|a| a["name"] == name.as_str()).and_then(|a| {
+        let url = a["browser_download_url"].as_str().filter(|u| *u == format!("{RELEASES}download/v{version}/{name}"))?;
+        let sha256 = a["digest"].as_str()?.strip_prefix("sha256:")?;
+        let sha256 = Some(sha256).filter(|h| h.len() == 64 && h.bytes().all(|b| b.is_ascii_hexdigit()))?;
+        Some(json!({ "url": url, "sha256": sha256.to_ascii_lowercase(), "size": a["size"].as_u64()? }))
+    });
+    Some(json!({ "version": version, "page": page, "installer": installer }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -655,5 +685,76 @@ mod tests {
         assert_eq!(ffmpeg_version(out).as_deref(), Some("6.1.1"));
         assert_eq!(ffmpeg_version("built with gcc version 12.2.0"), Some("12.2.0".into())); // first match wins, like the JS regex
         assert_eq!(ffmpeg_version("no banner"), None);
+    }
+
+    // The shape of GitHub's answer for v0.1.16 (assets trimmed to the fields the app reads).
+    fn release() -> Value {
+        let base = "https://github.com/Khryz-Navarro/ArgonStream/releases";
+        json!({
+            "tag_name": "v0.1.16",
+            "html_url": format!("{base}/tag/v0.1.16"),
+            "assets": [
+                { "name": "ArgonStream-0.1.16-amd64.deb", "size": 32_000_000,
+                  "browser_download_url": format!("{base}/download/v0.1.16/ArgonStream-0.1.16-amd64.deb"),
+                  "digest": "sha256:ed32ccf75c2ebbe3c620aa925d021f2579d28c24eef1e2d37c1771d8104fcc03" },
+                { "name": "ArgonStream-Setup-0.1.16.exe", "size": 23_456_789,
+                  "browser_download_url": format!("{base}/download/v0.1.16/ArgonStream-Setup-0.1.16.exe"),
+                  "digest": "sha256:A0BE52FEC92F8871A331DBE9B02C49CE66987E04FA237CB2304D524543CAE464" }
+            ]
+        })
+    }
+
+    #[test]
+    fn newer_release_offers_only_a_newer_version() {
+        let r = newer_release("0.1.15", &release()).unwrap();
+        assert_eq!(r["version"], "0.1.16");
+        assert_eq!(r["page"], "https://github.com/Khryz-Navarro/ArgonStream/releases/tag/v0.1.16");
+        let installer = &r["installer"];
+        assert_eq!(
+            installer["url"],
+            "https://github.com/Khryz-Navarro/ArgonStream/releases/download/v0.1.16/ArgonStream-Setup-0.1.16.exe"
+        );
+        assert_eq!(installer["sha256"], "a0be52fec92f8871a331dbe9b02c49ce66987e04fa237cb2304d524543cae464");
+        assert_eq!(installer["size"], 23_456_789);
+        assert!(newer_release("0.1.9", &release()).is_some(), "versions compare as numbers, not text");
+        for current in ["0.1.16", "0.1.17", "0.2.0", "1.0.0"] {
+            assert_eq!(newer_release(current, &release()), None, "{current}");
+        }
+    }
+
+    #[test]
+    fn newer_release_ignores_odd_tags_and_foreign_pages() {
+        for tag in ["0.1.17", "v0.1", "v0.1.17-beta", "v+0.1.17", "v0.1.17.1", "latest", ""] {
+            let mut r = release();
+            r["tag_name"] = json!(tag);
+            assert_eq!(newer_release("0.1.0", &r), None, "{tag}");
+        }
+        let mut r = release();
+        r["html_url"] = json!("https://example.com/Khryz-Navarro/ArgonStream/releases/tag/v0.1.16");
+        assert_eq!(newer_release("0.1.0", &r), None);
+        assert_eq!(newer_release("not a version", &release()), None);
+    }
+
+    #[test]
+    fn newer_release_drops_an_installer_that_looks_wrong() {
+        let exe = 1; // the installer's index in release()["assets"]
+        let broken: [(&str, Value); 6] = [
+            ("browser_download_url", json!("https://example.com/ArgonStream-Setup-0.1.16.exe")),
+            ("browser_download_url", json!("https://github.com/Khryz-Navarro/ArgonStream/releases/download/v0.1.15/ArgonStream-Setup-0.1.16.exe")),
+            ("digest", json!("md5:0123456789abcdef0123456789abcdef")),
+            ("digest", json!("sha256:a0be52")),
+            ("digest", Value::Null),
+            ("size", Value::Null),
+        ];
+        for (field, value) in broken {
+            let mut r = release();
+            r["assets"][exe][field] = value.clone();
+            let offer = newer_release("0.1.15", &r).unwrap();
+            assert_eq!(offer["installer"], Value::Null, "{field} = {value}");
+            assert_eq!(offer["version"], "0.1.16", "the banner still shows, with the page");
+        }
+        let mut r = release();
+        r["assets"].as_array_mut().unwrap().remove(exe);
+        assert_eq!(newer_release("0.1.15", &r).unwrap()["installer"], Value::Null);
     }
 }

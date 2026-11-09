@@ -357,6 +357,20 @@ function showStatus(s) {
   if (previewState?.loading) showPreview(previewState);
 }
 
+/* ---------- update banner: a newer ArgonStream release on GitHub ---------- */
+
+let appVersion = '', update = null, updateLater = false;
+function showUpdate(offer) {
+  if (offer) update = offer;
+  $('update').hidden = !update || updateLater;
+  if (!update) return;
+  const bold = text => Object.assign(document.createElement('b'), { textContent: text });
+  $('update-text').replaceChildren(bold(`ArgonStream v${update.version} is out.`), appVersion && ` You have v${appVersion}.`);
+  $('update-text').title = $('update-text').textContent; // full text on hover when it's cut off
+}
+$('update-btn').onclick = () => window.api.openRelease();
+$('update-later').onclick = () => { updateLater = true; showUpdate(); }; // until the next launch
+
 /* ---------- Settings window: theme, text/page size and file names (main applies and saves them) ---------- */
 
 const NAME_EXAMPLES = { // what ytdlp::styled_name makes of a 1080p H.264 + AAC video
@@ -437,8 +451,12 @@ window.api.about().then(({ version, tauri }) => {
   $('about-btn').setAttribute('aria-label', `About ArgonStream v${version}`); // keeps the visible text in the name
   $('about-version').textContent = `Version ${version}`;
   $('about-tauri').textContent = tauri;
+  appVersion = version;
+  showUpdate();
 });
 
 window.api.onStatus(showStatus);
 window.api.status().then(showStatus);
+window.api.onUpdate(showUpdate);
+window.api.updateInfo().then(showUpdate);
 refreshList();

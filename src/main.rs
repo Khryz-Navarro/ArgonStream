@@ -1,4 +1,4 @@
-// The app's backend: installs and updates yt-dlp,
+// The app's backend: installs and updates yt-dlp, checks GitHub for a newer ArgonStream release,
 // runs downloads (pause/cancel kill yt-dlp's whole process tree), deletes leftovers, and applies the
 // Settings window's theme, page size and file names. The page talks to it through ui/api.js.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -45,6 +45,7 @@ struct AppState {
     jobs: Mutex<HashMap<String, Job>>,        // download id -> running yt-dlp
     downloads: Mutex<HashMap<String, Files>>, // download id -> its files, for Delete (kept across Retry/Resume)
     settings: Mutex<Value>,
+    update: Mutex<Value>, // ytdlp::newer_release's offer, or null while there's none (or no answer)
 }
 
 fn command(bin: impl AsRef<OsStr>) -> Command {
@@ -122,6 +123,21 @@ fn prepare_ytdlp(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// Runs once per launch, after yt-dlp's setup: is there a newer ArgonStream release? Offline, rate-limited or
+// an odd answer just means no banner.
+fn check_update(app: &AppHandle) {
+    let accept = "Accept: application/vnd.github+json";
+    let out = command("curl").args(["-fsSL", "--max-time", "15", "-H", accept, ytdlp::RELEASES_API]).output();
+    let Some(release) = out.ok().filter(|o| o.status.success()).and_then(|o| serde_json::from_slice(&o.stdout).ok())
+    else {
+        return;
+    };
+    if let Some(offer) = ytdlp::newer_release(&app.package_info().version.to_string(), &release) {
+        *app.state::<AppState>().update.lock().unwrap() = offer.clone();
+        let _ = app.emit("update", offer);
+    }
+}
+
 fn wait_ready() -> Result<(), String> {
     READY.wait().clone()
 }
@@ -142,6 +158,19 @@ fn kill(job: &Job, reason: &'static str) {
 #[tauri::command]
 fn status(state: State<AppState>) -> Value {
     state.status.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn update_info(state: State<AppState>) -> Value {
+    state.update.lock().unwrap().clone()
+}
+
+// Opens the page of the release check_update found: the page never sends a URL.
+#[tauri::command]
+fn open_release(state: State<AppState>) {
+    if let Some(page) = state.update.lock().unwrap()["page"].as_str() {
+        let _ = tauri_plugin_opener::open_url(page, None::<&str>);
+    }
 }
 
 #[tauri::command]
@@ -502,10 +531,11 @@ fn main() {
             jobs: Default::default(),
             downloads: Default::default(),
             settings: Default::default(),
+            update: Default::default(),
         })
         .invoke_handler(tauri::generate_handler![
-            status, about, settings, set_setting, pick_cookies_file, default_folder, paste, pick_folder, show_file, info,
-            download, cancel, pause, delete_files
+            status, about, update_info, open_release, settings, set_setting, pick_cookies_file, default_folder, paste,
+            pick_folder, show_file, info, download, cancel, pause, delete_files
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -516,6 +546,7 @@ fn main() {
                     set_status(&handle, json!({ "state": "error", "text": text }));
                 }
                 let _ = READY.set(result);
+                check_update(&handle); // after READY, so downloads never wait on it
             });
             let settings = load_settings(app.handle());
             let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
