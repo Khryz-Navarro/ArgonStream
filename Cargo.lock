@@ -70,6 +70,7 @@ version = "0.1.17"
 dependencies = [
  "arboard",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

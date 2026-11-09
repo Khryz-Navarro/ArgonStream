@@ -15,6 +15,7 @@ use std::sync::{Arc, Mutex, OnceLock, mpsc};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::window::Color;
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, Theme, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use sha2::{Digest, Sha256};
 use tauri_plugin_dialog::DialogExt;
 
 // Set once yt-dlp is installed and update-checked; every yt-dlp call waits on it.
@@ -126,16 +127,74 @@ fn prepare_ytdlp(app: &AppHandle) -> Result<(), String> {
 // Runs once per launch, after yt-dlp's setup: is there a newer ArgonStream release? Offline, rate-limited or
 // an odd answer just means no banner.
 fn check_update(app: &AppHandle) {
+    let _ = std::fs::remove_dir_all(updates_dir(app)); // the installer an earlier Update ran, if any
     let accept = "Accept: application/vnd.github+json";
     let out = command("curl").args(["-fsSL", "--max-time", "15", "-H", accept, ytdlp::RELEASES_API]).output();
     let Some(release) = out.ok().filter(|o| o.status.success()).and_then(|o| serde_json::from_slice(&o.stdout).ok())
     else {
         return;
     };
-    if let Some(offer) = ytdlp::newer_release(&app.package_info().version.to_string(), &release) {
+    if let Some(mut offer) = ytdlp::newer_release(&app.package_info().version.to_string(), &release) {
+        if !cfg!(windows) {
+            offer["installer"] = Value::Null; // a .deb needs the password and an AppImage is replaced by hand: Update opens the page
+        }
         *app.state::<AppState>().update.lock().unwrap() = offer.clone();
         let _ = app.emit("update", offer);
     }
+}
+
+fn updates_dir(app: &AppHandle) -> PathBuf {
+    data_dir(app).join("updates")
+}
+
+// Windows: Update downloads the installer check_update found, checks it against GitHub's SHA-256, starts it and
+// quits (the exit handler stops running downloads; their .part files stay). The installer updates the app in
+// place. Progress goes to the page as "update-progress" events; an error comes back as the command's result.
+fn install_update(app: &AppHandle) -> Result<(), String> {
+    let offer = app.state::<AppState>().update.lock().unwrap().clone();
+    let installer = &offer["installer"];
+    let (Some(url), Some(sha256), Some(size)) =
+        (installer["url"].as_str(), installer["sha256"].as_str(), installer["size"].as_u64())
+    else {
+        return Err("There's no installer to run for this release.".into());
+    };
+    let dir = updates_dir(app);
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let exe = dir.join(format!("ArgonStream-Setup-{}.exe", offer["version"].as_str().unwrap_or_default()));
+    let part = exe.with_extension("exe.part");
+    let progress = |state: &str, percent: u64| app.emit("update-progress", json!({ "state": state, "percent": percent }));
+
+    let mut curl = command("curl").args(["-fsSL", "-o"]).arg(&part).arg(url).stderr(Stdio::piped()).spawn();
+    let curl = curl.as_mut().map_err(|e| format!("couldn't run curl ({e})"))?;
+    let status = loop {
+        if let Some(status) = curl.try_wait().map_err(|e| e.to_string())? {
+            break status;
+        }
+        let got = std::fs::metadata(&part).map_or(0, |m| m.len());
+        let _ = progress("downloading", (got * 100 / size.max(1)).min(99));
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    };
+    if !status.success() {
+        let mut stderr = String::new();
+        let _ = curl.stderr.take().map(|mut s| s.read_to_string(&mut stderr));
+        let _ = std::fs::remove_file(&part);
+        return Err(format!("Couldn't download the update. {}", stderr.trim()));
+    }
+
+    let _ = progress("verifying", 100);
+    let mut hasher = Sha256::new();
+    std::fs::File::open(&part).and_then(|mut f| std::io::copy(&mut f, &mut hasher)).map_err(|e| e.to_string())?;
+    let hash: String = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect();
+    if hash != sha256 {
+        let _ = std::fs::remove_file(&part);
+        return Err("The download didn't match GitHub's checksum, so nothing was installed.".into());
+    }
+    std::fs::rename(&part, &exe).map_err(|e| e.to_string())?;
+
+    let _ = progress("starting", 100);
+    Command::new(&exe).spawn().map_err(|e| format!("Couldn't start the installer ({e})"))?;
+    app.exit(0);
+    Ok(())
 }
 
 fn wait_ready() -> Result<(), String> {
@@ -163,6 +222,11 @@ fn status(state: State<AppState>) -> Value {
 #[tauri::command]
 fn update_info(state: State<AppState>) -> Value {
     state.update.lock().unwrap().clone()
+}
+
+#[tauri::command]
+async fn update_now(app: AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || install_update(&app)).await.map_err(|e| e.to_string())?
 }
 
 // Opens the page of the release check_update found: the page never sends a URL.
@@ -534,7 +598,7 @@ fn main() {
             update: Default::default(),
         })
         .invoke_handler(tauri::generate_handler![
-            status, about, update_info, open_release, settings, set_setting, pick_cookies_file, default_folder, paste,
+            status, about, update_info, update_now, open_release, settings, set_setting, pick_cookies_file, default_folder, paste,
             pick_folder, show_file, info, download, cancel, pause, delete_files
         ])
         .setup(|app| {

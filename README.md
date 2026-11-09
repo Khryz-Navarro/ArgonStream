@@ -77,8 +77,8 @@ speed limit, cookies).
 - It doesn't sign in to YouTube itself. For age-restricted and members-only videos it can use your
   browser's signed-in session instead (see [Cookies](#cookies)).
 - It downloads one video per link; whole playlists and channels aren't supported.
-- It doesn't install its own updates: when a newer release is out, a banner says so and **Update** opens
-  the release. (yt-dlp does update itself, at every start.)
+- On Linux it doesn't install its own updates: when a newer release is out, a banner says so and **Update**
+  opens the release. (On Windows, **Update** installs it. yt-dlp updates itself at every start.)
 - It's made and tested for YouTube. yt-dlp supports many other sites and the app accepts any
   web link, but other sites aren't tested.
 
@@ -166,9 +166,14 @@ The exact yt-dlp options are in [Quality options](#quality-options).
   - on the right, the ffmpeg version and when yt-dlp was last checked.
 - **ffmpeg:** bundled with the app, pinned to a build checked by its SHA-256, so there's nothing else to install.
 - **ArgonStream itself:** at each start, after yt-dlp's check, the app asks GitHub once for its latest
-  release. If that's newer, a banner under the title bar says so: **Update** opens the release page, and
-  **×** hides the banner until the next start. Offline, nothing shows. The request carries nothing about
-  you beyond what any web request does.
+  release. If that's newer, a banner under the title bar says so, and **×** hides it until the next start.
+  Offline, nothing shows. The request carries nothing about you beyond what any web request does.
+  - **Update on Windows** downloads the new installer, checks it against the SHA-256 that GitHub publishes
+    for it, starts it and closes the app; the installer then updates it in place. A download that doesn't
+    match is deleted and nothing runs. Downloads still running stop: to finish one, download the same link
+    into the same folder again and it continues where it stopped.
+  - **Update on Linux** opens the release page, since a `.deb` needs your password and an AppImage is a file
+    you replace.
 
 ### Window and settings
 
@@ -318,8 +323,8 @@ You don't need to install yt-dlp, ffmpeg or Python yourself.
 2. Run it. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**:
    click **More info → Run anyway**.
 
-**To update,** run the newer installer; there's no need to uninstall first. (When one is out, the app's banner
-says so, and its **Update** button opens the release.) It sees the installed version, its
+**To update,** run the newer installer; there's no need to uninstall first. (Easier: when one is out, the app's
+banner says so, and its **Update** button downloads, checks and starts it for you.) It sees the installed version, its
 first page says **Update ArgonStream** (from which version to which), and **Next** installs the new version
 over the old one in the same folder. Your settings, yt-dlp and downloaded videos are kept. Close the app first:
 downloads still running in it stop.
@@ -534,8 +539,8 @@ before running it; otherwise both would ship the same version.
 ## Known limitations
 
 - The installer isn't code-signed, so Windows SmartScreen warns the first time it runs.
-- The app doesn't install its own updates: its banner opens the new release, and you run the installer.
-  (yt-dlp does update itself, at every start.)
+- On Linux the app doesn't install its own updates: its banner opens the new release. On Windows, **Update**
+  runs the installer, which isn't code-signed, so SmartScreen may still warn.
 - Playlists are ignored: a link with `&list=` downloads only that one video. Whole playlists are
   [planned](https://github.com/Khryz-Navarro/ArgonStream/wiki/Playlists).
 - Cookies come only from Firefox or a `cookies.txt` file: Chrome and Edge lock theirs on Windows.
