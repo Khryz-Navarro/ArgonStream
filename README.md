@@ -28,6 +28,7 @@ installs itself on first launch and keeps itself up to date.
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 - [Known limitations](#known-limitations)
+- [Roadmap](#roadmap)
 - [Credits and legal](#credits-and-legal)
 
 ## What it does
@@ -528,11 +529,25 @@ before running it; otherwise both would ship the same version.
 
 - The installer isn't code-signed, so Windows SmartScreen warns the first time it runs.
 - The app doesn't update itself. (yt-dlp does, at every start.)
-- Playlists are ignored: a link with `&list=` downloads only that one video.
+- Playlists are ignored: a link with `&list=` downloads only that one video. Whole playlists are
+  [planned](https://github.com/Khryz-Navarro/ArgonStream/wiki/Playlists).
 - Cookies come only from Firefox or a `cookies.txt` file: Chrome and Edge lock theirs on Windows.
 - Tested on Windows 11, and on Linux only on Ubuntu 26.04 under WSL. The title bar keeps its Windows-style
   buttons on Linux too.
 - Linux builds are x86-64 only.
+
+## Roadmap
+
+What's planned next is on the wiki's [Roadmap](https://github.com/Khryz-Navarro/ArgonStream/wiki/Roadmap):
+
+1. YouTube clips, whole playlists and GIFs from X;
+2. converting, compressing for Discord, and trimming and cropping files on your computer;
+3. image galleries (gallery-dl) and transcripts and subtitles;
+4. a mobile app and a Discord bot.
+
+None of it is in the app yet. Each feature has a plan page on the wiki and an issue labeled
+[`roadmap`](https://github.com/Khryz-Navarro/ArgonStream/issues?q=label%3Aroadmap), where you can say what
+you'd use it for.
 
 ## Credits and legal
 
