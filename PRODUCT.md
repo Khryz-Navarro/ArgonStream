@@ -46,6 +46,11 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
 - **Audio only:** a Video / Audio switch in Quality. Audio saves the best audio stream as MP3 (best VBR),
   AAC (.m4a, YouTube's own AAC kept as it is), WAV, FLAC or WMA, converted by the bundled ffmpeg. Only
   formats that ffmpeg can encode are offered.
+- **Playlists:** a link that belongs to a playlist offers This video (the default) or Whole playlist. The
+  whole playlist downloads one video at a time, in one yt-dlp process, into a folder named after it; each
+  file leads with its place (`03 Title (1080p).mp4`). It's one row in Downloads History ("3 of 17"). A
+  video that fails is skipped and listed when the playlist is done. Resume and Retry go on from where it
+  stopped. Delete moves a finished playlist's videos to the Recycle Bin; a canceled one keeps them.
 - **Downloads list:** progress, size, speed and time left; Pause/Resume, Cancel, Retry, Show in folder,
   Delete, Clear finished. Delete removes only files yt-dlp reported for that download: leftovers
   permanently, a finished file to the Recycle Bin after a confirm.
@@ -58,9 +63,11 @@ and "Show in folder" opening File Explorer. Its installer is about 23 MB, most o
   videos; Chrome and Edge lock their cookies on Windows, so their users export a cookies.txt).
   About shows the app, yt-dlp, ffmpeg and runtime versions. Last quality and folder are remembered.
 - **Terminology in the UI:** New download, Downloads History, Quality, Video, Audio, Custom, Paste, Change, Download,
+  This video, Whole playlist,
   Show in folder, Retry, Resume, Clear finished, Settings, Theme, Desktop, Text and page size, File names,
   Speed limit, Cookies, From Firefox, From a file.
-- **Constraints:** Windows only (tested on Windows 11). One video per link (playlists are ignored). No
+- **Constraints:** Windows only (tested on Windows 11). A playlist downloads whole, into a folder
+  (no zip yet, no picking videos; channels and Mixes aren't supported). No
   login of its own: age-restricted and members-only videos need Settings → Cookies. Only http(s) links reach yt-dlp. The
   installer is not code-signed. The app doesn't update itself (yt-dlp does).
 - **License:** MIT (`LICENSE`, chosen 2026-11-07) for the app's own code; yt-dlp (Unlicense) and the

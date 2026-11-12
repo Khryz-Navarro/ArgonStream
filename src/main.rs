@@ -39,6 +39,10 @@ struct Job {
 struct Files {
     streams: BTreeSet<PathBuf>, // every file yt-dlp reported writing
     file: Option<PathBuf>,      // the finished video
+    // A whole playlist has many:
+    items: Vec<PathBuf>,            // its finished videos
+    pending: Vec<(PathBuf, Value)>, // audio downloads waiting to be converted, with their NAME| parts
+    done: bool,                     // it finished, so Delete moves `items` to the Recycle Bin
 }
 
 struct AppState {
@@ -283,44 +287,76 @@ fn explain(error: String, settings: &Value) -> String {
     ytdlp::explain(&error, settings["cookies"].as_str().is_some_and(|mode| mode != "off"))
 }
 
+// Asks yt-dlp about a link (`args` is ytdlp::info_args or playlist_args) and returns what it printed.
+fn lookup(app: &AppHandle, url: &str, args: fn(&str, &[String]) -> Vec<String>) -> Result<Vec<u8>, String> {
+    let settings = app.state::<AppState>().settings.lock().unwrap().clone();
+    let args = args(&ytdlp::assert_url(url)?, &cookies(&settings)?);
+    wait_ready()?;
+    let out = command(bin_path(app)).args(args).output().map_err(|e| e.to_string())?;
+    if !out.status.success() {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        let error = ytdlp::error_text(&stderr).unwrap_or_else(|| format!("yt-dlp exited with code {:?}", out.status.code()));
+        return Err(explain(error, &settings));
+    }
+    Ok(out.stdout)
+}
+
 #[tauri::command]
 async fn info(app: AppHandle, url: String) -> Value {
     let result = tauri::async_runtime::spawn_blocking(move || {
-        let settings = app.state::<AppState>().settings.lock().unwrap().clone();
-        let args = ytdlp::info_args(&ytdlp::assert_url(&url)?, &cookies(&settings)?);
-        wait_ready()?;
-        let out = command(bin_path(&app)).args(args).output().map_err(|e| e.to_string())?;
-        if !out.status.success() {
-            let stderr = String::from_utf8_lossy(&out.stderr);
-            let error = ytdlp::error_text(&stderr).unwrap_or_else(|| format!("yt-dlp exited with code {:?}", out.status.code()));
-            return Err(explain(error, &settings));
-        }
-        serde_json::from_slice::<Value>(&out.stdout).map_err(|e| e.to_string())
+        serde_json::from_slice::<Value>(&lookup(&app, &url, ytdlp::info_args)?).map_err(|e| e.to_string())
     })
     .await;
     result.map_err(|e| e.to_string()).and_then(|r| r).unwrap_or_else(|error| json!({ "error": error }))
 }
 
+// The playlist a link belongs to (ytdlp::playlist_info), or null when it has none.
 #[tauri::command]
-fn download(app: AppHandle, id: String, url: String, quality: String, folder: String) {
-    std::thread::spawn(move || run_download(&app, &id, &url, &quality, &folder));
+async fn playlist(app: AppHandle, url: String) -> Value {
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let out = lookup(&app, &url, ytdlp::playlist_args)?;
+        Ok(ytdlp::playlist_info(&String::from_utf8_lossy(&out)).unwrap_or_default())
+    })
+    .await;
+    result.map_err(|e| e.to_string()).and_then(|r| r).unwrap_or_else(|error| json!({ "error": error }))
 }
 
-fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &str) {
+// `playlist` comes from the page and only picks one of two things: the link's own video, or its whole playlist.
+#[tauri::command]
+fn download(app: AppHandle, id: String, url: String, quality: String, folder: String, playlist: bool) {
+    std::thread::spawn(move || run_download(&app, &id, &url, &quality, &folder, playlist));
+}
+
+// Where yt-dlp notes the finished videos of playlist downloads, one file per download.
+fn playlists_dir(app: &AppHandle) -> PathBuf {
+    data_dir(app).join("playlists")
+}
+
+fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &str, playlist: bool) {
     let send = |mut ev: Value| {
         ev["id"] = id.into();
         let _ = app.emit("progress", ev);
     };
+    if playlist && !ytdlp::safe_id(id) {
+        return send(json!({ "state": "error", "error": "Unknown download" })); // the id names the archive file
+    }
     let state = app.state::<AppState>();
     let ffmpeg = ffmpeg_path();
     // the settings when the download starts (or resumes): changing them doesn't touch one that's running
     let settings = state.settings.lock().unwrap().clone();
     let style = settings["filename"].as_str().unwrap_or("classic");
     let limit = settings["speed"].as_str().filter(|s| *s != "unlimited");
+    // A whole playlist: Resume and Retry run yt-dlp again, and this file makes it skip the videos it finished.
+    let archive = playlist.then(|| playlists_dir(app).join(format!("{id}.txt")));
     let spawned = ytdlp::assert_url(url)
         .and_then(|url| {
+            if archive.is_some() {
+                std::fs::create_dir_all(playlists_dir(app)).map_err(|e| e.to_string())?;
+            }
             let ffmpeg = ffmpeg.as_deref().and_then(Path::to_str);
-            ytdlp::download_args(&url, quality, folder, ffmpeg, limit, &cookies(&settings)?)
+            // lossy, never None: a path that isn't Unicode must not turn a playlist into "one video"
+            let archive = archive.as_ref().map(|a| a.to_string_lossy());
+            ytdlp::download_args(&url, quality, folder, ffmpeg, limit, &cookies(&settings)?, archive.as_deref())
         })
         .and_then(|args| {
             wait_ready()?;
@@ -347,33 +383,87 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
     }
     drop(tx);
     let (mut file, mut error, mut name) = (None::<PathBuf>, None, Value::Null);
+    let mut skipped = Vec::new(); // a playlist's videos that failed in this run
     for line in rx {
         if line.starts_with("ERROR:") {
             error = ytdlp::error_text(&line);
+            if playlist {
+                skipped.extend(ytdlp::skipped(&line));
+            }
         }
         let Some(ev) = ytdlp::parse_line(&line) else { continue };
-        if let Some(parts) = ev.get("name") {
-            name = parts.clone(); // for the finished file's name
-            continue;
-        }
         let mut downloads = state.downloads.lock().unwrap();
         let record = downloads.entry(id.into()).or_default();
-        if let Some(name) = ev["filename"].as_str() {
-            record.streams.insert(name.into());
-        }
-        if let Some(path) = ev["file"].as_str() {
+        if let Some(parts) = ev.get("name") {
+            name = parts.clone(); // for the finished file's name
+        } else if let Some(path) = ev["file"].as_str() {
             file = Some(path.into());
             // audio: the download is only the source; it counts as finished (Recycle Bin on Delete) once converted
-            if ytdlp::audio_target(quality).is_none() {
+            if !playlist && ytdlp::audio_target(quality).is_none() {
                 record.file = file.clone();
             }
         } else {
+            if let Some(name) = ev["filename"].as_str() {
+                record.streams.insert(name.into());
+            }
             drop(downloads);
             send(ev);
+            continue;
+        }
+        // A playlist: one of its videos is finished once yt-dlp has printed both its file and its name parts.
+        if playlist && file.is_some() && !name.is_null() {
+            let (finished, parts) = (file.take().unwrap(), name.take());
+            if ytdlp::audio_target(quality).is_some() {
+                record.pending.push((finished, parts)); // converted after the last video
+            } else {
+                record.items.push(finish_video(&finished, style, &parts));
+            }
         }
     }
     let exit = child.wait();
     let ok = exit.as_ref().is_ok_and(|s| s.success());
+    let fallback = || exit.map_or_else(|e| e.to_string(), |s| format!("yt-dlp exited with code {:?}", s.code()));
+    if let Some(archive) = &archive {
+        // Audio: yt-dlp fetched each stream as-is; convert them one at a time while still registered as this job
+        if let Some(target) = ytdlp::audio_target(quality) {
+            while stop.lock().unwrap().is_none() {
+                let next = state.downloads.lock().unwrap().get(id).and_then(|r| Some((r.pending.first()?.clone(), r.items.len())));
+                let Some(((source, parts), converted)) = next else { break };
+                send(json!({ "index": converted + 1, "converting": true })); // which one, for "Converting 3 of 17…"
+                let styled = ytdlp::styled_name(style, &parts, target.0);
+                let result = convert_audio(app, id, &stop, &source, target, styled, ffmpeg.as_deref());
+                if stop.lock().unwrap().is_some() {
+                    break; // canceled mid-conversion: it stays pending, so Retry converts it
+                }
+                let mut downloads = state.downloads.lock().unwrap();
+                let record = downloads.entry(id.into()).or_default();
+                record.pending.remove(0);
+                match result {
+                    Ok(path) => record.items.push(path),
+                    Err(error) => skipped.push(json!({ "id": null, "error": error })),
+                }
+            }
+        }
+        state.jobs.lock().unwrap().remove(id);
+        if let Some(reason) = *stop.lock().unwrap() {
+            return send(json!({ "state": reason })); // the finished videos stay; Resume and Retry go on from them
+        }
+        let items = state.downloads.lock().unwrap().get(id).map(|r| r.items.clone()).unwrap_or_default();
+        // One video that fails doesn't fail the playlist: it's skipped. The playlist fails when none finished.
+        let Some(first) = items.first() else {
+            let none = || if ok { "No video in this playlist could be downloaded".into() } else { fallback() };
+            return send(json!({ "state": "error", "error": explain(error.unwrap_or_else(none), &settings) }));
+        };
+        if let Some(record) = state.downloads.lock().unwrap().get_mut(id) {
+            record.done = true; // Delete now moves the videos to the Recycle Bin
+        }
+        let _ = std::fs::remove_file(archive);
+        for video in &mut skipped {
+            video["error"] = explain(video["error"].as_str().unwrap_or_default().into(), &settings).into();
+        }
+        let size: u64 = items.iter().filter_map(|f| std::fs::metadata(f).ok()).map(|m| m.len()).sum();
+        return send(json!({ "state": "done", "file": first, "files": items.len(), "size": size, "skipped": skipped }));
+    }
     // Audio downloads: yt-dlp fetched the stream as-is; convert it while still registered as this job
     let converted = match (ytdlp::audio_target(quality), &file) {
         (Some(target), Some(source)) if ok && stop.lock().unwrap().is_none() => {
@@ -387,26 +477,25 @@ fn run_download(app: &AppHandle, id: &str, url: &str, quality: &str, folder: &st
         return send(json!({ "state": reason }));
     }
     if !ok {
-        let fallback = || exit.map_or_else(|e| e.to_string(), |s| format!("yt-dlp exited with code {:?}", s.code()));
         return send(json!({ "state": "error", "error": explain(error.unwrap_or_else(fallback), &settings) }));
     }
     match converted {
         Some(Err(error)) => return send(json!({ "state": "error", "error": error })),
         Some(Ok(path)) => file = Some(path),
-        // a video: yt-dlp's working name is unique per video and quality; the finished file gets the
-        // Settings → File names name, or keeps the working one if that can't be done
-        None => {
-            file = file.map(|f| {
-                let styled = f.extension().and_then(|ext| ytdlp::styled_name(style, &name, &ext.to_string_lossy()));
-                styled.and_then(|n| place(&f, &n).ok()).unwrap_or(f)
-            })
-        }
+        None => file = file.map(|f| finish_video(&f, style, &name)),
     }
     if let Some(record) = state.downloads.lock().unwrap().get_mut(id) {
         record.file = file.clone(); // what Delete sends to the Recycle Bin
     }
     let size = file.as_ref().and_then(|f| std::fs::metadata(f).ok()).map(|m| m.len());
     send(json!({ "state": "done", "file": file, "size": size }));
+}
+
+// A finished video: yt-dlp's working name is unique per video and quality; the file gets the Settings → File
+// names name (`name` is its NAME| parts), or keeps the working one if that can't be done.
+fn finish_video(file: &Path, style: &str, name: &Value) -> PathBuf {
+    let styled = file.extension().and_then(|ext| ytdlp::styled_name(style, name, &ext.to_string_lossy()));
+    styled.and_then(|n| place(file, &n).ok()).unwrap_or_else(|| file.into())
 }
 
 // Moves a finished file to `name` in its folder, never over another file: a taken name gets " (2)", " (3)"….
@@ -473,8 +562,9 @@ fn pause(state: State<AppState>, id: String) {
 }
 
 // Delete what a download left on disk: its partial/temporary files (permanently) and, for a finished
-// download, the video itself (to the Recycle Bin). Only paths yt-dlp reported for this id are touched,
-// never a path sent by the page.
+// download, the video itself (to the Recycle Bin). A finished playlist's videos all go there, and then its
+// folder if that leaves it empty; a playlist that was canceled or failed keeps the videos it finished.
+// Only paths yt-dlp reported for this id are touched, never a path sent by the page.
 #[tauri::command]
 async fn delete_files(app: AppHandle, id: String) -> Result<Value, String> {
     let state = app.state::<AppState>();
@@ -494,8 +584,8 @@ async fn delete_files(app: AppHandle, id: String) -> Result<Value, String> {
             .unwrap_or_default();
         for name in ytdlp::leftover_names(&streams, &names) {
             let target = folder.join(name);
-            if record.file.as_ref() == Some(&target) {
-                continue; // the finished video goes to the Recycle Bin below
+            if record.file.as_ref() == Some(&target) || record.items.contains(&target) {
+                continue; // a finished video: the Recycle Bin below, or kept
             }
             match std::fs::remove_file(&target) {
                 Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.to_string()),
@@ -503,11 +593,19 @@ async fn delete_files(app: AppHandle, id: String) -> Result<Value, String> {
             }
         }
     }
-    if let Some(file) = record.file.clone().filter(|f| f.exists()) {
+    let playlist = record.items.iter().filter(|_| record.done);
+    let finished: Vec<PathBuf> = record.file.iter().chain(playlist).filter(|f| f.exists()).cloned().collect();
+    if !finished.is_empty() {
+        removed += finished.len();
         // On a fresh thread: `trash` sets up COM per thread and panics if a pooled thread has it in another mode.
-        let trashed = std::thread::spawn(move || trash::delete(file).map_err(|e| e.to_string())).join();
+        let trashed = std::thread::spawn(move || trash::delete_all(finished).map_err(|e| e.to_string())).join();
         trashed.map_err(|_| "Couldn't move the video to the Recycle Bin".to_string())??;
-        removed += 1;
+    }
+    if let Some(folder) = record.items.first().and_then(|f| f.parent()).filter(|_| record.done) {
+        let _ = std::fs::remove_dir(folder); // the playlist's folder; this only removes an empty one
+    }
+    if ytdlp::safe_id(&id) {
+        let _ = std::fs::remove_file(playlists_dir(&app).join(format!("{id}.txt")));
     }
     state.downloads.lock().unwrap().remove(&id);
     Ok(json!({ "removed": removed }))
@@ -599,11 +697,12 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             status, about, update_info, update_now, open_release, settings, set_setting, pick_cookies_file, default_folder, paste,
-            pick_folder, show_file, info, download, cancel, pause, delete_files
+            pick_folder, show_file, info, playlist, download, cancel, pause, delete_files
         ])
         .setup(|app| {
             let handle = app.handle().clone();
             std::thread::spawn(move || {
+                let _ = std::fs::remove_dir_all(playlists_dir(&handle)); // downloads never outlive the app
                 let result = prepare_ytdlp(&handle);
                 if let Err(e) = &result {
                     let text = format!("Couldn't set up yt-dlp: {e}. Check your connection and restart.");

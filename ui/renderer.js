@@ -37,6 +37,7 @@ let ytReady = false;
 let folder = store.get('folder', null);
 let info = null; // metadata for the link currently in the box
 let infoFor = ''; // the link `info` belongs to
+let playlist = null; // that link's playlist ({ title, count, videos }), once the backend has looked it up
 const jobs = new Map(); // id -> job
 
 /* ---------- tabs ---------- */
@@ -132,11 +133,33 @@ $('change').onclick = async () => {
 
 /* ---------- link box + preview ---------- */
 
+const videos = n => `${n} ${n === 1 ? 'video' : 'videos'}`;
+
+// A link with list= belongs to a playlist. One to the playlist alone ("/playlist?list=…") has no video of its own.
+function listKind(url) {
+  try {
+    const u = new URL(url);
+    return !u.searchParams.has('list') ? null : u.pathname === '/playlist' ? 'only' : 'also';
+  } catch { return null; }
+}
+
 function syncButtons() {
   const url = $('url').value.trim();
   $('paste').hidden = url !== '';
   $('clear').hidden = url === '';
-  $('download').disabled = !ytReady || !isUrl(url);
+  // a link to a playlist alone can only be downloaded whole, so Download waits until the playlist is known
+  const waiting = listKind(url) === 'only' && !(playlist && url === infoFor);
+  $('download').disabled = !ytReady || !isUrl(url) || waiting;
+}
+
+// This video / Whole playlist: shown once the backend has found the link's playlist, with This video chosen.
+function showScope() {
+  const kind = playlist && listKind(infoFor);
+  $('scope').hidden = !kind;
+  if (!kind) return;
+  $('scope-one').hidden = kind === 'only';
+  $('scope-all').textContent = `Whole playlist · ${videos(playlist.count)}`;
+  document.querySelector(`input[name=scope][value=${kind === 'only' ? 'all' : 'one'}]`).checked = true;
 }
 
 let previewState = null;
@@ -168,13 +191,25 @@ async function onUrl() {
   if (url === infoFor) return;
   infoFor = url;
   info = null;
+  playlist = null;
+  showScope();
   if (!isUrl(url)) return showPreview(null);
   showPreview({ loading: true });
+  if (listKind(url)) lookUpPlaylist(url); // alongside the preview, which doesn't wait for it
   const res = await window.api.info(url);
   if (url !== infoFor) return; // the link changed while we were waiting
   if (res.error) return showPreview({ error: res.error });
   info = res;
   showPreview(res);
+}
+
+// No playlist, or an error (a private playlist, a Mix): the link is treated as one video, as before.
+async function lookUpPlaylist(url) {
+  const res = await window.api.playlist(url);
+  if (url !== infoFor || !res || res.error) return;
+  playlist = res;
+  showScope();
+  syncButtons();
 }
 
 let debounce;
@@ -220,39 +255,57 @@ function render(job) {
   q('.reveal').hidden = job.state !== 'done' || !job.file;
   q('.retry').hidden = !['error', 'canceled'].includes(job.state);
   q('.delete').hidden = !FINISHED.includes(job.state);
-  const deleteLabel = job.state === 'done' ? `Delete the downloaded file (moves it to the ${BIN})` : 'Delete the leftover partial files';
+  const deleteLabel = job.state !== 'done' ? 'Delete the leftover partial files'
+    : job.playlist ? `Delete the downloaded videos (moves them to the ${BIN})` : `Delete the downloaded file (moves it to the ${BIN})`;
   q('.delete').title = deleteLabel;
   q('.delete').setAttribute('aria-label', deleteLabel);
 
+  // A playlist's row is about the whole playlist: which video it's on, and a percent that counts the ones before it.
+  const where = job.playlist && job.index ? `${job.index} of ${job.count}` : null;
+  const whole = p => (where ? ((job.index - 1) * 100 + (p ?? 0)) / job.count : p);
+  // Of the video being downloaded. In a playlist, a video's sound comes as a second stream after its picture:
+  // its share already counts as filled then, so the strip never steps back between the two.
+  const part = job.playlist && job.stream === 'audio' && !job.format ? 100
+    : job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
   let pct = null;
   let msg;
   if (job.state === 'starting') msg = ytReady ? 'Starting…' : 'Waiting for yt-dlp update…';
   else if (job.state === 'downloading') {
-    pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
-    msg = [
+    pct = whole(part);
+    msg = (!job.stream ? [where, 'Starting…'] : [ // no stream yet: a playlist's next video, before its first bytes
+      where,
       job.stream === 'audio' ? 'Audio' : 'Video',
       job.total ? `${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}` : fmtBytes(job.downloaded),
       job.speed && `${fmtBytes(job.speed)}/s`,
-      job.eta != null && `${fmtEta(job.eta)} left`,
-    ].filter(Boolean).join(' · ');
+      !job.playlist && job.eta != null && `${fmtEta(job.eta)} left`, // a playlist's would be one video's
+    ]).filter(Boolean).join(' · ');
   } else if (job.state === 'processing') {
-    pct = 100;
-    if (job.format) msg = `Converting to ${job.format}…`; // audio only: the backend converts the downloaded stream
-    else msg = job.stream === 'audio' ? 'Merging video and audio…' : 'Processing…';
-  } else if (job.state === 'done') msg = 'Done'; // the size is the row's big number
+    // Audio only: the backend converts the downloaded stream. A playlist's are converted one by one after its last
+    // download (`converting`), with the strip left full, as it is for one file.
+    pct = job.converting ? 100 : whole(100);
+    if (job.format && (job.converting || !job.playlist)) msg = where ? `Converting ${where} to ${job.format}…` : `Converting to ${job.format}…`;
+    else msg = [where, job.stream === 'audio' && !job.format ? 'Merging video and audio…' : 'Processing…'].filter(Boolean).join(' · ');
+  } else if (job.state === 'done') msg = job.playlist ? `Done · ${job.files} of ${videos(job.count)}` : 'Done'; // the size is the row's big number
   else if (paused) {
-    pct = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : null;
-    msg = job.total ? `Paused · ${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}` : 'Paused';
+    pct = whole(part);
+    msg = ['Paused', where, job.total && `${fmtBytes(job.downloaded)} of ${fmtBytes(job.total)}`].filter(Boolean).join(' · ');
   } else if (job.state === 'canceled') msg = 'Canceled';
   else msg = job.error || 'Download failed';
 
   q('.msg').textContent = msg;
   q('.msg').title = msg;
+  const skipped = (job.state === 'done' && job.skipped) || [];
+  q('.skipped').hidden = !skipped.length;
+  q('.skipped summary').textContent = `${skipped.length} skipped`;
+  q('.skipped ul').replaceChildren(...skipped.map(s => {
+    const name = job.videos?.find(v => v.id === s.id)?.title || s.id;
+    return Object.assign(document.createElement('li'), { textContent: [name, s.error].filter(Boolean).join(': ') });
+  }));
   // the row's one big number: percent while it runs, the file size once it's done
   const big = job.state === 'done' ? (job.size != null ? fmtBytes(job.size) : '') : pct == null ? '' : `${Math.floor(pct)}%`;
   q('.pct').textContent = big;
   // The strip stays in every state: full when done, stopped where it failed, undeveloped when canceled.
-  const reached = job.total ? Math.min(100, (job.downloaded / job.total) * 100) : 0;
+  const reached = whole(part) ?? 0;
   const strip = { done: 100, canceled: 0, error: reached }[job.state] ?? pct ?? 0;
   q('.fill').style.setProperty('--p', `${strip}%`);
   q('.bar').setAttribute('aria-valuenow', String(Math.floor(strip)));
@@ -276,7 +329,8 @@ function makeItem(job) {
   el.querySelector('.pause').onclick = () => window.api.pause(job.id);
   el.querySelector('.delete').onclick = async () => {
     // await: under Tauri, confirm() is the dialog plugin's native message box and returns a Promise
-    if (job.state === 'done' && !(await confirm(`Move "${job.title}" to the ${BIN}?`))) return;
+    const what = job.playlist ? `the playlist's ${videos(job.files)}` : `"${job.title}"`;
+    if (job.state === 'done' && !(await confirm(`Move ${what} to the ${BIN}?`))) return;
     await window.api.deleteFiles(job.id);
     job.el.remove();
     jobs.delete(job.id);
@@ -295,21 +349,24 @@ function start(job) {
     $('list').prepend(job.el);
     jobs.set(job.id, job);
   }
-  Object.assign(job, { state: 'starting', error: null, total: null, downloaded: 0 });
+  Object.assign(job, { state: 'starting', error: null, total: null, downloaded: 0, skipped: null, converting: false });
   render(job);
-  window.api.download({ id: job.id, url: job.url, quality: job.quality, folder: job.folder });
+  // playlist: a yes or no, never text. Resume and Retry send the same one, and yt-dlp skips the videos it finished.
+  window.api.download({ id: job.id, url: job.url, quality: job.quality, folder: job.folder, playlist: !!job.playlist });
 }
 
 $('download').onclick = () => {
   const url = $('url').value.trim();
   const meta = url === infoFor && info ? info : {};
+  const all = url === infoFor && playlist && document.querySelector('input[name=scope]:checked').value === 'all' ? playlist : null;
   start({
     id: crypto.randomUUID(),
     url,
     ...chosenQuality(),
     folder,
-    title: meta.title || url.replace(/^https?:\/\/(www\.)?/, ''),
+    title: all?.title || meta.title || url.replace(/^https?:\/\/(www\.)?/, ''),
     thumbnail: meta.thumbnail,
+    ...(all && { playlist: true, count: all.count, videos: all.videos }), // the videos name the ones it skips
   });
   $('url').value = '';
   onUrl();
@@ -329,6 +386,7 @@ window.api.onProgress(ev => {
   if (!job) return;
   Object.assign(job, ev);
   if (ev.title) showMeta(job); // yt-dlp reports the real title/thumbnail as each download starts
+  if ('video' in ev) Object.assign(job, { state: 'downloading', stream: null, downloaded: 0, total: null, speed: null }); // a playlist's next video
   render(job);
 });
 

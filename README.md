@@ -5,8 +5,9 @@ built with **Rust** and **[Tauri 2](https://tauri.app/)**: a Rust backend runs y
 window is drawn by the system's web view (WebView2 on Windows, WebKitGTK on Linux). The Windows installer
 is about 23 MB, most of it ffmpeg.
 
-Paste a link, pick a quality preset (or your own resolution and file type), and download. yt-dlp
-installs itself on first launch and keeps itself up to date.
+Paste a link, pick a quality preset (or your own resolution and file type), and download. A link to a
+playlist can download the whole playlist into its own folder. yt-dlp installs itself on first launch and
+keeps itself up to date.
 
 > **Status:** early versions (0.x) for Windows 10/11 and 64-bit Linux. Download the installer, `.deb` or AppImage from
 > [Releases](https://github.com/Khryz-Navarro/ArgonStream/releases), or run from source.
@@ -46,8 +47,8 @@ happening, and cleans up after itself.
    check is done, so yt-dlp is never replaced in the middle of one.
 2. **It looks the link up.** When you paste a link, the app asks yt-dlp about the video without
    downloading it and shows the thumbnail, title, channel, length and the highest resolution available.
-   Only web (`http`/`https`) links are accepted, one video per link: a link with `&list=` gets just the
-   video it points to.
+   Only web (`http`/`https`) links are accepted. If the link belongs to a playlist, the app looks the
+   playlist up too and lets you choose **This video** or **Whole playlist** (see [Playlists](#playlists)).
 3. **It turns your choice into yt-dlp options.** Pick a preset (4K Best, 4K, 1080p, 720p or Default), a
    Custom resolution and file type, or switch to Audio and pick a format. The app turns that into
    yt-dlp's format rules (see [Quality options](#quality-options)). If the video doesn't reach the
@@ -76,7 +77,8 @@ speed limit, cookies).
 
 - It doesn't sign in to YouTube itself. For age-restricted and members-only videos it can use your
   browser's signed-in session instead (see [Cookies](#cookies)).
-- It downloads one video per link; whole playlists and channels aren't supported.
+- A playlist is all or one: you get the whole playlist or the one video you linked, not a selection, and
+  not as a zip yet. Channels and YouTube Mixes aren't supported.
 - On Linux it doesn't install its own updates: when a newer release is out, a banner says so and **Update**
   opens the release. (On Windows, **Update** installs it. yt-dlp updates itself at every start.)
 - It's made and tested for YouTube. yt-dlp supports many other sites and the app accepts any
@@ -117,6 +119,29 @@ The exact yt-dlp options are in [Quality options](#quality-options).
   30 fps, e.g. `2160p60`) and length. If yt-dlp can't read a link, the preview says why.
 - **Save folder:** your Downloads folder by default. **Change** picks another, which is remembered.
 - **Start:** **Download** or <kbd>Enter</kbd> starts it. The link box then clears for the next link.
+
+### Playlists
+
+- **This video or the whole playlist:** when a link belongs to a playlist (it has `list=` in it), a switch
+  appears under the preview: **This video**, which is chosen at first, or **Whole playlist · 17 videos**.
+  A link to the playlist itself (`youtube.com/playlist?list=…`) only offers the playlist, and **Download**
+  waits until the app has looked it up.
+- **Its own folder:** the videos go into a folder named after the playlist, inside your save folder. Each
+  file name starts with the video's place in the playlist, so they sort in order:
+  `03 Video Title (1080p).mp4`.
+- **One row, one video at a time:** a playlist is one row in Downloads History. It shows which video it's
+  on (*3 of 17 · Video · 45 MB of 120 MB · 3 MB/s*), and its strip and percent cover the whole playlist.
+- **Pause, Resume, Cancel and Retry** act on the whole playlist. Resume and Retry go on from the video it
+  stopped at; the finished ones aren't downloaded again.
+- **Skipped videos:** a video that's private, removed or needs a sign-in doesn't stop the rest. When the
+  playlist is done, the row says how many it got (*Done · 15 of 17 videos*) and lists the ones it skipped,
+  with yt-dlp's reason.
+- **Audio only** works too: every video's sound is downloaded first, then converted one by one.
+- **Delete (🗑):** for a finished playlist it moves all its videos to the Recycle Bin (the Trash on Linux)
+  after a confirm, then removes the playlist's folder if that left it empty. For a canceled or failed one
+  it deletes only the leftover partial files; the videos that finished stay.
+- **Not yet:** saving a playlist as a zip (planned next), picking only some of its videos, and YouTube
+  Mixes (a Mix link downloads just its own video).
 
 ### Watching and managing downloads
 
@@ -382,7 +407,7 @@ or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact v
 
 ## Using the app
 
-1. **Paste a link** with **Paste** (or <kbd>Ctrl</kbd>+<kbd>V</kbd> in the link box). The preview shows the thumbnail, title, channel and highest resolution.
+1. **Paste a link** with **Paste** (or <kbd>Ctrl</kbd>+<kbd>V</kbd> in the link box). The preview shows the thumbnail, title, channel and highest resolution. If the link belongs to a playlist, pick **This video** or **Whole playlist** under it.
 2. **Pick a quality,** or use the **Custom** row's dropdowns. For sound only, switch Quality to **Audio** and pick MP3, AAC, WAV, FLAC or WMA.
 3. **Choose where to save** with **Change** (default: your Downloads folder).
 4. **Click Download** (or press <kbd>Enter</kbd>). The link box clears for the next link.
@@ -394,6 +419,8 @@ or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact v
 | Video · 225 MB of 921 MB · 11 MB/s · 1m left | Downloading the video stream, then the audio stream. |
 | Merging video and audio… | ffmpeg is combining the two streams. |
 | Converting to MP3… | Audio only: ffmpeg is turning the downloaded stream into the format you picked. Cancel stops it. |
+| 3 of 17 · Video · 45 MB of 120 MB · 3 MB/s | A playlist: the video it's on comes first. The strip and the percent cover the whole playlist. |
+| ✓ Done · 15 of 17 videos | A playlist finished; its total size is the big number. **2 skipped** under it lists the videos it couldn't download, and why. |
 | ✓ Done | Finished; the file size shows as the row's big number. **Show in folder** opens File Explorer (your file manager on Linux) with the file selected. The 🗑 button (after a confirmation) moves the file to the Recycle Bin (the Trash on Linux). |
 | Paused · 48.9 MB of 921.4 MB | **Pause** (‖) stopped yt-dlp and kept the partial file; **Resume** continues from there. Not available while merging. |
 | Canceled | **Retry** resumes from where it stopped; 🗑 deletes the leftover partial files instead. |
@@ -402,15 +429,17 @@ or, with Node.js installed, `npx @tauri-apps/cli@2.12.4 build`. Use that exact v
 The 🗑 button only touches files yt-dlp reported writing for *that* download: its `.part` pieces,
 fragments, separate video/audio streams and ffmpeg's `.temp` merge file. Leftovers are deleted
 permanently; a finished video goes to the Recycle Bin (the Trash on Linux). An earlier download of the same video in another
-quality is never touched.
+quality is never touched. A finished playlist's videos all go to the Recycle Bin; a playlist you canceled
+keeps the videos it finished.
 
 ## Where things are stored
 
 | What | Windows | Linux |
 |---|---|---|
-| Your downloads | The folder shown in the app (default: your Downloads folder) | The same |
+| Your downloads | The folder shown in the app (default: your Downloads folder); a playlist gets its own folder inside it | The same |
 | yt-dlp program | `%APPDATA%\com.khryz.ytdownloader\bin\yt-dlp.exe` | `~/.local/share/com.khryz.ytdownloader/bin/yt-dlp` |
 | Settings (theme, text and page size, file names, speed limit, cookies and the cookies.txt location) | `%APPDATA%\com.khryz.ytdownloader\settings.json` | `~/.local/share/com.khryz.ytdownloader/settings.json` |
+| A running playlist's note of the videos it has finished, so Resume and Retry skip them. Removed when the playlist finishes or is deleted, and when the app starts | `%APPDATA%\com.khryz.ytdownloader\playlists\` | `~/.local/share/com.khryz.ytdownloader/playlists/` |
 | Remembered quality and folder | WebView2 storage in `%LOCALAPPDATA%\com.khryz.ytdownloader` | WebKitGTK storage in `~/.local/share/com.khryz.ytdownloader` |
 | ffmpeg | `ffmpeg.exe` next to the app's exe (`binaries\` in the source tree) | `argonstream-ffmpeg` next to the app (`/usr/bin` for the `.deb`) |
 
@@ -450,8 +479,13 @@ ArgonStream/
   `progress` event for the page. **Pause** and **Cancel** end the whole process tree (yt-dlp starts its
   own child and ffmpeg): `taskkill /T /F` on Windows; on Linux every command starts in its own process
   group, which gets `SIGKILL`. A paused download keeps its `.part` file, so Resume continues it.
+- **Playlists** are one yt-dlp process (`--yes-playlist`) that works through the videos in order, with
+  `%(playlist_title)s/` in front of the output template to make the folder. yt-dlp notes each finished
+  video in a `--download-archive` file in the app's data folder, so Resume and Retry skip those without
+  asking YouTube about them again.
 - **Security:** links must be `http(s)` and are passed after `--`, so they can't be read as yt-dlp
-  options. Quality and settings values from the page are checked against fixed lists. Delete only
+  options. Quality and settings values from the page are checked against fixed lists; the This video /
+  Whole playlist choice arrives as a yes or no, and a download's id is checked before it names a file. Delete only
   removes files yt-dlp reported for that download, never a path sent by the page. The cookies.txt path
   comes from the system's file dialog, opened and saved by the backend. The page has a
   strict content security policy and can only call the app's own commands and the window buttons.
@@ -542,8 +576,10 @@ before running it; otherwise both would ship the same version.
 - The installer isn't code-signed, so Windows SmartScreen warns the first time it runs.
 - On Linux the app doesn't install its own updates: its banner opens the new release. On Windows, **Update**
   runs the installer, which isn't code-signed, so SmartScreen may still warn.
-- Playlists are ignored: a link with `&list=` downloads only that one video. Whole playlists are
-  [planned](https://github.com/Khryz-Navarro/ArgonStream/wiki/Playlists).
+- A playlist downloads whole, into a folder: saving it as a zip is
+  [planned next](https://github.com/Khryz-Navarro/ArgonStream/wiki/Playlists), and you can't pick only some
+  of its videos. YouTube Mixes and channel links aren't supported. Downloading the same playlist again
+  makes second copies (` (2)`), as it does for one video.
 - Cookies come only from Firefox or a `cookies.txt` file: Chrome and Edge lock theirs on Windows.
 - Tested on Windows 11, and on Linux only on Ubuntu 26.04 under WSL. The title bar keeps its Windows-style
   buttons on Linux too.
@@ -553,12 +589,12 @@ before running it; otherwise both would ship the same version.
 
 What's planned next is on the wiki's [Roadmap](https://github.com/Khryz-Navarro/ArgonStream/wiki/Roadmap):
 
-1. YouTube clips, whole playlists and GIFs from X;
+1. YouTube clips, playlists as a zip (into a folder already works) and GIFs from X;
 2. converting, compressing for Discord, and trimming and cropping files on your computer;
 3. image galleries (gallery-dl) and transcripts and subtitles;
 4. a mobile app and a Discord bot.
 
-None of it is in the app yet. Each feature has a plan page on the wiki and an issue labeled
+Apart from playlists into a folder, none of it is in the app yet. Each feature has a plan page on the wiki and an issue labeled
 [`roadmap`](https://github.com/Khryz-Navarro/ArgonStream/issues?q=label%3Aroadmap), where you can say what
 you'd use it for.
 
