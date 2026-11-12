@@ -131,6 +131,12 @@
       <div class="meta"><div id="pv-title" class="title"></div><div id="pv-sub" class="sub"></div></div>
     </div>
 
+    <!-- Shown once the link's playlist is known. A link to a playlist alone has no "This video". -->
+    <div id="scope" class="seg" role="radiogroup" aria-label="What to download" hidden>
+      <label id="scope-one"><input type="radio" name="scope" value="one" checked>This video</label>
+      <label><input type="radio" name="scope" value="all"><span id="scope-all">Whole playlist</span></label>
+    </div>
+
     <div class="quality">
       <div class="label">
         <span class="k" id="q-label">Quality</span>
@@ -209,6 +215,8 @@
         <span class="msg"></span><span class="pct"></span>
       </div>
       <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Download progress"><div class="fill"></div></div>
+      <!-- a finished playlist: the videos it couldn't download, and why. The list can scroll, so Tab reaches it. -->
+      <details class="skipped" hidden><summary></summary><ul tabindex="0" aria-label="Skipped videos"></ul></details>
     </div>
     <!-- one fixed-width action column, so every row's strip and big number end on the same line -->
     <div class="acts">

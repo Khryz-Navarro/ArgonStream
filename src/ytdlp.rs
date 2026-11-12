@@ -87,14 +87,36 @@ pub fn assert_url(url: &str) -> Result<String, String> {
 }
 
 /// `cookies` are `cookie_args`: an age-restricted video can't even be looked up without them.
+/// `--playlist-items 1`: a link to a playlist alone has no video of its own, so its first one is previewed
+/// instead of every video being looked up.
 pub fn info_args(url: &str, cookies: &[String]) -> Vec<String> {
     let mut args = strings(&[
-        "--no-playlist", "--no-warnings", "--encoding", "utf-8",
+        "--no-playlist", "--playlist-items", "1", "--no-warnings", "--encoding", "utf-8",
         "-O", "%(.{id,title,channel,uploader,duration_string,thumbnail,height,fps})j",
     ]);
     args.extend_from_slice(cookies);
     args.extend(strings(&["--", url])); // `--` so a link can never be read as an option
     args
+}
+
+/// Looks up the playlist a link belongs to without opening each video: one line per video, for `playlist_info`.
+pub fn playlist_args(url: &str, cookies: &[String]) -> Vec<String> {
+    let mut args = strings(&[
+        "--yes-playlist", "--flat-playlist", "--no-warnings", "--encoding", "utf-8",
+        "-O", "%(.{playlist_title,id,title})j",
+    ]);
+    args.extend_from_slice(cookies);
+    args.extend(strings(&["--", url]));
+    args
+}
+
+/// `playlist_args`' output as the page gets it: the playlist's title, how many videos it has, and each video's id
+/// and title (to name the ones a download skips). None when the link has no playlist.
+pub fn playlist_info(output: &str) -> Option<Value> {
+    let lines: Vec<Value> = output.lines().filter_map(|l| serde_json::from_str(l).ok()).collect();
+    let title = lines.first()?["playlist_title"].as_str()?; // a video on its own has none
+    let videos: Vec<Value> = lines.iter().map(|v| json!({ "id": v["id"], "title": v["title"] })).collect();
+    Some(json!({ "title": title, "count": videos.len(), "videos": videos }))
 }
 
 /// Settings → Cookies as yt-dlp options, so it uses a signed-in YouTube session (age-restricted and members-only
@@ -140,14 +162,20 @@ pub fn explain(error: &str, cookies_on: bool) -> String {
 // target ("Title [id].f251-mp3.webm"). It can never be mistaken for a finished "Title [id].mp3" (which yt-dlp
 // would report as already downloaded, and the conversion would then delete), and two formats of one video
 // downloading at once don't share a file.
-fn output_template(quality: &str) -> String {
+// A whole playlist goes into a folder named after it; yt-dlp turns the title into a safe folder name.
+fn output_template(quality: &str, playlist: bool) -> String {
+    let folder = if playlist { "%(playlist_title,playlist_id|Playlist)s/" } else { "" };
     match audio_target(quality) {
-        Some((ext, _)) => format!("%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"),
-        None => OUTPUT_TEMPLATE.to_string(),
+        Some((ext, _)) => format!("{folder}%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"),
+        None => format!("{folder}{OUTPUT_TEMPLATE}"),
     }
 }
 
 /// `limit` is a SPEED_LIMITS cap for this download, or None for no cap; `cookies` are `cookie_args`.
+/// `archive` is None for one video: the link's own, or the first one of a link that only names a playlist or a
+/// channel (the one the preview showed, as in `info_args`). For a whole playlist it's the file where yt-dlp notes
+/// each finished video, so Resume and Retry skip those without looking them up again. yt-dlp moves on to the next
+/// video after an error.
 pub fn download_args(
     url: &str,
     quality: &str,
@@ -155,17 +183,27 @@ pub fn download_args(
     ffmpeg: Option<&str>,
     limit: Option<&str>,
     cookies: &[String],
+    archive: Option<&str>,
 ) -> Result<Vec<String>, String> {
     let mut args = quality_args(quality)?;
+    match archive {
+        Some(archive) => args.extend(strings(&["--yes-playlist", "--download-archive", archive])),
+        None => args.extend(strings(&["--no-playlist", "--playlist-items", "1"])),
+    }
+    // A playlist's video also reports its place and how many there are, for "3 of 17" and its file name.
+    let (meta, place) = match archive {
+        Some(_) => (",playlist_index,playlist_count", "\t%(playlist_index|)s\t%(playlist_count|)s"),
+        None => ("", ""),
+    };
     args.extend(strings(&[
-        "--no-playlist", "--encoding", "utf-8", "--newline", "--progress",
+        "--encoding", "utf-8", "--newline", "--progress",
         "--progress-template", "download:DL|%(info.vcodec)s|%(progress)j",
-        "--print", "video:META|%(.{title,thumbnail})j",
+        "--print", &format!("video:META|%(.{{title,thumbnail{meta}}})j"),
         "--print", "after_move:FILE|%(filepath)s",
         // The parts of the Settings → File names name. `S` makes yt-dlp sanitize a part as a file name (no
         // / \ : * ? " < > | and no control characters), so the tabs between them can't come from a title.
-        "--print", "after_move:NAME|%(title)S\t%(channel,uploader|)S\t%(height|)s\t%(vcodec|)s\t%(acodec|)s",
-        "-P", folder, "-o", &output_template(quality),
+        "--print", &format!("after_move:NAME|%(title)S\t%(channel,uploader|)S\t%(height|)s\t%(vcodec|)s\t%(acodec|)s{place}"),
+        "-P", folder, "-o", &output_template(quality, archive.is_some()),
     ]));
     if let Some(ffmpeg) = ffmpeg {
         args.extend(strings(&["--ffmpeg-location", ffmpeg]));
@@ -186,10 +224,21 @@ pub fn parse_line(line: &str) -> Option<Value> {
     if let Some(name) = line.strip_prefix("NAME|") {
         let mut parts = name.split('\t');
         let mut next = || parts.next().unwrap_or_default();
-        return Some(json!({ "name": { "title": next(), "author": next(), "height": next(), "vcodec": next(), "acodec": next() } }));
+        return Some(json!({ "name": {
+            "title": next(), "author": next(), "height": next(), "vcodec": next(), "acodec": next(),
+            "index": next(), "count": next(), // a playlist's video: its place, and how many there are
+        } }));
     }
     if let Some(meta) = line.strip_prefix("META|") {
         let m = serde_json::from_str::<Value>(meta).ok().filter(Value::is_object)?;
+        if !m["playlist_index"].is_null() {
+            // a playlist's next video: the row keeps the playlist's own title and thumbnail
+            let mut ev = json!({ "video": m["title"], "index": m["playlist_index"] });
+            if !m["playlist_count"].is_null() {
+                ev["count"] = m["playlist_count"].clone(); // else the page keeps the count from its lookup
+            }
+            return Some(ev);
+        }
         return Some(json!({ "title": m["title"], "thumbnail": m["thumbnail"] }));
     }
     let (vcodec, progress) = line.strip_prefix("DL|")?.split_once('|')?;
@@ -279,13 +328,18 @@ fn codec_name(id: &str) -> Option<&str> {
 /// The finished file's name in a Settings → File names style, from a NAME| line's parts (`parse_line`):
 /// classic "Title (1080p).mp4", basic "Title.mp4", pretty "Title - Author (1080p, h264).mp4",
 /// nerdy "Title_1080p_h264_aac.mp4". Codecs are named only for videos; an audio file's extension already
-/// says it. None (no title) keeps yt-dlp's working name.
+/// says it. A playlist's video leads with its place, padded so the files sort in the playlist's order:
+/// "03 Title (1080p).mp4", nerdy "03_Title_1080p_h264_aac.mp4". None (no title) keeps yt-dlp's working name.
 pub fn styled_name(style: &str, parts: &Value, ext: &str) -> Option<String> {
     let part = |key: &str| parts[key].as_str().map(str::trim).filter(|s| !s.is_empty());
     let title = part("title")?;
     let height = part("height").map(|h| format!("{h}p"));
     let vcodec = part("vcodec").and_then(codec_name);
     let acodec = vcodec.and(part("acodec").and_then(codec_name));
+    let index = part("index").filter(|i| i.bytes().all(|b| b.is_ascii_digit())).map(|i| {
+        let width = part("count").map_or(0, str::len).max(2);
+        format!("{i:0>width$}")
+    });
     let stem = match style {
         "basic" => title.to_string(),
         "pretty" => {
@@ -296,6 +350,10 @@ pub fn styled_name(style: &str, parts: &Value, ext: &str) -> Option<String> {
         }
         "nerdy" => title.split_whitespace().chain(height.as_deref()).chain(vcodec).chain(acodec).collect::<Vec<_>>().join("_"),
         _ => height.map_or_else(|| title.to_string(), |h| format!("{title} ({h})")), // classic
+    };
+    let stem = match index {
+        Some(index) => format!("{index}{}{stem}", if style == "nerdy" { "_" } else { " " }),
+        None => stem,
     };
     let name = format!("{stem}.{ext}");
     (!name.contains(['/', '\\'])).then_some(name) // yt-dlp sanitized the parts; never leave the folder anyway
@@ -310,19 +368,32 @@ pub fn numbered_name(name: &str, n: u32) -> String {
     }
 }
 
-/// "ERROR: [youtube] abc123: Video unavailable" -> "Video unavailable"
-pub fn error_text(output: &str) -> Option<String> {
-    let line = output.lines().rev().find(|l| l.starts_with("ERROR:"))?;
-    let rest = line["ERROR:".len()..].trim_start();
-    // drop a leading "[extractor] id: "
-    let message = rest
+// An "ERROR:" line as (the video's id, the message): a leading "[extractor] id: " gives the id and is dropped.
+fn error_parts(line: &str) -> Option<(Option<&str>, &str)> {
+    let rest = line.strip_prefix("ERROR:")?.trim_start();
+    let split = rest
         .strip_prefix('[')
         .and_then(|r| r.split_once(']'))
         .filter(|(extractor, _)| !extractor.is_empty())
         .and_then(|(_, r)| r.trim_start().split_once(':'))
-        .filter(|(id, _)| !id.is_empty() && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'))
-        .map_or(rest, |(_, msg)| msg.trim_start());
-    Some(message.to_string())
+        .filter(|(id, _)| !id.is_empty() && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'));
+    Some(split.map_or((None, rest), |(id, message)| (Some(id), message.trim_start())))
+}
+
+/// "ERROR: [youtube] abc123: Video unavailable" -> "Video unavailable"
+pub fn error_text(output: &str) -> Option<String> {
+    output.lines().rev().find_map(error_parts).map(|(_, message)| message.to_string())
+}
+
+/// A video that a playlist download skipped, from its "ERROR:" line: `{ id, error }`; the id is null when
+/// yt-dlp names none.
+pub fn skipped(line: &str) -> Option<Value> {
+    error_parts(line).map(|(id, error)| json!({ "id": id, "error": error }))
+}
+
+/// A download's id comes from the page and names its playlist's archive file, so only a UUID's characters pass.
+pub fn safe_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= 64 && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
 }
 
 /// "ffmpeg version 6.1.1-essentials_build-www.gyan.dev Copyright…" -> "6.1.1"
@@ -377,14 +448,14 @@ mod tests {
     #[test]
     fn every_quality_builds_args_that_end_with_dashdash_url() {
         for quality in QUALITIES {
-            let args = download_args("https://youtu.be/x", quality, "C:\\out", Some("ff.exe"), None, &[]).unwrap();
+            let args = download_args("https://youtu.be/x", quality, "C:\\out", Some("ff.exe"), None, &[], None).unwrap();
             assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
             assert!(args.iter().any(|a| a == "--no-playlist"));
             assert_eq!(after(&args, "-P"), "C:\\out");
             assert_eq!(after(&args, "-o"), OUTPUT_TEMPLATE);
             assert_eq!(after(&args, "--ffmpeg-location"), "ff.exe");
         }
-        let args = download_args("https://youtu.be/x", "mp4_720", ".", None, None, &[]).unwrap();
+        let args = download_args("https://youtu.be/x", "mp4_720", ".", None, None, &[], None).unwrap();
         assert!(!args.iter().any(|a| a == "--ffmpeg-location"));
         assert!(!args.iter().any(|a| a == "--limit-rate"), "no cap unless one is set");
     }
@@ -392,7 +463,7 @@ mod tests {
     #[test]
     fn speed_limits_become_ytdlps_limit_rate() {
         for quality in ["mp4_1080", "audio-mp3"] {
-            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &[]).unwrap();
+            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &[], None).unwrap();
             assert_eq!(after(&args, "--limit-rate"), "5M");
             assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]); // the link stays last, after `--`
         }
@@ -420,11 +491,11 @@ mod tests {
         assert_eq!(after(&info, "--cookies"), "C:\\c.txt");
         assert_eq!(info[info.len() - 2..], ["--", "https://youtu.be/x"]);
         for quality in ["mp4_1080", "audio-mp3"] {
-            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &cookies).unwrap();
+            let args = download_args("https://youtu.be/x", quality, ".", None, Some("5M"), &cookies, None).unwrap();
             assert_eq!(after(&args, "--cookies"), "C:\\c.txt");
             assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x"]);
         }
-        assert!(!download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[]).unwrap().iter().any(|a| a.starts_with("--cookies")));
+        assert!(!download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[], None).unwrap().iter().any(|a| a.starts_with("--cookies")));
     }
 
     #[test]
@@ -478,7 +549,7 @@ mod tests {
             if key != "audio-aac" {
                 assert_eq!(quality_args(key).unwrap(), ["-f", "ba/b"], "{key}");
             }
-            let args = download_args("https://youtu.be/x", key, "C:\\out", Some("ff.exe"), None, &[]).unwrap();
+            let args = download_args("https://youtu.be/x", key, "C:\\out", Some("ff.exe"), None, &[], None).unwrap();
             assert!(!args.iter().any(|a| a == "-x" || a == "--merge-output-format"), "{key}: no extraction or merge");
             // the source gets its own ".f<format>-<target>" name, never the finished file's
             assert_eq!(after(&args, "-o"), format!("%(title)s [%(id)s].f%(format_id)s-{ext}.%(ext)s"));
@@ -538,7 +609,7 @@ mod tests {
     #[test]
     fn unknown_quality_is_rejected() {
         for quality in ["nope", "toString", "custom-mp4-1000", "custom-avi-1080", "custom-mp4-1080 --exec x", "custom-mp4-+1080", "custom-mp4-", "audio-ogg", "audio-", "audio-mp3 --exec x"] {
-            let err = download_args("https://youtu.be/x", quality, ".", None, None, &[]).unwrap_err();
+            let err = download_args("https://youtu.be/x", quality, ".", None, None, &[], None).unwrap_err();
             assert!(err.contains("Unknown quality"), "{quality}");
         }
     }
@@ -566,6 +637,102 @@ mod tests {
         assert!(assert_url("file:///C:/Windows/win.ini").unwrap_err().contains("http"));
         assert!(assert_url("").is_err());
         assert!(info_args("https://youtu.be/x", &[]).ends_with(&["--".to_string(), "https://youtu.be/x".to_string()]));
+    }
+
+    #[test]
+    fn a_link_to_a_playlist_alone_previews_only_its_first_video() {
+        let info = info_args("https://www.youtube.com/playlist?list=PL1", &[]);
+        assert!(info.iter().any(|a| a == "--no-playlist"));
+        assert_eq!(after(&info, "--playlist-items"), "1");
+    }
+
+    #[test]
+    fn a_playlist_is_looked_up_without_opening_each_video() {
+        let cookies = cookie_args("firefox", None).unwrap();
+        let args = playlist_args("https://youtu.be/x?list=PL1", &cookies);
+        assert!(args.iter().any(|a| a == "--yes-playlist") && args.iter().any(|a| a == "--flat-playlist"));
+        assert_eq!(after(&args, "--cookies-from-browser"), "firefox");
+        assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x?list=PL1"]);
+
+        // yt-dlp 2026.10.26's real lines for "Official Blender Open Movies", cut to two videos
+        let out = concat!(
+            r#"{"playlist_title": "Official Blender Open Movies", "id": "l5OZu-IrXpw", "title": "SINGULARITY - Painterly Space Adventure"}"#, "\n",
+            r#"{"playlist_title": "Official Blender Open Movies", "id": "u9lj-c29dxI", "title": "WING IT! - Blender Open Movie"}"#, "\n",
+        );
+        assert_eq!(playlist_info(out), Some(json!({
+            "title": "Official Blender Open Movies", "count": 2,
+            "videos": [
+                { "id": "l5OZu-IrXpw", "title": "SINGULARITY - Painterly Space Adventure" },
+                { "id": "u9lj-c29dxI", "title": "WING IT! - Blender Open Movie" },
+            ],
+        })));
+        // a video on its own, nothing at all, or noise: no playlist
+        assert_eq!(playlist_info(r#"{"id": "x", "title": "T"}"#), None);
+        assert_eq!(playlist_info(""), None);
+        assert_eq!(playlist_info("WARNING: something"), None);
+    }
+
+    #[test]
+    fn a_whole_playlist_goes_into_its_own_folder_and_notes_finished_videos() {
+        for quality in ["mp4_1080", "audio-mp3"] {
+            let args = download_args("https://youtu.be/x?list=PL1", quality, "C:\\out", None, None, &[], Some("C:\\data\\id.txt")).unwrap();
+            assert!(args.iter().any(|a| a == "--yes-playlist"), "{quality}");
+            assert!(!args.iter().any(|a| a == "--no-playlist" || a == "--playlist-items"), "{quality}: every video");
+            assert_eq!(after(&args, "--download-archive"), "C:\\data\\id.txt");
+            assert_eq!(after(&args, "-P"), "C:\\out");
+            assert!(after(&args, "-o").starts_with("%(playlist_title,playlist_id|Playlist)s/%(title)s [%(id)s]"), "{quality}");
+            assert_eq!(args[args.len() - 2..], ["--", "https://youtu.be/x?list=PL1"]);
+        }
+        // one video: no archive, no folder of its own, and nothing about a playlist in what yt-dlp prints
+        let one = download_args("https://youtu.be/x?list=PL1", "mp4_1080", "C:\\out", None, None, &[], None).unwrap();
+        assert!(one.iter().any(|a| a == "--no-playlist") && !one.iter().any(|a| a == "--yes-playlist" || a == "--download-archive"));
+        assert_eq!(after(&one, "-o"), OUTPUT_TEMPLATE);
+        assert!(one.iter().any(|a| a == "video:META|%(.{title,thumbnail})j"));
+        assert!(!one.iter().any(|a| a.contains("playlist_index")));
+        // even for a link that only names a playlist or a channel: its first video, the one the preview showed
+        assert_eq!(after(&one, "--playlist-items"), "1");
+    }
+
+    #[test]
+    fn a_playlists_videos_report_their_place_and_lead_their_names_with_it() {
+        // yt-dlp 2026.10.26's real META line for the third of 17 videos
+        assert_eq!(
+            parse_line(r#"META|{"title": "CHARGE - Blender Open Movie", "thumbnail": "https://i.ytimg.com/x.jpg", "playlist_index": 3, "playlist_count": 17}"#),
+            Some(json!({ "video": "CHARGE - Blender Open Movie", "index": 3, "count": 17 }))
+        );
+        // no total from yt-dlp: no "count", so the page keeps the one from its lookup
+        assert_eq!(parse_line(r#"META|{"title": "T", "playlist_index": 3}"#), Some(json!({ "video": "T", "index": 3 })));
+        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[], Some("a.txt")).unwrap();
+        assert!(args.iter().any(|a| a == "video:META|%(.{title,thumbnail,playlist_index,playlist_count})j"));
+        assert!(args.iter().any(|a| a.ends_with("\t%(playlist_index|)s\t%(playlist_count|)s")), "yt-dlp prints the place");
+        let video = &parse_line("NAME|Video Title\tAuthor\t1080\tavc1.640028\tmp4a.40.2\t3\t17").unwrap()["name"];
+        assert_eq!(styled_name("classic", video, "mp4").as_deref(), Some("03 Video Title (1080p).mp4"));
+        assert_eq!(styled_name("basic", video, "mp4").as_deref(), Some("03 Video Title.mp4"));
+        assert_eq!(styled_name("pretty", video, "mp4").as_deref(), Some("03 Video Title - Author (1080p, h264).mp4"));
+        assert_eq!(styled_name("nerdy", video, "mp4").as_deref(), Some("03_Video_Title_1080p_h264_aac.mp4"));
+        // padded to the playlist's length, so 3 sorts before 120
+        let long = &parse_line("NAME|T\t\t\tnone\topus\t3\t120").unwrap()["name"];
+        assert_eq!(styled_name("basic", long, "mp3").as_deref(), Some("003 T.mp3"));
+        // anything but a number is left out
+        assert_eq!(styled_name("basic", &json!({ "title": "T", "index": "NA", "count": "17" }), "mp4").as_deref(), Some("T.mp4"));
+    }
+
+    #[test]
+    fn skipped_names_the_video_and_why() {
+        assert_eq!(
+            skipped("ERROR: [youtube] Xk29aLq0P1c: Private video. Sign in if you've been granted access to this video"),
+            Some(json!({ "id": "Xk29aLq0P1c", "error": "Private video. Sign in if you've been granted access to this video" }))
+        );
+        assert_eq!(skipped("ERROR: Unable to download webpage"), Some(json!({ "id": null, "error": "Unable to download webpage" })));
+        assert_eq!(skipped("[download] Downloading item 3 of 17"), None);
+    }
+
+    #[test]
+    fn safe_id_only_lets_a_uuids_characters_name_a_file() {
+        assert!(safe_id("3f2b8c1e-9a4d-4c7b-8e21-0d5f6a7b8c9d"));
+        for id in ["", "..", "a/b", "a\\b", "..\\..\\x", "a.txt", "a b", "id:1", &"a".repeat(65)] {
+            assert!(!safe_id(id), "{id}");
+        }
     }
 
     #[test]
@@ -629,7 +796,7 @@ mod tests {
     #[test]
     fn styled_names_follow_the_file_names_setting() {
         let line = "NAME|Video Title\tAuthor\t1080\tavc1.640028\tmp4a.40.2";
-        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[]).unwrap();
+        let args = download_args("https://youtu.be/x", "mp4_1080", ".", None, None, &[], None).unwrap();
         assert!(args.iter().any(|a| a.starts_with("after_move:NAME|%(title)S\t")), "yt-dlp prints the parts");
         let video = &parse_line(line).unwrap()["name"];
         assert_eq!(styled_name("classic", video, "mp4").as_deref(), Some("Video Title (1080p).mp4"));

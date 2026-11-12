@@ -136,6 +136,11 @@ img { display: block; }
            grid-template-areas: "link quality" "preview quality" "save quality" "download quality"; gap: 16px 64px; }
 .compose > .input { grid-area: link; }
 .compose > .preview { grid-area: preview; }
+/* This video / Whole playlist: its row exists only while it's shown, so a hidden switch leaves no gap */
+.compose > .seg { grid-area: scope; }
+.compose:has(> .seg:not([hidden])) { grid-template-rows: auto auto auto auto 1fr;
+  grid-template-areas: "link quality" "preview quality" "scope quality" "save quality" "download quality"; }
+.compose > .seg label { height: auto; min-height: 34px; padding: 4px 8px; text-align: center; } /* the count wraps at large page sizes */
 .compose > .quality { grid-area: quality; }
 .compose > .save { grid-area: save; }
 .compose > .primary { grid-area: download; align-self: start; }
@@ -253,6 +258,12 @@ img { display: block; }
 .fill { position: absolute; inset: 0 auto 0 0; width: min(100%, round(nearest, var(--p, 0%), 14px)); background: var(--accent);
         transition: width .5s cubic-bezier(.16, 1, .3, 1); }
 .item.processing .fill, .item.paused .fill { opacity: .5; }
+/* a finished playlist's skipped videos: closed until asked for, and a few rows tall at most */
+.skipped { font-size: 12px; line-height: 16px; color: var(--muted); }
+.skipped summary { width: fit-content; cursor: pointer; border-radius: 3px; }
+.skipped summary:hover { color: var(--text); }
+.skipped ul { list-style: none; margin-top: 6px; max-height: 84px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.skipped li { overflow-wrap: anywhere; }
 /* finished strips keep the signature: fully developed in fixer green, stopped in safelight red where it failed */
 .item.done .fill { background: var(--ok); }
 .item.error .fill { background: var(--err); }
@@ -286,6 +297,9 @@ img { display: block; }
   /* the edge code keeps its own full-width line under the frame, as at 100%, and may wrap rather than lose the ID */
   .preview .code { grid-row: 3; grid-column: 1 / -1; white-space: normal; }
   .preview .meta .title { font-size: 13px; line-height: 18px; }
+  /* a playlist link adds the This video / Whole playlist row: it turns compact and the rows close up, so Download still fits */
+  .compose:has(> .seg:not([hidden])) { row-gap: 12px; }
+  .compose > .seg label { min-height: 28px; padding: 1px 8px; font-size: 12.5px; line-height: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
